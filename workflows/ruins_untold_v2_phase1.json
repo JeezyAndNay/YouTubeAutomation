@@ -1,0 +1,685 @@
+{
+  "id": "RuinsUntoldV2Phase1",
+  "name": "Ruins Untold v2 — Production Pipeline",
+  "nodes": [
+    {
+      "id": "2a000001-0001-40010-8000-000000000001",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        60,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "2a000002-0002-40020-8000-000000000002",
+      "name": "Read Topic Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        320,
+        300
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "gid"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRangeA1",
+              "range": "A1:K200"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "placeholder",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "2a000003-0003-40030-8000-000000000003",
+      "name": "Aggregate Topics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst rows = $input.all();\nconst newRows = rows.filter(item =>\n  (item.json.STATUS || '').toString().trim().toLowerCase() === 'new'\n);\nif (newRows.length === 0) {\n  throw new Error('No ideas with STATUS = \"New\" found in the sheet.');\n}\nconst displayRows = newRows.slice(0, 10);\nconst topicList = displayRows\n  .map((item, i) => `${i + 1}. ${item.json.TOPIC || '(no topic)'}`)\n  .join('\\n');\nconst allRows = displayRows.map(r => r.json);\nreturn [{ json: { topicList, allRows: JSON.stringify(allRows), count: displayRows.length } }];\n"
+      }
+    },
+    {
+      "id": "2a000004-0004-40040-8000-000000000004",
+      "name": "Select Episode Topic",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        840,
+        300
+      ],
+      "parameters": {
+        "resume": "form",
+        "formTitle": "RUINS UNTOLD — CASE FILE SELECTION",
+        "formDescription": "={{ 'OPEN CASE FILES — STATUS: NEW\\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n' + $json.topicList + '\\n\\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\nEnter the case number to open.' }}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "CASE NUMBER",
+              "fieldType": "number",
+              "requiredField": true
+            }
+          ]
+        },
+        "formSubmitButtonLabel": "OPEN CASE FILE",
+        "responseMode": "lastNode"
+      }
+    },
+    {
+      "id": "2a000005-0005-40050-8000-000000000005",
+      "name": "Look Up Selected Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows = JSON.parse($('Aggregate Topics').item.json.allRows);\nif (!selection || selection < 1 || selection > allRows.length) {\n  throw new Error(`Invalid selection \"${selection}\". Enter 1–${allRows.length}.`);\n}\nconst row = allRows[selection - 1];\n\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nconst projectDir = '/Users/jneal/n8n_projects/' + slug;\n\nreturn [{\n  json: {\n    topic:         row.TOPIC           || '',\n    audience:      'curious history fans, conspiracy-adjacent adults 25-45',\n    runtime:       20,\n    angle:         row.ANGLE          || '',\n    keyEvidence:   row.KEY_EVIDENCE   || '',\n    keyResearchers:row.KEY_RESEARCHERS|| '',\n    relatedVideo:  row.RELATED_VIDEO  || 'N/A',\n    hookStyle:     row.HOOK_STYLE     || 'contradiction',\n    toneDial:      parseInt(row.TONE_DIAL, 10) || 7,\n    slug,\n    projectDir\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "2a000006-0006-40060-8000-000000000006",
+      "name": "Init Project Directories",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst path = require('path');\nconst inp  = $input.first().json;\nconst dirs = ['scripts', 'audio', 'images', 'videos', 'clips', 'music', 'sfx'];\nfs.mkdirSync(inp.projectDir, { recursive: true });\nfor (const d of dirs) {\n  fs.mkdirSync(path.join(inp.projectDir, d), { recursive: true });\n}\nconsole.log('Project directory created: ' + inp.projectDir);\nreturn [{ json: inp }];\n"
+      }
+    },
+    {
+      "id": "2a000007-0007-40070-8000-000000000007",
+      "name": "Research Agent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        560
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs  = require('fs');\nconst inp = $input.first().json;\nconst sys = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/research_agent.md', 'utf-8');\nconst userInput = JSON.stringify({ topic: inp.topic, audience: inp.audience, runtime: inp.runtime }, null, 2);\nconst fullPrompt = sys + '\\n\\n---\\n\\nYour input:\\n\\n' + userInput;\nconsole.log('Research Agent — prompt length: ' + fullPrompt.length);\nconst res  = await fetch('http://host.docker.internal:3333/generate', {\n  method: 'POST', headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ prompt: fullPrompt })\n});\nconst data = await res.json();\nif (data.exitCode !== 0) throw new Error('Research Agent failed: ' + data.error);\nlet raw = data.output.trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research package JSON');\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = inp.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\nconsole.log('Saved: ' + outPath);\nreturn [{ json: { ...inp, researchPackage: pkg } }];\n"
+      }
+    },
+    {
+      "id": "2a000008-0008-40080-8000-000000000008",
+      "name": "Script Agent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        560
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs  = require('fs');\nconst inp = $input.first().json;\nconst sys = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/script_agent.md', 'utf-8');\nconst fullPrompt = sys + '\\n\\n---\\n\\nYour input (research_package.json):\\n\\n' + JSON.stringify(inp.researchPackage, null, 2);\nconsole.log('Script Agent — prompt length: ' + fullPrompt.length);\nconst res  = await fetch('http://host.docker.internal:3333/generate', {\n  method: 'POST', headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ prompt: fullPrompt })\n});\nconst data = await res.json();\nif (data.exitCode !== 0) throw new Error('Script Agent failed: ' + data.error);\nconst script = data.output.trim();\nfs.writeFileSync(inp.projectDir + '/scripts/script.md', script, 'utf-8');\nconsole.log('Script saved (' + script.split(' ').length + ' words)');\nreturn [{ json: { ...inp, scriptContent: script } }];\n"
+      }
+    },
+    {
+      "id": "2a000009-0009-40090-8000-000000000009",
+      "name": "Voice Agent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        560
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs  = require('fs');\nconst inp = $input.first().json;\nconst sys = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/voice_agent.md', 'utf-8');\nconst fullPrompt = sys + '\\n\\n---\\n\\nYour input (script.md):\\n\\n' + inp.scriptContent;\nconsole.log('Voice Agent — prompt length: ' + fullPrompt.length);\nconst res  = await fetch('http://host.docker.internal:3333/generate', {\n  method: 'POST', headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ prompt: fullPrompt })\n});\nconst data = await res.json();\nif (data.exitCode !== 0) throw new Error('Voice Agent failed: ' + data.error);\nlet raw = data.output.trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse voice package JSON');\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nfs.writeFileSync(inp.projectDir + '/audio/voice_package.json', JSON.stringify(pkg, null, 2), 'utf-8');\nconsole.log('Voice package saved (' + pkg.segments.length + ' segments)');\n// Reset TTS chain state\nconst sd = $getWorkflowStaticData('global');\nsd.ruinsVoicePrevIds = [];\nreturn [{ json: { ...inp, voicePackage: pkg } }];\n"
+      }
+    },
+    {
+      "id": "2a000010-0010-40100-8000-000000000010",
+      "name": "Extract Voice Segments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        560
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst inp  = $input.first().json;\nconst segs = inp.voicePackage.segments;\nconst out  = segs.map((seg, i) => ({\n  json: {\n    projectDir:  inp.projectDir,\n    voiceId:     inp.voicePackage.voice_id,\n    model:       inp.voicePackage.model,\n    segmentId:   seg.segment_id,\n    sequence:    seg.sequence,\n    seqPad:      String(seg.sequence).padStart(3, '0'),\n    chunkText:   seg.voice_optimized_text,\n    isFirstChunk: i === 0\n  }\n}));\nconsole.log('Extracted ' + out.length + ' voice segments');\nreturn out;\n"
+      }
+    },
+    {
+      "id": "2a000011-0011-40110-8000-000000000011",
+      "name": "Split Segments",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1100,
+        560
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "2a000012-0012-40120-8000-000000000012",
+      "name": "Prepare TTS Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        560
+      ],
+      "parameters": {
+        "jsCode": "\nconst item       = $input.item.json;\nconst staticData = $getWorkflowStaticData('global');\nconst kieInput = {\n  dialogue: [{ text: item.chunkText, voice: item.voiceId }],\n  stability: 0.5\n};\nif (!item.isFirstChunk && staticData.ruinsVoicePrevIds && staticData.ruinsVoicePrevIds.length > 0) {\n  kieInput.previous_request_ids = staticData.ruinsVoicePrevIds.slice(-3);\n}\nconst kieBody = { model: 'elevenlabs/text-to-dialogue-v3', input: kieInput };\nreturn [{\n  json: {\n    ...item,\n    kieBody:         JSON.stringify(kieBody),\n    includedPrevIds: kieInput.previous_request_ids || []\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "2a000013-0013-40130-8000-000000000013",
+      "name": "Submit to Kie.ai",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1620,
+        560
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $credentials.httpHeaderAuth.value }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.kieBody }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0U8Ob6H4EiGx7N2v",
+          "name": "Kie AI API"
+        }
+      }
+    },
+    {
+      "id": "2a000014-0014-40140-8000-000000000014",
+      "name": "Extract Task ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        560
+      ],
+      "parameters": {
+        "jsCode": "\nconst response  = $input.item.json;\nconst chunkMeta = $('Prepare TTS Request').item.json;\nif (response.code !== 200) {\n  throw new Error('Kie.ai createTask failed (seg ' + chunkMeta.segmentId + '): ' + response.msg);\n}\nreturn [{ json: { ...chunkMeta, kieTaskId: response.data.taskId } }];\n"
+      }
+    },
+    {
+      "id": "2a000015-0015-40150-8000-000000000015",
+      "name": "Wait 10s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        2140,
+        560
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 10,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "2a000016-0016-40160-8000-000000000016",
+      "name": "Poll Kie.ai Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        560
+      ],
+      "parameters": {
+        "url": "=https://api.kie.ai/api/v1/jobs/recordInfo?taskId={{ $('Extract Task ID').item.json.kieTaskId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $credentials.httpHeaderAuth.value }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0U8Ob6H4EiGx7N2v",
+          "name": "Kie AI API"
+        }
+      }
+    },
+    {
+      "id": "2a000017-0017-40170-8000-000000000017",
+      "name": "TTS Complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2660,
+        560
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-tts-done",
+              "leftValue": "={{ $json.data.state }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2a000018-0018-40180-8000-000000000018",
+      "name": "Store Audio URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2920,
+        560
+      ],
+      "parameters": {
+        "jsCode": "\nconst pollResp   = $input.item.json;\nconst chunkMeta  = $('Prepare TTS Request').item.json;\nconst staticData = $getWorkflowStaticData('global');\nlet resultJson = {};\ntry { resultJson = JSON.parse(pollResp.data.resultJson || '{}'); } catch(e) {}\nconst requestId =\n  resultJson.request_id     ||\n  resultJson.history_item_id||\n  resultJson.requestId      ||\n  $('Extract Task ID').item.json.kieTaskId;\nif (!staticData.ruinsVoicePrevIds) staticData.ruinsVoicePrevIds = [];\nstaticData.ruinsVoicePrevIds.push(requestId);\nif (staticData.ruinsVoicePrevIds.length > 3) {\n  staticData.ruinsVoicePrevIds = staticData.ruinsVoicePrevIds.slice(-3);\n}\nconst audioUrl =\n  (resultJson.resultUrls || [])[0] ||\n  (pollResp.data.resultUrls  || [])[0] ||\n  '';\nif (!audioUrl) throw new Error('No audio URL for seg ' + chunkMeta.segmentId + '. state=' + pollResp.data.state);\nreturn [{ json: { ...chunkMeta, kieRequestId: requestId, audioUrl } }];\n"
+      }
+    },
+    {
+      "id": "2a000019-0019-40190-8000-000000000019",
+      "name": "Download Chunk Audio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3180,
+        560
+      ],
+      "parameters": {
+        "url": "={{ $json.audioUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "2a000020-0020-40200-8000-000000000020",
+      "name": "Save Segment Audio",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        3440,
+        560
+      ],
+      "parameters": {
+        "fileName": "={{ $('Prepare TTS Request').item.json.projectDir + '/audio/seg_' + $('Prepare TTS Request').item.json.seqPad + '_' + $('Prepare TTS Request').item.json.segmentId + '.mp3' }}"
+      }
+    },
+    {
+      "id": "2a000021-0021-40210-8000-000000000021",
+      "name": "Concatenate Voiceover",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        820
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst { execSync } = require('child_process');\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst dir  = inp.projectDir + '/audio';\n\n// Collect all segment MP3s in order\nconst files = fs.readdirSync(dir)\n  .filter(f => f.startsWith('seg_') && f.endsWith('.mp3'))\n  .sort();\n\nif (files.length === 0) throw new Error('No segment audio files found in ' + dir);\nconsole.log('Concatenating ' + files.length + ' segments...');\n\nconst concatTxt = dir + '/concat.txt';\nfs.writeFileSync(concatTxt, files.map(f => \"file '\" + dir + '/' + f + \"'\").join('\\n'), 'utf-8');\n\nconst finalPath = dir + '/voiceover_final.mp3';\nexecSync('ffmpeg -y -f concat -safe 0 -i \"' + concatTxt + '\" -c copy \"' + finalPath + '\"', { timeout: 120000 });\nconsole.log('Voiceover final: ' + finalPath);\nreturn [{ json: { ...inp, voiceFinalPath: finalPath } }];\n"
+      }
+    },
+    {
+      "id": "2a000100-0100-41000-8000-000000000100",
+      "name": "Note: Phase 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        40,
+        140
+      ],
+      "parameters": {
+        "content": "## Ruins Untold v2 — Phase 1\n**Topic Selection → Research → Script → Voice → TTS → Concat**\n\n**Before running:**\n- Claude bridge must be running: `python3 /Users/jneal/n8n_projects/ClaudeBridge/claude-bridge.py`\n- Set Google Sheets credential\n- Kie AI API credential must be named `Kie AI API`\n\n**Outputs → `/Users/jneal/n8n_projects/{slug}/`**",
+        "height": 150,
+        "width": 660
+      }
+    },
+    {
+      "id": "2a000101-0101-41010-8000-000000000101",
+      "name": "Note: TTS Loop",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        400
+      ],
+      "parameters": {
+        "content": "## TTS Loop (Kie.ai ElevenLabs v3)\n`Split → Prepare → Submit → Poll → Download → Save → (next segment)`\n\nVoice ID: `4YYIPFl9wE5c4L2eu2Gb`\nModel: `elevenlabs/text-to-dialogue-v3`\nPrevious request IDs chained for prosody continuity.",
+        "height": 150,
+        "width": 660
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Topic Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Topic Sheet": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Topics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Topics": {
+      "main": [
+        [
+          {
+            "node": "Select Episode Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Episode Topic": {
+      "main": [
+        [
+          {
+            "node": "Look Up Selected Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Look Up Selected Row": {
+      "main": [
+        [
+          {
+            "node": "Init Project Directories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init Project Directories": {
+      "main": [
+        [
+          {
+            "node": "Research Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Agent": {
+      "main": [
+        [
+          {
+            "node": "Script Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script Agent": {
+      "main": [
+        [
+          {
+            "node": "Voice Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Voice Agent": {
+      "main": [
+        [
+          {
+            "node": "Extract Voice Segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Voice Segments": {
+      "main": [
+        [
+          {
+            "node": "Split Segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Segments": {
+      "main": [
+        [
+          {
+            "node": "Prepare TTS Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Concatenate Voiceover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare TTS Request": {
+      "main": [
+        [
+          {
+            "node": "Submit to Kie.ai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit to Kie.ai": {
+      "main": [
+        [
+          {
+            "node": "Extract Task ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Task ID": {
+      "main": [
+        [
+          {
+            "node": "Wait 10s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 10s": {
+      "main": [
+        [
+          {
+            "node": "Poll Kie.ai Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Kie.ai Status": {
+      "main": [
+        [
+          {
+            "node": "TTS Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TTS Complete?": {
+      "main": [
+        [
+          {
+            "node": "Store Audio URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 10s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Audio URL": {
+      "main": [
+        [
+          {
+            "node": "Download Chunk Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Chunk Audio": {
+      "main": [
+        [
+          {
+            "node": "Save Segment Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Segment Audio": {
+      "main": [
+        [
+          {
+            "node": "Split Segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "versionId": "2dbc1e9b-02ba-49c1-8b5a-fa8590fd2d8d",
+  "meta": {
+    "instanceId": "ruins-untold-v2"
+  },
+  "tags": [
+    {
+      "name": "ruins-untold"
+    },
+    {
+      "name": "v2"
+    },
+    {
+      "name": "phase-1"
+    }
+  ]
+}

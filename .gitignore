@@ -1,0 +1,11 @@
+# Claude Code local settings (may contain secrets)
+.claude/settings.local.json
+
+# macOS
+.DS_Store
+
+# Local episode output
+*.mp3
+*.mp4
+*.jpg
+*.png

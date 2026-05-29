@@ -1,0 +1,194 @@
+{
+  "name": "Ruins Untold v2 — Phase 1 (Research → Script → Voice → TTS → Concat)",
+  "nodes": [
+    {
+      "id": "node-001",
+      "name": "▶ Start Episode",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 300],
+      "parameters": {}
+    },
+    {
+      "id": "node-002",
+      "name": "📋 Episode Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [220, 300],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-1",
+              "name": "topic",
+              "value": "The Lost City of Atlantis",
+              "type": "string"
+            },
+            {
+              "id": "cfg-2",
+              "name": "audience",
+              "value": "curious history fans, conspiracy-adjacent adults 25-45",
+              "type": "string"
+            },
+            {
+              "id": "cfg-3",
+              "name": "runtime",
+              "value": 20,
+              "type": "number"
+            },
+            {
+              "id": "cfg-4",
+              "name": "kieApiKey",
+              "value": "YOUR_KIE_AI_API_KEY_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-003",
+      "name": "📁 Create Episode Directories",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\n\nconst inp = $input.first().json;\nconst { topic, audience, runtime, kieApiKey } = inp;\n\nconst slug = topic.toLowerCase()\n  .replace(/[^a-z0-9]+/g, '_')\n  .replace(/^_+|_+$/g, '')\n  .substring(0, 50);\n\nconst ts = new Date().toISOString()\n  .replace(/[^0-9]/g, '')\n  .substring(0, 12);\n\nconst episodeDir = '/Users/jneal/n8n_projects/' + slug + '_' + ts;\nconst dirs = ['scripts', 'audio', 'images', 'videos', 'clips', 'music', 'sfx'];\n\nfs.mkdirSync(episodeDir, { recursive: true });\nfor (const d of dirs) {\n  fs.mkdirSync(path.join(episodeDir, d), { recursive: true });\n}\n\nconsole.log('Episode directory created: ' + episodeDir);\n\nreturn [{ json: { topic, audience, runtime, kieApiKey, episodeDir, slug } }];"
+      }
+    },
+    {
+      "id": "node-004",
+      "name": "🔬 Research Agent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fs = require('fs');\nconst inp = $input.first().json;\n\nconst systemPrompt = fs.readFileSync(\n  '/Users/jneal/n8n_projects/ruins_untold_system_prompts/research_agent.md',\n  'utf-8'\n);\n\nconst userInput = JSON.stringify({\n  topic: inp.topic,\n  audience: inp.audience,\n  runtime: inp.runtime\n}, null, 2);\n\nconst fullPrompt = systemPrompt + '\\n\\n---\\n\\nYour input:\\n\\n' + userInput;\n\nconsole.log('Calling Research Agent (prompt length: ' + fullPrompt.length + ')');\n\nconst res = await fetch('http://host.docker.internal:3333/generate', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ prompt: fullPrompt })\n});\n\nconst data = await res.json();\nif (data.exitCode !== 0) throw new Error('Research Agent failed: ' + data.error);\n\nlet raw = data.output.trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet pkg;\ntry {\n  pkg = JSON.parse(raw);\n} catch (e) {\n  const s = raw.indexOf('{');\n  const en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Could not parse research package JSON');\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\n\nconst outPath = inp.episodeDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\nconsole.log('Research package saved: ' + outPath);\n\nreturn [{ json: { ...inp, researchPackage: pkg, researchPackagePath: outPath } }];"
+      }
+    },
+    {
+      "id": "node-005",
+      "name": "✍️ Script Agent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [940, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fs = require('fs');\nconst inp = $input.first().json;\n\nconst systemPrompt = fs.readFileSync(\n  '/Users/jneal/n8n_projects/ruins_untold_system_prompts/script_agent.md',\n  'utf-8'\n);\n\nconst userInput = JSON.stringify(inp.researchPackage, null, 2);\nconst fullPrompt = systemPrompt + '\\n\\n---\\n\\nYour input (research_package.json):\\n\\n' + userInput;\n\nconsole.log('Calling Script Agent (prompt length: ' + fullPrompt.length + ')');\n\nconst res = await fetch('http://host.docker.internal:3333/generate', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ prompt: fullPrompt })\n});\n\nconst data = await res.json();\nif (data.exitCode !== 0) throw new Error('Script Agent failed: ' + data.error);\n\nconst scriptContent = data.output.trim();\nconst outPath = inp.episodeDir + '/scripts/script.md';\nfs.writeFileSync(outPath, scriptContent, 'utf-8');\nconsole.log('Script saved: ' + outPath + ' (' + scriptContent.split(' ').length + ' words)');\n\nreturn [{ json: { ...inp, scriptContent, scriptPath: outPath } }];"
+      }
+    },
+    {
+      "id": "node-006",
+      "name": "🎙️ Voice Agent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1180, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fs = require('fs');\nconst inp = $input.first().json;\n\nconst systemPrompt = fs.readFileSync(\n  '/Users/jneal/n8n_projects/ruins_untold_system_prompts/voice_agent.md',\n  'utf-8'\n);\n\nconst fullPrompt = systemPrompt + '\\n\\n---\\n\\nYour input (script.md):\\n\\n' + inp.scriptContent;\n\nconsole.log('Calling Voice Agent (prompt length: ' + fullPrompt.length + ')');\n\nconst res = await fetch('http://host.docker.internal:3333/generate', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ prompt: fullPrompt })\n});\n\nconst data = await res.json();\nif (data.exitCode !== 0) throw new Error('Voice Agent failed: ' + data.error);\n\nlet raw = data.output.trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet pkg;\ntry {\n  pkg = JSON.parse(raw);\n} catch (e) {\n  const s = raw.indexOf('{');\n  const en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Could not parse voice package JSON');\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\n\nconst outPath = inp.episodeDir + '/audio/voice_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\nconsole.log('Voice package saved: ' + outPath + ' (' + pkg.segments.length + ' segments)');\n\nreturn [{ json: { ...inp, voicePackage: pkg, voicePackagePath: outPath } }];"
+      }
+    },
+    {
+      "id": "node-007",
+      "name": "🔊 TTS — Kie.ai ElevenLabs v3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1420, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fs = require('fs');\nconst inp = $input.first().json;\n\n// ── KIE.AI CONFIGURATION ──────────────────────────────────────────────────────\n// Update the endpoint and key format to match your Kie.ai account\nconst KIE_API_KEY = inp.kieApiKey;\nconst KIE_TTS_URL = 'https://api.kie.ai/v1/tts/generate'; // confirm with Kie.ai docs\n// ─────────────────────────────────────────────────────────────────────────────\n\nconst { voicePackage, episodeDir } = inp;\nconst segments = voicePackage.segments;\n\nconsole.log('Starting TTS for ' + segments.length + ' segments...');\n\nlet prevRequestId = null;\nconst updatedSegments = [];\n\nfor (let i = 0; i < segments.length; i++) {\n  const seg = segments[i];\n  console.log('Generating segment ' + (i + 1) + '/' + segments.length + ': ' + seg.segment_id);\n\n  const payload = {\n    model_id: voicePackage.model,\n    voice_id: voicePackage.voice_id,\n    text: seg.voice_optimized_text,\n    voice_settings: {\n      stability: 0.5,\n      similarity_boost: 0.75,\n      style: 0,\n      use_speaker_boost: true\n    },\n    previous_request_ids: prevRequestId ? [prevRequestId] : []\n  };\n\n  const res = await fetch(KIE_TTS_URL, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'Authorization': 'Bearer ' + KIE_API_KEY\n    },\n    body: JSON.stringify(payload)\n  });\n\n  if (!res.ok) {\n    const errText = await res.text();\n    throw new Error('TTS failed for ' + seg.segment_id + ': ' + res.status + ' ' + errText.substring(0, 200));\n  }\n\n  const audioBuffer = Buffer.from(await res.arrayBuffer());\n  const seqPad = String(seg.sequence).padStart(3, '0');\n  const audioFile = episodeDir + '/audio/seg_' + seqPad + '_' + seg.segment_id + '.mp3';\n  fs.writeFileSync(audioFile, audioBuffer);\n\n  prevRequestId = res.headers.get('request-id')\n    || res.headers.get('x-request-id')\n    || res.headers.get('x-elevenlabs-request-id')\n    || null;\n\n  updatedSegments.push({ ...seg, audio_file: audioFile, request_id: prevRequestId });\n  console.log('  Saved: ' + audioFile + ' (' + audioBuffer.length + ' bytes)');\n}\n\nvoicePackage.segments = updatedSegments;\nfs.writeFileSync(inp.voicePackagePath, JSON.stringify(voicePackage, null, 2), 'utf-8');\nconsole.log('TTS complete. voice_package.json updated with audio file paths.');\n\nreturn [{ json: { ...inp, voicePackage, ttsComplete: true, segmentCount: updatedSegments.length } }];"
+      }
+    },
+    {
+      "id": "node-008",
+      "name": "🎵 Concatenate Voiceover",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1660, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { execSync } = require('child_process');\nconst fs = require('fs');\nconst inp = $input.first().json;\n\nconst { voicePackage, episodeDir } = inp;\n\nconst segs = voicePackage.segments\n  .filter(function(s) { return s.audio_file && fs.existsSync(s.audio_file); })\n  .sort(function(a, b) { return a.sequence - b.sequence; });\n\nif (segs.length === 0) throw new Error('No audio segment files found to concatenate');\n\nconsole.log('Concatenating ' + segs.length + ' segments...');\n\nconst concatPath = episodeDir + '/audio/concat.txt';\nconst lines = segs.map(function(s) { return \"file '\" + s.audio_file + \"'\"; });\nfs.writeFileSync(concatPath, lines.join('\\n'), 'utf-8');\n\nconst outputPath = episodeDir + '/audio/voiceover_final.mp3';\n\nexecSync(\n  'ffmpeg -y -f concat -safe 0 -i \"' + concatPath + '\" -c copy \"' + outputPath + '\"',\n  { timeout: 120000 }\n);\n\nconsole.log('Voiceover final saved: ' + outputPath);\n\nreturn [{ json: { ...inp, voiceFinalPath: outputPath, phase1Complete: true } }];"
+      }
+    },
+    {
+      "id": "node-note-1",
+      "name": "ℹ️ Phase 1 Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 80],
+      "parameters": {
+        "content": "## Ruins Untold v2 — Phase 1\n**Research → Script → Voice → TTS → Audio Concat**\n\n### Before Running:\n1. Set `topic`, `audience`, `runtime` in **Episode Config**\n2. Set `kieApiKey` in **Episode Config**\n3. Confirm `KIE_TTS_URL` in the **TTS node** matches your Kie.ai endpoint\n4. Make sure the Claude bridge is running:\n   `python3 /Users/jneal/n8n_projects/ClaudeBridge/claude-bridge.py`\n\n### Outputs (in `/Users/jneal/n8n_projects/{slug}_{timestamp}/`):\n- `scripts/research_package.json`\n- `scripts/script.md`\n- `audio/voice_package.json`\n- `audio/seg_001_*.mp3` → `audio/voiceover_final.mp3`",
+        "height": 200,
+        "width": 700
+      }
+    },
+    {
+      "id": "node-note-2",
+      "name": "ℹ️ TTS Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1420, 80],
+      "parameters": {
+        "content": "## TTS — Kie.ai ElevenLabs v3\n\n**Voice ID:** `4YYIPFl9wE5c4L2eu2Gb`\n**Model:** `eleven_v3`\n\nUpdate `KIE_TTS_URL` inside the code to match\nyour Kie.ai TTS endpoint. Segments are generated\nsequentially with `previous_request_ids` chaining\nfor consistent prosody across the full episode.",
+        "height": 160,
+        "width": 340
+      }
+    }
+  ],
+  "connections": {
+    "▶ Start Episode": {
+      "main": [
+        [{ "node": "📋 Episode Config", "type": "main", "index": 0 }]
+      ]
+    },
+    "📋 Episode Config": {
+      "main": [
+        [{ "node": "📁 Create Episode Directories", "type": "main", "index": 0 }]
+      ]
+    },
+    "📁 Create Episode Directories": {
+      "main": [
+        [{ "node": "🔬 Research Agent", "type": "main", "index": 0 }]
+      ]
+    },
+    "🔬 Research Agent": {
+      "main": [
+        [{ "node": "✍️ Script Agent", "type": "main", "index": 0 }]
+      ]
+    },
+    "✍️ Script Agent": {
+      "main": [
+        [{ "node": "🎙️ Voice Agent", "type": "main", "index": 0 }]
+      ]
+    },
+    "🎙️ Voice Agent": {
+      "main": [
+        [{ "node": "🔊 TTS — Kie.ai ElevenLabs v3", "type": "main", "index": 0 }]
+      ]
+    },
+    "🔊 TTS — Kie.ai ElevenLabs v3": {
+      "main": [
+        [{ "node": "🎵 Concatenate Voiceover", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "ruins-untold-v2"
+  },
+  "tags": [
+    { "name": "ruins-untold" },
+    { "name": "phase-1" }
+  ]
+}

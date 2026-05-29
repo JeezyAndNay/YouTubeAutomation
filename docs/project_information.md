@@ -1,0 +1,2 @@
+This project is a fully automated YouTube content production pipeline built in n8n. The system transforms a single detailed topic prompt into a complete long-form YouTube video (~20 minutes) with script, narration, images, video sequences, sound effects, metadata, and publishing assets.
+The workflow is designed to minimize manual intervention while maintaining high production quality through structured prompt engineering, AI-driven content generation, and automated media assembly.
