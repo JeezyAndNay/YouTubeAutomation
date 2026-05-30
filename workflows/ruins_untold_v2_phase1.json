@@ -19,7 +19,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        320,
+        300,
         300
       ],
       "parameters": {
@@ -31,22 +31,15 @@
         },
         "sheetName": {
           "__rl": true,
-          "value": "gid=0",
-          "mode": "gid"
+          "value": "Ideas",
+          "mode": "name"
         },
-        "options": {
-          "dataLocationOnSheet": {
-            "values": {
-              "rangeDefinition": "specifyRangeA1",
-              "range": "A1:K200"
-            }
-          }
-        }
+        "options": {}
       },
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "placeholder",
-          "name": "Google Sheets"
+          "id": "5KlwkkXYEjhrIznj",
+          "name": "Google Sheets account"
         }
       }
     },
@@ -56,12 +49,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        580,
+        540,
         300
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst rows = $input.all();\nconst newRows = rows.filter(item =>\n  (item.json.STATUS || '').toString().trim().toLowerCase() === 'new'\n);\nif (newRows.length === 0) {\n  throw new Error('No ideas with STATUS = \"New\" found in the sheet.');\n}\nconst displayRows = newRows.slice(0, 10);\nconst topicList = displayRows\n  .map((item, i) => `${i + 1}. ${item.json.TOPIC || '(no topic)'}`)\n  .join('\\n');\nconst allRows = displayRows.map(r => r.json);\nreturn [{ json: { topicList, allRows: JSON.stringify(allRows), count: displayRows.length } }];\n"
+        "jsCode": "\nconst rows = $input.all();\nconst newRows = rows.filter(item =>\n  (item.json.STATUS || '').toString().trim().toLowerCase() === 'new'\n);\nif (newRows.length === 0) throw new Error('No rows with STATUS = \"New\" found in the Ideas sheet.');\nconst displayRows = newRows.slice(0, 10);\nconst topicList = displayRows.map((item, i) => `${i + 1}. ${item.json.TOPIC || '(no topic)'}`).join('\\n');\nreturn [{ json: { topicList, allRows: JSON.stringify(displayRows.map(r => r.json)), count: displayRows.length } }];\n"
       }
     },
     {
@@ -70,24 +63,25 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        840,
+        780,
         300
       ],
       "parameters": {
         "resume": "form",
         "formTitle": "RUINS UNTOLD — CASE FILE SELECTION",
-        "formDescription": "={{ 'OPEN CASE FILES — STATUS: NEW\\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n' + $json.topicList + '\\n\\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\nEnter the case number to open.' }}",
+        "formDescription": "={{ 'CLASSIFIED — INTERNAL PRODUCTION USE ONLY\\n'+ '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n'+ 'OPEN CASE FILES — STATUS: NEW\\n'+ '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n'+ $json.topicList+ '\\n\\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n'+ 'Enter the case number to open for production.' }}",
         "formFields": {
           "values": [
             {
               "fieldLabel": "CASE NUMBER",
               "fieldType": "number",
+              "placeholder": "1",
               "requiredField": true
             }
           ]
         },
-        "formSubmitButtonLabel": "OPEN CASE FILE",
-        "responseMode": "lastNode"
+        "responseMode": "lastNode",
+        "options": {}
       }
     },
     {
@@ -96,92 +90,357 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
+        1020,
         300
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows = JSON.parse($('Aggregate Topics').item.json.allRows);\nif (!selection || selection < 1 || selection > allRows.length) {\n  throw new Error(`Invalid selection \"${selection}\". Enter 1–${allRows.length}.`);\n}\nconst row = allRows[selection - 1];\n\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nconst projectDir = '/Users/jneal/n8n_projects/' + slug;\n\nreturn [{\n  json: {\n    topic:         row.TOPIC           || '',\n    audience:      'curious history fans, conspiracy-adjacent adults 25-45',\n    runtime:       20,\n    angle:         row.ANGLE          || '',\n    keyEvidence:   row.KEY_EVIDENCE   || '',\n    keyResearchers:row.KEY_RESEARCHERS|| '',\n    relatedVideo:  row.RELATED_VIDEO  || 'N/A',\n    hookStyle:     row.HOOK_STYLE     || 'contradiction',\n    toneDial:      parseInt(row.TONE_DIAL, 10) || 7,\n    slug,\n    projectDir\n  }\n}];\n"
+        "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Aggregate Topics').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection \"${selection}\". Enter 1–${allRows.length}.`);\nconst row  = allRows[selection - 1];\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nreturn [{\n  json: {\n    topic:      row.TOPIC || '',\n    audience:   'curious history fans, conspiracy-adjacent adults 25–45',\n    runtime:    20,\n    slug,\n    projectDir: '/Users/jneal/n8n_projects/' + slug\n  }\n}];\n"
       }
     },
     {
       "id": "2a000006-0006-40060-8000-000000000006",
-      "name": "Init Project Directories",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "name": "Mark In Progress",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
       "position": [
-        1360,
+        1260,
         300
       ],
       "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst path = require('path');\nconst inp  = $input.first().json;\nconst dirs = ['scripts', 'audio', 'images', 'videos', 'clips', 'music', 'sfx'];\nfs.mkdirSync(inp.projectDir, { recursive: true });\nfor (const d of dirs) {\n  fs.mkdirSync(path.join(inp.projectDir, d), { recursive: true });\n}\nconsole.log('Project directory created: ' + inp.projectDir);\nreturn [{ json: inp }];\n"
-      }
-    },
-    {
-      "id": "2a000007-0007-40070-8000-000000000007",
-      "name": "Research Agent",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        60,
-        560
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs  = require('fs');\nconst inp = $input.first().json;\nconst sys = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/research_agent.md', 'utf-8');\nconst userInput = JSON.stringify({ topic: inp.topic, audience: inp.audience, runtime: inp.runtime }, null, 2);\nconst fullPrompt = sys + '\\n\\n---\\n\\nYour input:\\n\\n' + userInput;\nconsole.log('Research Agent — prompt length: ' + fullPrompt.length);\nconst res  = await fetch('http://host.docker.internal:3333/generate', {\n  method: 'POST', headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ prompt: fullPrompt })\n});\nconst data = await res.json();\nif (data.exitCode !== 0) throw new Error('Research Agent failed: ' + data.error);\nlet raw = data.output.trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research package JSON');\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = inp.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\nconsole.log('Saved: ' + outPath);\nreturn [{ json: { ...inp, researchPackage: pkg } }];\n"
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Ideas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "TOPIC": "={{ $json.topic }}",
+            "STATUS": "In Progress"
+          },
+          "matchingColumns": [
+            "TOPIC"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "DATE_ADDED",
+              "displayName": "DATE_ADDED",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "STATUS",
+              "displayName": "STATUS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TOPIC",
+              "displayName": "TOPIC",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ANGLE",
+              "displayName": "ANGLE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "KEY_EVIDENCE",
+              "displayName": "KEY_EVIDENCE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "KEY_RESEARCHERS",
+              "displayName": "KEY_RESEARCHERS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "HOOK_STYLE",
+              "displayName": "HOOK_STYLE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "TONE_DIAL",
+              "displayName": "TONE_DIAL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "RELATED_VIDEO",
+              "displayName": "RELATED_VIDEO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "NOTES",
+              "displayName": "NOTES",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5KlwkkXYEjhrIznj",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
       "id": "2a000008-0008-40080-8000-000000000008",
-      "name": "Script Agent",
+      "name": "Restore Project Vars",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        320,
-        560
+        1740,
+        300
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs  = require('fs');\nconst inp = $input.first().json;\nconst sys = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/script_agent.md', 'utf-8');\nconst fullPrompt = sys + '\\n\\n---\\n\\nYour input (research_package.json):\\n\\n' + JSON.stringify(inp.researchPackage, null, 2);\nconsole.log('Script Agent — prompt length: ' + fullPrompt.length);\nconst res  = await fetch('http://host.docker.internal:3333/generate', {\n  method: 'POST', headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ prompt: fullPrompt })\n});\nconst data = await res.json();\nif (data.exitCode !== 0) throw new Error('Script Agent failed: ' + data.error);\nconst script = data.output.trim();\nfs.writeFileSync(inp.projectDir + '/scripts/script.md', script, 'utf-8');\nconsole.log('Script saved (' + script.split(' ').length + ' words)');\nreturn [{ json: { ...inp, scriptContent: script } }];\n"
+        "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst vars = $('Look Up Selected Row').first().json;\n\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(vars.projectDir, { recursive: true });\nfor (const d of dirs) {\n  fs.mkdirSync(path.join(vars.projectDir, d), { recursive: true });\n}\n\nconsole.log('Directories created: ' + vars.projectDir);\nreturn [{ json: vars }];"
       }
     },
     {
       "id": "2a000009-0009-40090-8000-000000000009",
-      "name": "Voice Agent",
+      "name": "Build Research Prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        580,
-        560
+        60,
+        580
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs  = require('fs');\nconst inp = $input.first().json;\nconst sys = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/voice_agent.md', 'utf-8');\nconst fullPrompt = sys + '\\n\\n---\\n\\nYour input (script.md):\\n\\n' + inp.scriptContent;\nconsole.log('Voice Agent — prompt length: ' + fullPrompt.length);\nconst res  = await fetch('http://host.docker.internal:3333/generate', {\n  method: 'POST', headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ prompt: fullPrompt })\n});\nconst data = await res.json();\nif (data.exitCode !== 0) throw new Error('Voice Agent failed: ' + data.error);\nlet raw = data.output.trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse voice package JSON');\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nfs.writeFileSync(inp.projectDir + '/audio/voice_package.json', JSON.stringify(pkg, null, 2), 'utf-8');\nconsole.log('Voice package saved (' + pkg.segments.length + ' segments)');\n// Reset TTS chain state\nconst sd = $getWorkflowStaticData('global');\nsd.ruinsVoicePrevIds = [];\nreturn [{ json: { ...inp, voicePackage: pkg } }];\n"
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/research_agent.md', 'utf-8');\nconst userInput = JSON.stringify({ topic: vars.topic, audience: vars.audience, runtime: vars.runtime }, null, 2);\nconst prompt = sys + '\\n\\n---\\n\\nYour input:\\n\\n' + userInput;\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt }) } }];\n"
       }
     },
     {
       "id": "2a000010-0010-40100-8000-000000000010",
-      "name": "Extract Voice Segments",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "name": "Call Research Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        840,
-        560
+        300,
+        580
       ],
       "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "\nconst inp  = $input.first().json;\nconst segs = inp.voicePackage.segments;\nconst out  = segs.map((seg, i) => ({\n  json: {\n    projectDir:  inp.projectDir,\n    voiceId:     inp.voicePackage.voice_id,\n    model:       inp.voicePackage.model,\n    segmentId:   seg.segment_id,\n    sequence:    seg.sequence,\n    seqPad:      String(seg.sequence).padStart(3, '0'),\n    chunkText:   seg.voice_optimized_text,\n    isFirstChunk: i === 0\n  }\n}));\nconsole.log('Extracted ' + out.length + ' voice segments');\nreturn out;\n"
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/generate",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.claudeBody }}",
+        "options": {
+          "timeout": 1500000
+        }
       }
     },
     {
       "id": "2a000011-0011-40110-8000-000000000011",
+      "name": "Parse Research Package",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        580
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Research Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = vars.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\n// Pass only project vars — research_package.json is on disk\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
+      }
+    },
+    {
+      "id": "2a000012-0012-40120-8000-000000000012",
+      "name": "Build Script Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        580
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/script_agent.md', 'utf-8');\nconst researchJson = fs.readFileSync(vars.projectDir + '/scripts/research_package.json', 'utf-8');\nconst prompt = sys + '\\n\\n---\\n\\nYour input (research_package.json):\\n\\n' + researchJson;\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt }) } }];\n"
+      }
+    },
+    {
+      "id": "2a000013-0013-40130-8000-000000000013",
+      "name": "Call Script Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1020,
+        580
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/generate",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.claudeBody }}",
+        "options": {
+          "timeout": 1500000
+        }
+      }
+    },
+    {
+      "id": "2a000014-0014-40140-8000-000000000014",
+      "name": "Parse Script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1260,
+        580
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Script Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nconst script = (inp.output || '').trim();\nif (!script) throw new Error('Script Agent returned empty output');\nfs.writeFileSync(vars.projectDir + '/scripts/script.md', script, 'utf-8');\n// script.md is on disk — don't carry large string through item data\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
+      }
+    },
+    {
+      "id": "2a000015-0015-40150-8000-000000000015",
+      "name": "Build Voice Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        580
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/voice_agent.md', 'utf-8');\nconst scriptContent = fs.readFileSync(vars.projectDir + '/scripts/script.md', 'utf-8');\nconst prompt = sys + '\\n\\n---\\n\\nYour input (script.md):\\n\\n' + scriptContent;\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, max_tokens: 16384 }) } }];\n"
+      }
+    },
+    {
+      "id": "2a000016-0016-40160-8000-000000000016",
+      "name": "Call Voice Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        580
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/generate",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.claudeBody }}",
+        "options": {
+          "timeout": 1500000
+        }
+      }
+    },
+    {
+      "id": "2a000017-0017-40170-8000-000000000017",
+      "name": "Parse Voice Package",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        580
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Voice Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse voice_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst pkgPath = vars.projectDir + '/audio/voice_package.json';\nfs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), 'utf-8');\nconst sd = $getWorkflowStaticData('global');\nsd.ruinsVoicePrevIds = [];\nreturn [{ json: { ...vars, voicePackage: pkg } }];\n"
+      }
+    },
+    {
+      "id": "2a000018-0018-40180-8000-000000000018",
+      "name": "Extract Voice Segments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        580
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst inp  = $input.first().json;\nreturn inp.voicePackage.segments.map((seg, i) => ({\n  json: {\n    projectDir:   inp.projectDir,\n    voiceId:      inp.voicePackage.voice_id,\n    model:        inp.voicePackage.model,\n    segmentId:    seg.segment_id,\n    sequence:     seg.sequence,\n    seqPad:       String(seg.sequence).padStart(3, '0'),\n    chunkText:    seg.voice_optimized_text,\n    isFirstChunk: i === 0\n  }\n}));\n"
+      }
+    },
+    {
+      "id": "2a000019-0019-40190-8000-000000000019",
       "name": "Split Segments",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        1100,
-        560
+        2460,
+        580
       ],
       "parameters": {
         "batchSize": 1,
@@ -189,26 +448,26 @@
       }
     },
     {
-      "id": "2a000012-0012-40120-8000-000000000012",
+      "id": "2a000020-0020-40200-8000-000000000020",
       "name": "Prepare TTS Request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1360,
-        560
+        2700,
+        580
       ],
       "parameters": {
-        "jsCode": "\nconst item       = $input.item.json;\nconst staticData = $getWorkflowStaticData('global');\nconst kieInput = {\n  dialogue: [{ text: item.chunkText, voice: item.voiceId }],\n  stability: 0.5\n};\nif (!item.isFirstChunk && staticData.ruinsVoicePrevIds && staticData.ruinsVoicePrevIds.length > 0) {\n  kieInput.previous_request_ids = staticData.ruinsVoicePrevIds.slice(-3);\n}\nconst kieBody = { model: 'elevenlabs/text-to-dialogue-v3', input: kieInput };\nreturn [{\n  json: {\n    ...item,\n    kieBody:         JSON.stringify(kieBody),\n    includedPrevIds: kieInput.previous_request_ids || []\n  }\n}];\n"
+        "jsCode": "\nconst item = $input.item.json;\nconst sd   = $getWorkflowStaticData('global');\nconst kieInput = { dialogue: [{ text: item.chunkText, voice: item.voiceId }], stability: 0.5 };\nif (!item.isFirstChunk && sd.ruinsVoicePrevIds && sd.ruinsVoicePrevIds.length > 0)\n  kieInput.previous_request_ids = sd.ruinsVoicePrevIds.slice(-3);\nreturn [{ json: { ...item, kieBody: JSON.stringify({ model: 'elevenlabs/text-to-dialogue-v3', input: kieInput }), includedPrevIds: kieInput.previous_request_ids || [] } }];\n"
       }
     },
     {
-      "id": "2a000013-0013-40130-8000-000000000013",
+      "id": "2a000021-0021-40210-8000-000000000021",
       "name": "Submit to Kie.ai",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1620,
-        560
+        2940,
+        580
       ],
       "parameters": {
         "method": "POST",
@@ -240,26 +499,26 @@
       }
     },
     {
-      "id": "2a000014-0014-40140-8000-000000000014",
+      "id": "2a000022-0022-40220-8000-000000000022",
       "name": "Extract Task ID",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1880,
-        560
+        3180,
+        580
       ],
       "parameters": {
-        "jsCode": "\nconst response  = $input.item.json;\nconst chunkMeta = $('Prepare TTS Request').item.json;\nif (response.code !== 200) {\n  throw new Error('Kie.ai createTask failed (seg ' + chunkMeta.segmentId + '): ' + response.msg);\n}\nreturn [{ json: { ...chunkMeta, kieTaskId: response.data.taskId } }];\n"
+        "jsCode": "\nconst res  = $input.item.json;\nconst meta = $('Prepare TTS Request').item.json;\nif (res.code !== 200) throw new Error('Kie.ai createTask failed (' + meta.segmentId + '): ' + res.msg);\nreturn [{ json: { ...meta, kieTaskId: res.data.taskId } }];\n"
       }
     },
     {
-      "id": "2a000015-0015-40150-8000-000000000015",
+      "id": "2a000023-0023-40230-8000-000000000023",
       "name": "Wait 10s",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        2140,
-        560
+        3420,
+        580
       ],
       "parameters": {
         "resume": "timeInterval",
@@ -268,13 +527,13 @@
       }
     },
     {
-      "id": "2a000016-0016-40160-8000-000000000016",
+      "id": "2a000024-0024-40240-8000-000000000024",
       "name": "Poll Kie.ai Status",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2400,
-        560
+        3660,
+        580
       ],
       "parameters": {
         "url": "=https://api.kie.ai/api/v1/jobs/recordInfo?taskId={{ $('Extract Task ID').item.json.kieTaskId }}",
@@ -301,13 +560,13 @@
       }
     },
     {
-      "id": "2a000017-0017-40170-8000-000000000017",
+      "id": "2a000025-0025-40250-8000-000000000025",
       "name": "TTS Complete?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2660,
-        560
+        3900,
+        580
       ],
       "parameters": {
         "conditions": {
@@ -319,7 +578,7 @@
           },
           "conditions": [
             {
-              "id": "cond-tts-done",
+              "id": "cond-tts",
               "leftValue": "={{ $json.data.state }}",
               "rightValue": "success",
               "operator": {
@@ -334,26 +593,26 @@
       }
     },
     {
-      "id": "2a000018-0018-40180-8000-000000000018",
+      "id": "2a000026-0026-40260-8000-000000000026",
       "name": "Store Audio URL",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2920,
-        560
+        4140,
+        580
       ],
       "parameters": {
-        "jsCode": "\nconst pollResp   = $input.item.json;\nconst chunkMeta  = $('Prepare TTS Request').item.json;\nconst staticData = $getWorkflowStaticData('global');\nlet resultJson = {};\ntry { resultJson = JSON.parse(pollResp.data.resultJson || '{}'); } catch(e) {}\nconst requestId =\n  resultJson.request_id     ||\n  resultJson.history_item_id||\n  resultJson.requestId      ||\n  $('Extract Task ID').item.json.kieTaskId;\nif (!staticData.ruinsVoicePrevIds) staticData.ruinsVoicePrevIds = [];\nstaticData.ruinsVoicePrevIds.push(requestId);\nif (staticData.ruinsVoicePrevIds.length > 3) {\n  staticData.ruinsVoicePrevIds = staticData.ruinsVoicePrevIds.slice(-3);\n}\nconst audioUrl =\n  (resultJson.resultUrls || [])[0] ||\n  (pollResp.data.resultUrls  || [])[0] ||\n  '';\nif (!audioUrl) throw new Error('No audio URL for seg ' + chunkMeta.segmentId + '. state=' + pollResp.data.state);\nreturn [{ json: { ...chunkMeta, kieRequestId: requestId, audioUrl } }];\n"
+        "jsCode": "\nconst poll = $input.item.json;\nconst meta = $('Prepare TTS Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\nlet rj = {};\ntry { rj = JSON.parse(poll.data.resultJson || '{}'); } catch(e) {}\nconst requestId = rj.request_id || rj.history_item_id || rj.requestId || $('Extract Task ID').item.json.kieTaskId;\nif (!sd.ruinsVoicePrevIds) sd.ruinsVoicePrevIds = [];\nsd.ruinsVoicePrevIds.push(requestId);\nif (sd.ruinsVoicePrevIds.length > 3) sd.ruinsVoicePrevIds = sd.ruinsVoicePrevIds.slice(-3);\nconst audioUrl = (rj.resultUrls || [])[0] || (poll.data.resultUrls || [])[0] || '';\nif (!audioUrl) throw new Error('No audio URL for ' + meta.segmentId + '. state=' + poll.data.state);\nreturn [{ json: { ...meta, kieRequestId: requestId, audioUrl } }];\n"
       }
     },
     {
-      "id": "2a000019-0019-40190-8000-000000000019",
+      "id": "2a000027-0027-40270-8000-000000000027",
       "name": "Download Chunk Audio",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3180,
-        560
+        4380,
+        580
       ],
       "parameters": {
         "url": "={{ $json.audioUrl }}",
@@ -367,60 +626,60 @@
       }
     },
     {
-      "id": "2a000020-0020-40200-8000-000000000020",
+      "id": "2a000028-0028-40280-8000-000000000028",
       "name": "Save Segment Audio",
       "type": "n8n-nodes-base.writeBinaryFile",
       "typeVersion": 1,
       "position": [
-        3440,
-        560
+        4620,
+        580
       ],
       "parameters": {
         "fileName": "={{ $('Prepare TTS Request').item.json.projectDir + '/audio/seg_' + $('Prepare TTS Request').item.json.seqPad + '_' + $('Prepare TTS Request').item.json.segmentId + '.mp3' }}"
       }
     },
     {
-      "id": "2a000021-0021-40210-8000-000000000021",
+      "id": "2a000029-0029-40290-8000-000000000029",
       "name": "Concatenate Voiceover",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1360,
-        820
+        2460,
+        860
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst { execSync } = require('child_process');\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst dir  = inp.projectDir + '/audio';\n\n// Collect all segment MP3s in order\nconst files = fs.readdirSync(dir)\n  .filter(f => f.startsWith('seg_') && f.endsWith('.mp3'))\n  .sort();\n\nif (files.length === 0) throw new Error('No segment audio files found in ' + dir);\nconsole.log('Concatenating ' + files.length + ' segments...');\n\nconst concatTxt = dir + '/concat.txt';\nfs.writeFileSync(concatTxt, files.map(f => \"file '\" + dir + '/' + f + \"'\").join('\\n'), 'utf-8');\n\nconst finalPath = dir + '/voiceover_final.mp3';\nexecSync('ffmpeg -y -f concat -safe 0 -i \"' + concatTxt + '\" -c copy \"' + finalPath + '\"', { timeout: 120000 });\nconsole.log('Voiceover final: ' + finalPath);\nreturn [{ json: { ...inp, voiceFinalPath: finalPath } }];\n"
+        "jsCode": "\nconst { execSync } = require('child_process');\nconst fs  = require('fs');\nconst inp = $input.first().json;\nconst dir = inp.projectDir + '/audio';\nconst files = fs.readdirSync(dir).filter(f => f.startsWith('seg_') && f.endsWith('.mp3')).sort();\nif (files.length === 0) throw new Error('No segment MP3s found in ' + dir);\nconst concatTxt = dir + '/concat.txt';\nfs.writeFileSync(concatTxt, files.map(f => \"file '\" + dir + '/' + f + \"'\").join('\\n'), 'utf-8');\nconst finalPath = dir + '/voiceover_final.mp3';\nexecSync('ffmpeg -y -f concat -safe 0 -i \"' + concatTxt + '\" -c copy \"' + finalPath + '\"', { timeout: 120000 });\nreturn [{ json: { ...inp, voiceFinalPath: finalPath } }];\n"
       }
     },
     {
       "id": "2a000100-0100-41000-8000-000000000100",
-      "name": "Note: Phase 1",
+      "name": "Note: Overview",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         40,
-        140
+        100
       ],
       "parameters": {
-        "content": "## Ruins Untold v2 — Phase 1\n**Topic Selection → Research → Script → Voice → TTS → Concat**\n\n**Before running:**\n- Claude bridge must be running: `python3 /Users/jneal/n8n_projects/ClaudeBridge/claude-bridge.py`\n- Set Google Sheets credential\n- Kie AI API credential must be named `Kie AI API`\n\n**Outputs → `/Users/jneal/n8n_projects/{slug}/`**",
-        "height": 150,
-        "width": 660
+        "content": "## Ruins Untold v2 — Phase 1\n**Topic → Research → Script → Voice → TTS (Kie.ai) → Concat**\n\n- Claude bridge must be running\n- `Kie AI API` credential set\n- `Google Sheets account` credential set",
+        "height": 180,
+        "width": 600
       }
     },
     {
       "id": "2a000101-0101-41010-8000-000000000101",
-      "name": "Note: TTS Loop",
+      "name": "Note: Agents",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        1080,
-        400
+        40,
+        380
       ],
       "parameters": {
-        "content": "## TTS Loop (Kie.ai ElevenLabs v3)\n`Split → Prepare → Submit → Poll → Download → Save → (next segment)`\n\nVoice ID: `4YYIPFl9wE5c4L2eu2Gb`\nModel: `elevenlabs/text-to-dialogue-v3`\nPrevious request IDs chained for prosody continuity.",
-        "height": 150,
-        "width": 660
+        "content": "## Agent Pattern\nEach agent = **Build Prompt** (Code) → **Call Claude** (HTTP) → **Parse + Save** (Code)\n\nNo `fetch` or `async` in Code nodes — HTTP calls are httpRequest nodes.",
+        "height": 180,
+        "width": 600
       }
     }
   ],
@@ -473,47 +732,124 @@
       "main": [
         [
           {
-            "node": "Init Project Directories",
+            "node": "Mark In Progress",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Init Project Directories": {
+    "Mark In Progress": {
       "main": [
         [
           {
-            "node": "Research Agent",
+            "node": "Restore Project Vars",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Research Agent": {
+    "Restore Project Vars": {
       "main": [
         [
           {
-            "node": "Script Agent",
+            "node": "Build Research Prompt",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Script Agent": {
+    "Build Research Prompt": {
       "main": [
         [
           {
-            "node": "Voice Agent",
+            "node": "Call Research Agent",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Voice Agent": {
+    "Call Research Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Research Package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Research Package": {
+      "main": [
+        [
+          {
+            "node": "Build Script Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Script Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Script Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Script Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Script": {
+      "main": [
+        [
+          {
+            "node": "Build Voice Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Voice Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Voice Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Voice Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Voice Package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Voice Package": {
       "main": [
         [
           {
@@ -663,11 +999,10 @@
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "saveManualExecutions": true,
-    "callerPolicy": "workflowsFromSameOwner"
+    "saveManualExecutions": true
   },
   "pinData": {},
-  "versionId": "2dbc1e9b-02ba-49c1-8b5a-fa8590fd2d8d",
+  "versionId": "871da455-1ae3-4991-b7b6-a1241182998e",
   "meta": {
     "instanceId": "ruins-untold-v2"
   },
@@ -677,9 +1012,6 @@
     },
     {
       "name": "v2"
-    },
-    {
-      "name": "phase-1"
     }
   ]
 }
