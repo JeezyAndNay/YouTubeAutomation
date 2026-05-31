@@ -1,6 +1,6 @@
 {
   "id": "RuinsUntoldV2Phase1",
-  "name": "Ruins Untold v2 — Production Pipeline",
+  "name": "Ruins Untold v2 \u2014 Production Pipeline",
   "nodes": [
     {
       "id": "2a000001-0001-40010-8000-000000000001",
@@ -68,8 +68,8 @@
       ],
       "parameters": {
         "resume": "form",
-        "formTitle": "RUINS UNTOLD — CASE FILE SELECTION",
-        "formDescription": "={{ 'CLASSIFIED — INTERNAL PRODUCTION USE ONLY\\n'+ '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n'+ 'OPEN CASE FILES — STATUS: NEW\\n'+ '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n'+ $json.topicList+ '\\n\\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n'+ 'Enter the case number to open for production.' }}",
+        "formTitle": "RUINS UNTOLD \u2014 CASE FILE SELECTION",
+        "formDescription": "={{ 'CLASSIFIED \u2014 INTERNAL PRODUCTION USE ONLY\\n'+ '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n'+ 'OPEN CASE FILES \u2014 STATUS: NEW\\n'+ '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n\\n'+ $json.topicList+ '\\n\\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n'+ 'Enter the case number to open for production.' }}",
         "formFields": {
           "values": [
             {
@@ -95,7 +95,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Aggregate Topics').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection \"${selection}\". Enter 1–${allRows.length}.`);\nconst row  = allRows[selection - 1];\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nreturn [{\n  json: {\n    topic:      row.TOPIC || '',\n    audience:   'curious history fans, conspiracy-adjacent adults 25–45',\n    runtime:    20,\n    slug,\n    projectDir: '/Users/jneal/n8n_projects/' + slug\n  }\n}];\n"
+        "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Aggregate Topics').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection \"${selection}\". Enter 1\u2013${allRows.length}.`);\nconst row  = allRows[selection - 1];\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nreturn [{\n  json: {\n    topic:      row.TOPIC || '',\n    audience:   'curious history fans, conspiracy-adjacent adults 25\u201345',\n    runtime:    20,\n    slug,\n    projectDir: '/Users/jneal/n8n_projects/' + slug\n  }\n}];\n"
       }
     },
     {
@@ -320,7 +320,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Research Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = vars.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\n// Pass only project vars — research_package.json is on disk\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Research Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = vars.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\n// Pass only project vars \u2014 research_package.json is on disk\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
       }
     },
     {
@@ -368,12 +368,12 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Script Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nconst script = (inp.output || '').trim();\nif (!script) throw new Error('Script Agent returned empty output');\nfs.writeFileSync(vars.projectDir + '/scripts/script.md', script, 'utf-8');\n// script.md is on disk — don't carry large string through item data\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Script Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nconst script = (inp.output || '').trim();\nif (!script) throw new Error('Script Agent returned empty output');\nfs.writeFileSync(vars.projectDir + '/scripts/script.md', script, 'utf-8');\n// script.md is on disk \u2014 don't carry large string through item data\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
       }
     },
     {
       "id": "2a000015-0015-40150-8000-000000000015",
-      "name": "Build Voice Prompt",
+      "name": "Split Script by Section",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -382,7 +382,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/voice_agent.md', 'utf-8');\nconst scriptContent = fs.readFileSync(vars.projectDir + '/scripts/script.md', 'utf-8');\nconst prompt = sys + '\\n\\n---\\n\\nYour input (script.md):\\n\\n' + scriptContent;\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, max_tokens: 16384 }) } }];\n"
+        "jsCode": "const fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/voice_agent.md', 'utf-8');\nconst scriptContent = fs.readFileSync(vars.projectDir + '/scripts/script.md', 'utf-8');\n\n// Strip SCRIPT METADATA block then split by section headers\nconst cleanScript = scriptContent.replace(/## SCRIPT METADATA[\\s\\S]*$/, '').trim();\nconst chunks = cleanScript.split(/\\n(?=## )/);\n\nconst actIdMap = {\n  'COLD OPEN':      'cold_open',\n  'CHANNEL HOOK':   'hook',\n  'CONCLUSION':     'conclusion',\n  'CALL TO ACTION': 'cta'\n};\nconst actNumRe = /ACT\\s+(\\d)/;\n\nconst results = [];\nfor (let i = 0; i < chunks.length; i++) {\n  const chunk = chunks[i].trim();\n  if (!chunk.startsWith('## ')) continue;\n  const nl = chunk.indexOf('\\n');\n  const header = (nl > -1 ? chunk.substring(0, nl) : chunk).replace(/^## /, '').trim().toUpperCase();\n  const sectionText = nl > -1 ? chunk.substring(nl + 1).trim() : '';\n  if (!sectionText) continue;\n\n  let actId = null;\n  for (const [key, id] of Object.entries(actIdMap)) {\n    if (header.includes(key)) { actId = id; break; }\n  }\n  if (!actId) {\n    const nm = header.match(actNumRe);\n    if (nm) actId = 'act' + nm[1];\n  }\n  if (!actId) continue;\n\n  const prompt = sys\n    + '\\n\\nSECTION PROCESSING MODE\\n\\n'\n    + 'Process this ONE section of the script only. Apply Steps 1-6 from your instructions.\\n'\n    + 'Act ID for this section: ' + actId + '\\n'\n    + 'Use segment IDs: ' + actId + '_01, ' + actId + '_02, etc. Sequence starts at 1.\\n\\n'\n    + 'IMPORTANT: Return ONLY a raw JSON array of segment objects. '\n    + 'No markdown fences, no outer wrapper object, no explanation text.\\n\\n'\n    + 'Section text:\\n\\n' + sectionText;\n\n  results.push({\n    json: {\n      ...vars,\n      actId,\n      sectionIndex: i,\n      claudeBody: JSON.stringify({ prompt, max_tokens: 8192, effort: \"low\" })\n    }\n  });\n}\n\nreturn results;"
       }
     },
     {
@@ -401,13 +401,13 @@
         "contentType": "raw",
         "body": "={{ $json.claudeBody }}",
         "options": {
-          "timeout": 1500000
+          "timeout": 3600000
         }
       }
     },
     {
       "id": "2a000017-0017-40170-8000-000000000017",
-      "name": "Parse Voice Package",
+      "name": "Parse Voice Chunk",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -416,7 +416,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Voice Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse voice_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst pkgPath = vars.projectDir + '/audio/voice_package.json';\nfs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), 'utf-8');\nconst sd = $getWorkflowStaticData('global');\nsd.ruinsVoicePrevIds = [];\nreturn [{ json: { ...vars, voicePackage: pkg } }];\n"
+        "jsCode": "const responses    = $input.all();\nconst sectionItems = $('Split Script by Section').all();\n\nreturn responses.map((resp, i) => {\n  const vars  = sectionItems[i].json;\n  const actId = vars.actId;\n  const inp   = resp.json;\n\n  if (inp.exitCode !== undefined && inp.exitCode !== 0)\n    throw new Error('Voice chunk error [' + actId + ']: ' + inp.error);\n\n  let raw = (inp.output || '').trim();\n  const m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\n  if (m) raw = m[1].trim();\n\n  let segments;\n  try {\n    segments = JSON.parse(raw);\n  } catch (e) {\n    const s = raw.indexOf('['), en = raw.lastIndexOf(']');\n    if (s === -1 || en === -1)\n      throw new Error('Cannot parse segments for ' + actId + '. Raw: ' + raw.substring(0, 200));\n    segments = JSON.parse(raw.substring(s, en + 1));\n  }\n\n  if (!Array.isArray(segments))\n    throw new Error('Expected array for ' + actId + ', got ' + typeof segments);\n\n  return { json: { ...vars, segments } };\n});"
       }
     },
     {
@@ -474,22 +474,11 @@
         "url": "https://api.kie.ai/api/v1/jobs/createTask",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "={{ 'Bearer ' + $credentials.httpHeaderAuth.value }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
         "sendBody": true,
         "contentType": "raw",
-        "body": "={{ $json.kieBody }}"
+        "rawContentType": "application/json",
+        "body": "={{ $json.kieBody }}",
+        "options": {}
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -662,7 +651,7 @@
         100
       ],
       "parameters": {
-        "content": "## Ruins Untold v2 — Phase 1\n**Topic → Research → Script → Voice → TTS (Kie.ai) → Concat**\n\n- Claude bridge must be running\n- `Kie AI API` credential set\n- `Google Sheets account` credential set",
+        "content": "## Ruins Untold v2 \u2014 Phase 1\n**Topic \u2192 Research \u2192 Script \u2192 Voice \u2192 TTS (Kie.ai) \u2192 Concat**\n\n- Claude bridge must be running\n- `Kie AI API` credential set\n- `Google Sheets account` credential set",
         "height": 180,
         "width": 600
       }
@@ -677,9 +666,23 @@
         380
       ],
       "parameters": {
-        "content": "## Agent Pattern\nEach agent = **Build Prompt** (Code) → **Call Claude** (HTTP) → **Parse + Save** (Code)\n\nNo `fetch` or `async` in Code nodes — HTTP calls are httpRequest nodes.",
+        "content": "## Agent Pattern\nEach agent = **Build Prompt** (Code) \u2192 **Call Claude** (HTTP) \u2192 **Parse + Save** (Code)\n\nNo `fetch` or `async` in Code nodes \u2014 HTTP calls are httpRequest nodes.",
         "height": 180,
         "width": 600
+      }
+    },
+    {
+      "id": "2a000030-0030-40300-8000-000000000030",
+      "name": "Merge Voice Chunks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2460,
+        580
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fs       = require('fs');\nconst allItems = $input.all();\nconst vars     = allItems[0].json;\n\nlet allSegments = [];\nlet seq = 1;\nfor (const item of allItems) {\n  for (const seg of (item.json.segments || [])) {\n    seg.sequence = seq++;\n    allSegments.push(seg);\n  }\n}\n\nconst voicePackage = {\n  topic:    vars.topic,\n  voice_id: '4YYIPFl9wE5c4L2eu2Gb',\n  model:    'eleven_v3',\n  stability: 'natural',\n  total_word_count: allSegments.reduce((s, seg) => s + (seg.word_count || 0), 0),\n  estimated_total_runtime_seconds: allSegments.reduce((s, seg) => s + (seg.estimated_duration_seconds || 0), 0),\n  segments: allSegments\n};\n\nconst pkgPath = vars.projectDir + '/audio/voice_package.json';\nfs.writeFileSync(pkgPath, JSON.stringify(voicePackage, null, 2), 'utf-8');\n\nconst sd = $getWorkflowStaticData('global');\nsd.ruinsVoicePrevIds = [];\n\nreturn [{ json: { ...vars, voicePackage } }];"
       }
     }
   ],
@@ -820,18 +823,7 @@
       "main": [
         [
           {
-            "node": "Build Voice Prompt",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build Voice Prompt": {
-      "main": [
-        [
-          {
-            "node": "Call Voice Agent",
+            "node": "Split Script by Section",
             "type": "main",
             "index": 0
           }
@@ -842,18 +834,7 @@
       "main": [
         [
           {
-            "node": "Parse Voice Package",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Voice Package": {
-      "main": [
-        [
-          {
-            "node": "Extract Voice Segments",
+            "node": "Parse Voice Chunk",
             "type": "main",
             "index": 0
           }
@@ -875,14 +856,14 @@
       "main": [
         [
           {
-            "node": "Prepare TTS Request",
+            "node": "Concatenate Voiceover",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Concatenate Voiceover",
+            "node": "Prepare TTS Request",
             "type": "main",
             "index": 0
           }
@@ -994,6 +975,39 @@
           }
         ]
       ]
+    },
+    "Split Script by Section": {
+      "main": [
+        [
+          {
+            "node": "Call Voice Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Voice Chunk": {
+      "main": [
+        [
+          {
+            "node": "Merge Voice Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Voice Chunks": {
+      "main": [
+        [
+          {
+            "node": "Extract Voice Segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -1001,7 +1015,208 @@
     "executionOrder": "v1",
     "saveManualExecutions": true
   },
-  "pinData": {},
+  "pinData": {
+    "Manual Trigger": [
+      {
+        "json": {}
+      }
+    ],
+    "Read Topic Sheet": [
+      {
+        "json": {
+          "TOPIC": "The Antikythera Mechanism",
+          "STATUS": "New",
+          "ROW_NUMBER": 2
+        }
+      }
+    ],
+    "Aggregate Topics": [
+      {
+        "json": {
+          "topicList": "1. The Antikythera Mechanism",
+          "allRows": "[{\"TOPIC\": \"The Antikythera Mechanism\", \"STATUS\": \"New\", \"ROW_NUMBER\": 2}]",
+          "count": 1
+        }
+      }
+    ],
+    "Select Episode Topic": [
+      {
+        "json": {
+          "CASE NUMBER": "1"
+        }
+      }
+    ],
+    "Look Up Selected Row": [
+      {
+        "json": {
+          "topic": "The Antikythera Mechanism",
+          "audience": "curious history fans, conspiracy-adjacent adults 25-45",
+          "runtime": 20,
+          "slug": "test_kie_20260531_submit",
+          "projectDir": "/Users/jneal/n8n_projects/test_kie_20260531_submit"
+        }
+      }
+    ],
+    "Mark In Progress": [
+      {
+        "json": {
+          "topic": "The Antikythera Mechanism",
+          "audience": "curious history fans, conspiracy-adjacent adults 25-45",
+          "runtime": 20,
+          "slug": "test_kie_20260531_submit",
+          "projectDir": "/Users/jneal/n8n_projects/test_kie_20260531_submit"
+        }
+      }
+    ],
+    "Restore Project Vars": [
+      {
+        "json": {
+          "topic": "The Antikythera Mechanism",
+          "audience": "curious history fans, conspiracy-adjacent adults 25-45",
+          "runtime": 20,
+          "slug": "test_kie_20260531_submit",
+          "projectDir": "/Users/jneal/n8n_projects/test_kie_20260531_submit"
+        }
+      }
+    ],
+    "Build Research Prompt": [
+      {
+        "json": {
+          "topic": "The Antikythera Mechanism",
+          "audience": "curious history fans, conspiracy-adjacent adults 25-45",
+          "runtime": 20,
+          "slug": "test_kie_20260531_submit",
+          "projectDir": "/Users/jneal/n8n_projects/test_kie_20260531_submit",
+          "claudeBody": "{\"prompt\": \"test\"}"
+        }
+      }
+    ],
+    "Call Research Agent": [
+      {
+        "json": {
+          "output": "{\"topic\": \"The Antikythera Mechanism\", \"summary\": \"Test\", \"timeline\": [], \"key_facts\": [\"Test\"], \"mysteries\": [], \"story_opportunities\": [], \"source_notes\": [], \"research_flags\": []}",
+          "exitCode": 0,
+          "error": ""
+        }
+      }
+    ],
+    "Parse Research Package": [
+      {
+        "json": {
+          "topic": "The Antikythera Mechanism",
+          "audience": "curious history fans, conspiracy-adjacent adults 25-45",
+          "runtime": 20,
+          "slug": "test_kie_20260531_submit",
+          "projectDir": "/Users/jneal/n8n_projects/test_kie_20260531_submit"
+        }
+      }
+    ],
+    "Build Script Prompt": [
+      {
+        "json": {
+          "topic": "The Antikythera Mechanism",
+          "audience": "curious history fans, conspiracy-adjacent adults 25-45",
+          "runtime": 20,
+          "slug": "test_kie_20260531_submit",
+          "projectDir": "/Users/jneal/n8n_projects/test_kie_20260531_submit",
+          "claudeBody": "{\"prompt\": \"test\"}"
+        }
+      }
+    ],
+    "Call Script Agent": [
+      {
+        "json": {
+          "output": "## COLD OPEN\n\nThe ancient mechanism turned.\n",
+          "exitCode": 0,
+          "error": ""
+        }
+      }
+    ],
+    "Parse Script": [
+      {
+        "json": {
+          "topic": "The Antikythera Mechanism",
+          "audience": "curious history fans, conspiracy-adjacent adults 25-45",
+          "runtime": 20,
+          "slug": "test_kie_20260531_submit",
+          "projectDir": "/Users/jneal/n8n_projects/test_kie_20260531_submit"
+        }
+      }
+    ],
+    "Split Script by Section": [
+      {
+        "json": {
+          "topic": "The Antikythera Mechanism",
+          "audience": "curious history fans, conspiracy-adjacent adults 25-45",
+          "runtime": 20,
+          "slug": "test_kie_20260531_submit",
+          "projectDir": "/Users/jneal/n8n_projects/test_kie_20260531_submit",
+          "actId": "cold_open",
+          "sectionIndex": 0,
+          "claudeBody": "{\"prompt\": \"test\", \"max_tokens\": 8192, \"effort\": \"low\"}"
+        }
+      }
+    ],
+    "Call Voice Agent": [
+      {
+        "json": {
+          "output": "[{\"segment_id\": \"cold_open_01\", \"sequence\": 1, \"voice_optimized_text\": \"The ancient mechanism ticked through time \\u2014 two thousand years beneath the sea.\", \"word_count\": 13, \"estimated_duration_seconds\": 5.5}]",
+          "exitCode": 0,
+          "error": ""
+        }
+      }
+    ],
+    "Parse Voice Chunk": [
+      {
+        "json": {
+          "topic": "The Antikythera Mechanism",
+          "audience": "curious history fans, conspiracy-adjacent adults 25-45",
+          "runtime": 20,
+          "slug": "test_kie_20260531_submit",
+          "projectDir": "/Users/jneal/n8n_projects/test_kie_20260531_submit",
+          "actId": "cold_open",
+          "sectionIndex": 0,
+          "segments": [
+            {
+              "segment_id": "cold_open_01",
+              "sequence": 1,
+              "voice_optimized_text": "The ancient mechanism ticked through time \u2014 two thousand years beneath the sea.",
+              "word_count": 13,
+              "estimated_duration_seconds": 5.5
+            }
+          ]
+        }
+      }
+    ],
+    "Merge Voice Chunks": [
+      {
+        "json": {
+          "topic": "The Antikythera Mechanism",
+          "audience": "curious history fans, conspiracy-adjacent adults 25-45",
+          "runtime": 20,
+          "slug": "test_kie_20260531_submit",
+          "projectDir": "/Users/jneal/n8n_projects/test_kie_20260531_submit",
+          "voicePackage": {
+            "topic": "The Antikythera Mechanism",
+            "voice_id": "4YYIPFl9wE5c4L2eu2Gb",
+            "model": "eleven_v3",
+            "stability": "natural",
+            "total_word_count": 13,
+            "estimated_total_runtime_seconds": 5.5,
+            "segments": [
+              {
+                "segment_id": "cold_open_01",
+                "sequence": 1,
+                "voice_optimized_text": "The ancient mechanism ticked through time \u2014 two thousand years beneath the sea.",
+                "word_count": 13,
+                "estimated_duration_seconds": 5.5
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
   "versionId": "871da455-1ae3-4991-b7b6-a1241182998e",
   "meta": {
     "instanceId": "ruins-untold-v2"

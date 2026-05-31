@@ -1,0 +1,1689 @@
+{
+  "name": "Ruins Untold v2 \u2014 Phase 2: Media Generation",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-p2-00-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "node-p2-01-scan",
+      "name": "Scan Projects",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst path = require('path');\nconst base = '/Users/jneal/n8n_projects';\n\nconst dirs = fs.readdirSync(base).filter(d => {\n  try {\n    const full = path.join(base, d);\n    if (!fs.statSync(full).isDirectory()) return false;\n    const hasVoiceover = fs.existsSync(path.join(full, 'audio', 'voiceover_final.mp3'));\n    const hasTimeline  = fs.existsSync(path.join(full, 'scripts', 'media_timeline.json'));\n    return hasVoiceover && !hasTimeline;\n  } catch(e) { return false; }\n}).sort();\n\nif (dirs.length === 0)\n  throw new Error('No Phase 2 ready projects. Need voiceover_final.mp3 but no media_timeline.json.');\n\nconst rows = dirs.map((d, i) => ({\n  caseNumber: i + 1,\n  slug: d,\n  projectDir: path.join(base, d)\n}));\n\nreturn [{ json: { readyProjects: dirs, allRows: JSON.stringify(rows) } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-02-select",
+      "name": "Select Episode",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -480,
+        0
+      ],
+      "parameters": {
+        "resume": "form",
+        "formTitle": "RUINS UNTOLD \u2014 PHASE 2 PRODUCTION",
+        "formDescription": "={{ 'SELECT EPISODE FOR PHASE 2\\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\nREADY PROJECTS (voiceover complete):\\n' + $('Scan Projects').first().json.readyProjects.map((d,i)=>(i+1)+'. '+d).join('\\n') }}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "CASE NUMBER",
+              "fieldType": "number",
+              "placeholder": "1",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-p2-03-load",
+      "name": "Load Project",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst path = require('path');\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Scan Projects').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection: ${selection}. Choose 1-${allRows.length}.`);\n\nconst row        = allRows[selection - 1];\nconst projectDir = row.projectDir;\nconst slug       = row.slug;\n\nconst voicePackage = JSON.parse(fs.readFileSync(path.join(projectDir, 'audio', 'voice_package.json'), 'utf-8'));\nconst topic = voicePackage.topic || slug;\n\nreturn [{ json: {\n  slug,\n  projectDir,\n  topic,\n  voiceFinalPath:    path.join(projectDir, 'audio', 'voiceover_final.mp3'),\n  scriptPath:        path.join(projectDir, 'scripts', 'script.md'),\n  researchPath:      path.join(projectDir, 'scripts', 'research_package.json'),\n  voicePackagePath:  path.join(projectDir, 'audio', 'voice_package.json'),\n  mediaTimelinePath: path.join(projectDir, 'scripts', 'media_timeline.json'),\n  imageManifestPath: path.join(projectDir, 'scripts', 'image_manifest.json'),\n  videoManifestPath: path.join(projectDir, 'scripts', 'video_manifest.json'),\n  metadataPath:      path.join(projectDir, 'scripts', 'metadata_package.json')\n} }];\n"
+      }
+    },
+    {
+      "id": "node-p2-04-duration",
+      "name": "Get Voiceover Duration",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "command": "={{ 'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"' + $json.voiceFinalPath + '\" 2>/dev/null || echo 0' }}"
+      }
+    },
+    {
+      "id": "node-p2-05-prep",
+      "name": "Prep Media Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst fs   = require('fs');\nconst dur  = parseFloat(($input.item.json.stdout || '').trim()) || 0;\nconst mm   = Math.floor(dur / 60);\nconst ss   = Math.round(dur % 60);\nconst vars = $('Load Project').first().json;\n\nconst scriptText   = fs.readFileSync(vars.scriptPath, 'utf-8');\nconst voicePackage = JSON.parse(fs.readFileSync(vars.voicePackagePath, 'utf-8'));\nconst wordCount    = scriptText.split(/\\s+/).filter(w => w.length > 0).length;\nconst wpm          = dur > 0 ? Math.round((wordCount / dur) * 60) : 150;\n\nreturn [{ json: {\n  ...vars,\n  durationSeconds: Math.round(dur * 10) / 10,\n  durationMMSS:    `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`,\n  wordCount,\n  wpm,\n  scriptText,\n  voicePackage\n} }];\n"
+      }
+    },
+    {
+      "id": "node-p2-06-build-media",
+      "name": "Build Media Placement Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/media_placement_agent.md', 'utf-8');\n\nconst input = {\n  voiceover_mp3_path:     vars.voiceFinalPath,\n  voice_package_path:     vars.voicePackagePath,\n  scene_manifest_path:    null,\n  topic:                  vars.topic,\n  total_duration_seconds: vars.durationSeconds,\n  voice_package:          vars.voicePackage,\n  script_text:            vars.scriptText\n};\n\nconst prompt = sys + '\\n\\n---\\n\\nYour input:\\n\\n' + JSON.stringify(input, null, 2);\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, model: 'claude-sonnet-4-6' }) } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-07-call-media",
+      "name": "Call Media Placement Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/generate",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.claudeBody }}",
+        "options": {
+          "timeout": 1800000
+        }
+      }
+    },
+    {
+      "id": "node-p2-08-parse-media",
+      "name": "Parse Media Timeline",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Media Placement Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Media Placement Agent error: ' + inp.error);\n\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet timeline;\ntry { timeline = JSON.parse(raw); }\ncatch(e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse media_timeline.json. Raw: ' + raw.substring(0,300));\n  timeline = JSON.parse(raw.substring(s, en + 1));\n}\n\nfs.writeFileSync(vars.mediaTimelinePath, JSON.stringify(timeline, null, 2), 'utf-8');\nconsole.log(`media_timeline.json saved: ${(timeline.scenes||[]).length} scenes, ${(timeline.music_cues||[]).length} music cues, ${(timeline.sfx_cues||[]).length} sfx cues`);\nreturn [{ json: { ...vars, timeline } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-09a-build-img",
+      "name": "Build Image Agent Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/image_agent.md', 'utf-8');\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst prompt = sys + '\\n\\n---\\n\\nYour input (media_timeline.json):\\n\\n' + JSON.stringify(timeline, null, 2);\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, model: 'claude-haiku-4-5-20251001' }) } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-10a-call-img",
+      "name": "Call Image Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        -600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/generate",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.claudeBody }}",
+        "options": {
+          "timeout": 1800000
+        }
+      }
+    },
+    {
+      "id": "node-p2-11a-parse-img",
+      "name": "Parse Image Manifest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Image Agent Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Image Agent error: ' + inp.error);\n\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet manifest;\ntry { manifest = JSON.parse(raw); }\ncatch(e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse image_manifest.json. Raw: ' + raw.substring(0,300));\n  manifest = JSON.parse(raw.substring(s, en + 1));\n}\n\nfs.writeFileSync(vars.imageManifestPath, JSON.stringify(manifest, null, 2), 'utf-8');\nconsole.log(`image_manifest.json saved: ${(manifest.image_prompts||[]).length} image prompts`);\nreturn [{ json: { ...vars, imageManifest: manifest } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-09b-build-vid",
+      "name": "Build Video Agent Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/video_agent.md', 'utf-8');\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst prompt = sys + '\\n\\n---\\n\\nYour input (media_timeline.json):\\n\\n' + JSON.stringify(timeline, null, 2);\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, model: 'claude-haiku-4-5-20251001' }) } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-10b-call-vid",
+      "name": "Call Video Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        -200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/generate",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.claudeBody }}",
+        "options": {
+          "timeout": 1800000
+        }
+      }
+    },
+    {
+      "id": "node-p2-11b-parse-vid",
+      "name": "Parse Video Manifest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Video Agent Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Video Agent error: ' + inp.error);\n\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet manifest;\ntry { manifest = JSON.parse(raw); }\ncatch(e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse video_manifest.json. Raw: ' + raw.substring(0,300));\n  manifest = JSON.parse(raw.substring(s, en + 1));\n}\n\nfs.writeFileSync(vars.videoManifestPath, JSON.stringify(manifest, null, 2), 'utf-8');\nconsole.log(`video_manifest.json saved: ${(manifest.video_prompts||[]).length} video prompts`);\nreturn [{ json: { ...vars, videoManifest: manifest } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-09c-build-meta",
+      "name": "Build Metadata Agent Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/metadata_agent.md', 'utf-8');\nconst scriptText   = fs.readFileSync(vars.scriptPath, 'utf-8');\nconst researchPkg  = fs.readFileSync(vars.researchPath, 'utf-8');\nconst voicePkg     = fs.readFileSync(vars.voicePackagePath, 'utf-8');\nconst input = {\n  script_path:          vars.scriptPath,\n  research_package_path: vars.researchPath,\n  voice_package_path:   vars.voicePackagePath,\n  script_text:          scriptText,\n  research_package:     JSON.parse(researchPkg),\n  voice_package:        JSON.parse(voicePkg)\n};\nconst prompt = sys + '\\n\\n---\\n\\nYour input:\\n\\n' + JSON.stringify(input, null, 2);\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, model: 'claude-haiku-4-5-20251001' }) } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-10c-call-meta",
+      "name": "Call Metadata Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/generate",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.claudeBody }}",
+        "options": {
+          "timeout": 1800000
+        }
+      }
+    },
+    {
+      "id": "node-p2-11c-parse-meta",
+      "name": "Parse Metadata Package",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Metadata Agent Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Metadata Agent error: ' + inp.error);\n\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch(e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse metadata_package.json. Raw: ' + raw.substring(0,300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\n\nfs.writeFileSync(vars.metadataPath, JSON.stringify(pkg, null, 2), 'utf-8');\nconsole.log('metadata_package.json saved. Title:', pkg.title_primary);\nreturn [{ json: { ...vars, metadata: pkg } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-13a-extract-img",
+      "name": "Extract Image Prompts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        -600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst manifest = vars.imageManifest || JSON.parse(fs.readFileSync(vars.imageManifestPath, 'utf-8'));\nconst prompts  = manifest.image_prompts || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.imageCost  = 0;\nstaticData.imageCount = 0;\n\nreturn prompts.map((p, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/images',\n    promptIndex:  i + 1,\n    totalPrompts: prompts.length,\n    assetType:    'image',\n    sceneId:      p.scene_id,\n    sequence:     p.sequence,\n    visualIn:     p.visual_in,\n    visualOut:    p.visual_out,\n    rawPrompt:    p,\n    filename:     'image_' + String(i + 1).padStart(4, '0')\n  }\n}));\n"
+      }
+    },
+    {
+      "id": "node-p2-13b-extract-vid",
+      "name": "Extract Video Prompts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        -200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst manifest = vars.videoManifest || JSON.parse(fs.readFileSync(vars.videoManifestPath, 'utf-8'));\nconst prompts  = manifest.video_prompts || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.videoCost  = 0;\nstaticData.videoCount = 0;\n\nreturn prompts.map((p, i) => ({\n  json: {\n    ...vars,\n    assetDir:             vars.projectDir + '/videos',\n    promptIndex:          i + 1,\n    totalPrompts:         prompts.length,\n    assetType:            'video',\n    sceneId:              p.scene_id,\n    sequence:             p.sequence,\n    visualIn:             p.visual_in,\n    visualOut:            p.visual_out,\n    targetDuration:       p.target_veo_duration_seconds || 8,\n    rawPrompt:            p,\n    filename:             'video_' + String(i + 1).padStart(4, '0')\n  }\n}));\n"
+      }
+    },
+    {
+      "id": "node-p2-13c-extract-mus",
+      "name": "Extract Music Cues",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst cues     = timeline.music_cues || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.musicCost  = 0;\nstaticData.musicCount = 0;\n\nreturn cues.map((c, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/music',\n    promptIndex:  i + 1,\n    totalPrompts: cues.length,\n    assetType:    'music',\n    cueId:        c.cue_id,\n    cueAct:       c.act,\n    cueStart:     c.start,\n    cueEnd:       c.end,\n    cueDuration:  c.duration,\n    rawPrompt:    c,\n    filename:     'music_' + String(i + 1).padStart(2, '0')\n  }\n}));\n"
+      }
+    },
+    {
+      "id": "node-p2-13d-extract-sfx",
+      "name": "Extract SFX Cues",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        1000
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst cues     = timeline.sfx_cues || [];\n\nreturn cues.map((c, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/sfx',\n    promptIndex:  i + 1,\n    totalPrompts: cues.length,\n    assetType:    'sfx',\n    cueId:        c.cue_id,\n    cueType:      c.type,\n    cueStart:     c.start,\n    cueDuration:  c.duration,\n    rawPrompt:    c,\n    filename:     'sfx_' + String(i + 1).padStart(2, '0')\n  }\n}));\n"
+      }
+    },
+    {
+      "id": "node-p2-14-split-img",
+      "name": "Split Image Prompts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2160,
+        -600
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-p2-15-prep-img",
+      "name": "Prepare Image Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        -600
+      ],
+      "parameters": {
+        "jsCode": "\nconst item = $input.item.json;\nconst p    = item.rawPrompt.prompt || {};\n\n// Build positive prompt from NB2 JSON fields\nconst positiveFields = ['goal','context','style','composition','lighting','mood','background'];\nconst positiveText = [\n  p.goal || '',\n  Array.isArray(p.subject) ? p.subject.join(', ') : (p.subject || ''),\n  p.context || '',\n  p.style || 'photorealistic, hyper-detailed, cinematic',\n  p.composition || '',\n  p.lighting || '',\n  Array.isArray(p.color_palette) ? p.color_palette.join(', ') : '',\n  p.background || '',\n  (() => { const c = p.camera_or_lens || {}; return [c.focal_length, c.type, c.aperture].filter(Boolean).join(' '); })(),\n  p.mood || ''\n].filter(Boolean).join(', ');\n\nconst negText = Array.isArray(p.negative_constraints)\n  ? p.negative_constraints.join(', ')\n  : 'modern elements, anachronistic objects, artificial studio lighting, oversaturated colors, watermark';\n\nconst kieInput = { prompt: positiveText, width: 1920, height: 1080, num_images: 1 };\nif (negText) kieInput.negative_prompt = negText;\n\nreturn [{ json: {\n  ...item,\n  kieBody:    JSON.stringify({ model: 'nano-banana-2', input: kieInput }),\n  promptText: positiveText\n} }];\n"
+      }
+    },
+    {
+      "id": "node-p2-16-submit-img",
+      "name": "Submit Image to Kie.ai",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        -600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.kieBody }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "node-p2-17-imgid",
+      "name": "Extract Image Task ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        -600
+      ],
+      "parameters": {
+        "jsCode": "\nconst resp = $input.item.json;\nconst meta = $('Prepare Image Request').item.json;\nif (resp.code !== 200)\n  throw new Error(`Kie.ai image failed (${meta.filename}): ${resp.msg}`);\nreturn [{ json: { ...meta, kieTaskId: resp.data.taskId } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-18-wait-img",
+      "name": "Wait for Image",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3120,
+        -600
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "amount": 15
+      }
+    },
+    {
+      "id": "node-p2-19-poll-img",
+      "name": "Poll Image Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3360,
+        -600
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/jobs/recordInfo?taskId={{ $('Extract Image Task ID').item.json.kieTaskId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      }
+    },
+    {
+      "id": "node-p2-20-check-img",
+      "name": "Image Generation Complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        -600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-img-s",
+              "leftValue": "={{ $json.data.state }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-img-f",
+              "leftValue": "={{ $json.data.state }}",
+              "rightValue": "fail",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-p2-21-store-img",
+      "name": "Store Image Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3840,
+        -600
+      ],
+      "parameters": {
+        "jsCode": "\nconst poll = $input.item.json;\nconst meta = $('Prepare Image Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\n\nlet rj = {};\ntry { rj = JSON.parse(poll.data.resultJson || '{}'); } catch(e) {}\nconst assetUrl = (rj.resultUrls || [])[0] || '';\nif (!assetUrl) throw new Error(`No URL for ${meta.filename} \u2014 state: ${poll.data.state}`);\n\nsd.imageCost  = (sd.imageCost  || 0) + (poll.data.creditsConsumed || 0);\nsd.imageCount = (sd.imageCount || 0) + 1;\n\nreturn [{ json: {\n  ...meta,\n  assetUrl,\n  filepath: meta.assetDir + '/' + meta.filename + '.png',\n  creditsConsumed: poll.data.creditsConsumed || 0\n} }];\n"
+      }
+    },
+    {
+      "id": "node-p2-22-save-img",
+      "name": "Save Image File",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        4080,
+        -600
+      ],
+      "parameters": {
+        "command": "={{ 'mkdir -p \"' + $json.assetDir + '\" && curl -fsSL -o \"' + $json.filepath + '\" \"' + $json.assetUrl + '\" && echo \"\u2713 ' + $json.filename + '\"' }}"
+      }
+    },
+    {
+      "id": "node-p2-23-split-vid",
+      "name": "Split Video Prompts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2160,
+        -200
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-p2-24-prep-vid",
+      "name": "Prepare Video Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        -200
+      ],
+      "parameters": {
+        "jsCode": "\nconst item = $input.item.json;\nconst p    = item.rawPrompt;\n\nconst kieBody = {\n  model:          'veo3_lite',\n  prompt:         p.prompt || '',\n  generationType: 'TEXT_2_VIDEO',\n  aspect_ratio:   '16:9',\n  resolution:     '1080p',\n  duration:       item.targetDuration || 8\n};\n\nreturn [{ json: {\n  ...item,\n  kieBody:    JSON.stringify(kieBody),\n  promptText: kieBody.prompt\n} }];\n"
+      }
+    },
+    {
+      "id": "node-p2-25-submit-vid",
+      "name": "Submit Video to Kie.ai",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        -200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/veo/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.kieBody }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "node-p2-26-vidid",
+      "name": "Extract Video Task ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        -200
+      ],
+      "parameters": {
+        "jsCode": "\nconst resp = $input.item.json;\nconst meta = $('Prepare Video Request').item.json;\nif (resp.code !== 200)\n  throw new Error(`Kie.ai video failed (${meta.filename}): ${resp.msg}`);\nreturn [{ json: { ...meta, kieTaskId: resp.data.taskId } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-27-wait-vid",
+      "name": "Wait for Video",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3120,
+        -200
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "amount": 30
+      }
+    },
+    {
+      "id": "node-p2-28-poll-vid",
+      "name": "Poll Video Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3360,
+        -200
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/veo/record-info?taskId={{ $('Extract Video Task ID').item.json.kieTaskId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      }
+    },
+    {
+      "id": "node-p2-29-check-vid",
+      "name": "Video Generation Complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        -200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-veo-s",
+              "leftValue": "={{ $json.data.successFlag }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-veo-e",
+              "leftValue": "={{ $json.data.errorCode }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-p2-30-store-vid",
+      "name": "Store Video Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3840,
+        -200
+      ],
+      "parameters": {
+        "jsCode": "\nconst poll = $input.item.json;\nconst meta = $('Prepare Video Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\n\nconst data = poll.data || {};\nif (data.errorCode)\n  throw new Error(`${meta.filename} failed: ${data.errorCode} \u2014 ${data.errorMessage}`);\n\nlet resp = data.response || {};\nif (typeof resp === 'string') { try { resp = JSON.parse(resp); } catch(e) {} }\nconst assetUrl = (resp.resultUrls||[])[0] || resp.videoUrl || resp.url || resp.video_url || '';\nif (!assetUrl) throw new Error(`No URL for ${meta.filename} \u2014 response: ${JSON.stringify(resp).slice(0,200)}`);\n\nsd.videoCost  = (sd.videoCost  || 0) + (data.creditsConsumed || 0);\nsd.videoCount = (sd.videoCount || 0) + 1;\n\nreturn [{ json: {\n  ...meta,\n  assetUrl,\n  filepath: meta.assetDir + '/' + meta.filename + '.mp4',\n  creditsConsumed: data.creditsConsumed || 0\n} }];\n"
+      }
+    },
+    {
+      "id": "node-p2-31-save-vid",
+      "name": "Save Video File",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        4080,
+        -200
+      ],
+      "parameters": {
+        "command": "={{ 'mkdir -p \"' + $json.assetDir + '\" && curl -fsSL -o \"' + $json.filepath + '\" \"' + $json.assetUrl + '\" && echo \"\u2713 ' + $json.filename + '\"' }}"
+      }
+    },
+    {
+      "id": "node-p2-32-split-mus",
+      "name": "Split Music Prompts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        600
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-p2-33-prep-mus",
+      "name": "Prepare Music Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        600
+      ],
+      "parameters": {
+        "jsCode": "\nconst item = $input.item.json;\nconst c    = item.rawPrompt;\n\nconst kieBody = {\n  model:        'V4_5',\n  prompt:       c.style_prompt || c.mood || '',\n  customMode:   false,\n  instrumental: true,\n  callBackUrl:  'http://localhost:9999/callback'\n};\n\nreturn [{ json: {\n  ...item,\n  kieBody:    JSON.stringify(kieBody),\n  promptText: kieBody.prompt\n} }];\n"
+      }
+    },
+    {
+      "id": "node-p2-34-submit-mus",
+      "name": "Submit Music to Kie.ai",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.kieBody }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "node-p2-35-musid",
+      "name": "Extract Music Task ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        600
+      ],
+      "parameters": {
+        "jsCode": "\nconst resp = $input.item.json;\nconst meta = $('Prepare Music Request').item.json;\nif (resp.code !== 200)\n  throw new Error(`Kie.ai music failed (${meta.filename}): ${resp.msg}`);\nreturn [{ json: { ...meta, kieTaskId: resp.data.taskId } }];\n"
+      }
+    },
+    {
+      "id": "node-p2-36-wait-mus",
+      "name": "Wait for Music",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        600
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "amount": 20
+      }
+    },
+    {
+      "id": "node-p2-37-poll-mus",
+      "name": "Poll Music Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        600
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/generate/record-info?taskId={{ $('Extract Music Task ID').item.json.kieTaskId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      }
+    },
+    {
+      "id": "node-p2-38-check-mus",
+      "name": "Music Generation Complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-mus-s",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "SUCCESS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-mus-f",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "FAILED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-p2-39-store-mus",
+      "name": "Store Music Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        600
+      ],
+      "parameters": {
+        "jsCode": "\nconst poll = $input.item.json;\nconst meta = $('Prepare Music Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\n\nconst data = poll.data || {};\nif (data.status === 'FAILED')\n  throw new Error(`${meta.filename} failed: ${data.errorCode}`);\n\nlet resp = data.response || {};\nif (typeof resp === 'string') { try { resp = JSON.parse(resp); } catch(e) {} }\nconst sunoData = resp.sunoData || [];\nconst assetUrl = (sunoData[0] || {}).audioUrl || '';\nif (!assetUrl) throw new Error(`No URL for ${meta.filename}`);\n\nsd.musicCost  = (sd.musicCost  || 0) + (data.creditsConsumed || 0);\nsd.musicCount = (sd.musicCount || 0) + 1;\n\nreturn [{ json: {\n  ...meta,\n  assetUrl,\n  filepath: meta.assetDir + '/' + meta.filename + '.mp3'\n} }];\n"
+      }
+    },
+    {
+      "id": "node-p2-40-save-mus",
+      "name": "Save Music File",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        3360,
+        600
+      ],
+      "parameters": {
+        "command": "={{ 'mkdir -p \"' + $json.assetDir + '\" && curl -fsSL -o \"' + $json.filepath + '\" \"' + $json.assetUrl + '\" && echo \"\u2713 ' + $json.filename + '\"' }}"
+      }
+    },
+    {
+      "id": "node-p2-41-split-sfx",
+      "name": "Split SFX Prompts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        1000
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-p2-42-prep-sfx",
+      "name": "Prepare SFX Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        1000
+      ],
+      "parameters": {
+        "jsCode": "\nconst fs = require('fs');\nconst item = $input.item.json;\nfs.mkdirSync(item.assetDir, { recursive: true });\nconst c    = item.rawPrompt;\n\nconst elBody = {\n  text:             c.prompt || c.description || '',\n  duration_seconds: Math.min(c.duration || 3.0, 22.0),\n  prompt_influence: 0.3\n};\n\nreturn [{ json: {\n  ...item,\n  elBody:     JSON.stringify(elBody),\n  promptText: elBody.text,\n  filepath:   item.assetDir + '/' + item.filename + '.mp3'\n} }];\n"
+      }
+    },
+    {
+      "id": "node-p2-43-submit-sfx",
+      "name": "Submit SFX to ElevenLabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        1000
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/sound-generation",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "audio/mpeg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.elBody }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "sfxAudio"
+            }
+          },
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "node-p2-44-save-sfx",
+      "name": "Save SFX File",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        1000
+      ],
+      "parameters": {
+        "fileName": "={{ $('Prepare SFX Request').item.json.filepath }}",
+        "dataPropertyName": "sfxAudio",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-p2-45-all-done",
+      "name": "All Assets Complete",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        4400,
+        200
+      ],
+      "parameters": {
+        "mode": "waitForAll",
+        "output": "all",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-p2-46-summary",
+      "name": "Phase 2 Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4640,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst fs  = require('fs');\nconst sd  = $getWorkflowStaticData('global');\nconst vars = $('Load Project').first().json;\n\nconst summary = {\n  projectDir:   vars.projectDir,\n  topic:        vars.topic,\n  completedAt:  new Date().toISOString(),\n  assets: {\n    imagesGenerated: sd.imageCount  || 0,\n    videosGenerated: sd.videoCount  || 0,\n    musicGenerated:  sd.musicCount  || 0,\n    imageCost:       sd.imageCost   || 0,\n    videoCost:       sd.videoCost   || 0,\n    musicCost:       sd.musicCost   || 0\n  }\n};\n\nconst summaryPath = vars.projectDir + '/scripts/phase2_summary.json';\nfs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2), 'utf-8');\nconsole.log('Phase 2 complete:', JSON.stringify(summary.assets));\nreturn [{ json: summary }];\n"
+      }
+    },
+    {
+      "id": "note-overview",
+      "name": "Note: Phase 2 Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        -280
+      ],
+      "parameters": {
+        "content": "## Ruins Untold v2 \u2014 Phase 2\n\n**Picks up from:** Phase 1 completed project (voiceover_final.mp3 exists)\n\n**Runs:**\n1. Media Placement Agent \u2192 media_timeline.json\n2. Image Agent \u2192 image_manifest.json\n3. Video Agent \u2192 video_manifest.json\n4. Metadata Agent \u2192 metadata_package.json\n5. Image generation (Kie.ai NB2)\n6. Video generation (Kie.ai Veo3Lite)\n7. Music generation (Kie.ai Suno V4.5)\n8. SFX generation (ElevenLabs)\n\n**Runtime:** 2-4 hours depending on asset count",
+        "height": 240,
+        "width": 420
+      }
+    },
+    {
+      "id": "note-agents",
+      "name": "Note: Agent Models",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -280
+      ],
+      "parameters": {
+        "content": "## Agent Models\n\n- **Media Placement:** claude-sonnet-4-6 (complex scene analysis)\n- **Image Agent:** claude-haiku-4-5 (template expansion)\n- **Video Agent:** claude-haiku-4-5 (template expansion)\n- **Metadata Agent:** claude-haiku-4-5 (structured output)\n\nAll agents receive system prompt via bridge `system` field for caching.",
+        "height": 180,
+        "width": 360
+      }
+    },
+    {
+      "id": "note-gen",
+      "name": "Note: Generation APIs",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        -840
+      ],
+      "parameters": {
+        "content": "## Generation APIs\n\n**Images:** Kie.ai NB2\n`POST /api/v1/jobs/createTask`\nmodel: `nano-banana-2`\nPoll: `/api/v1/jobs/recordInfo`\n\n**Videos:** Kie.ai Veo3Lite\n`POST /api/v1/veo/generate`\nmodel: `veo3_lite`\nPoll: `/api/v1/veo/record-info`\n\n**Music:** Kie.ai Suno\n`POST /api/v1/generate`\nmodel: `V4_5`\n\n**SFX:** ElevenLabs\n`POST /v1/sound-generation`\n(synchronous)",
+        "height": 260,
+        "width": 340
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scan Projects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scan Projects": {
+      "main": [
+        [
+          {
+            "node": "Select Episode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Episode": {
+      "main": [
+        [
+          {
+            "node": "Load Project",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Project": {
+      "main": [
+        [
+          {
+            "node": "Get Voiceover Duration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Voiceover Duration": {
+      "main": [
+        [
+          {
+            "node": "Prep Media Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Media Analysis": {
+      "main": [
+        [
+          {
+            "node": "Build Media Placement Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Media Placement Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Media Placement Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Media Placement Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Media Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Media Timeline": {
+      "main": [
+        [
+          {
+            "node": "Build Image Agent Prompt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build Video Agent Prompt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build Metadata Agent Prompt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Music Cues",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract SFX Cues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Image Agent Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Image Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Image Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Image Manifest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Video Agent Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Video Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Video Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Video Manifest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Metadata Agent Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Metadata Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Metadata Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Metadata Package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Image Manifest": {
+      "main": [
+        [
+          {
+            "node": "Extract Image Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Video Manifest": {
+      "main": [
+        [
+          {
+            "node": "Extract Video Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Image Prompts": {
+      "main": [
+        [
+          {
+            "node": "Split Image Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Image Prompts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Image Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "All Assets Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Image Request": {
+      "main": [
+        [
+          {
+            "node": "Submit Image to Kie.ai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit Image to Kie.ai": {
+      "main": [
+        [
+          {
+            "node": "Extract Image Task ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Image Task ID": {
+      "main": [
+        [
+          {
+            "node": "Wait for Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Image": {
+      "main": [
+        [
+          {
+            "node": "Poll Image Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Image Status": {
+      "main": [
+        [
+          {
+            "node": "Image Generation Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Generation Complete?": {
+      "main": [
+        [
+          {
+            "node": "Store Image Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Image Result": {
+      "main": [
+        [
+          {
+            "node": "Save Image File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Image File": {
+      "main": [
+        [
+          {
+            "node": "Split Image Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Video Prompts": {
+      "main": [
+        [
+          {
+            "node": "Split Video Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Video Prompts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Video Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "All Assets Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Video Request": {
+      "main": [
+        [
+          {
+            "node": "Submit Video to Kie.ai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit Video to Kie.ai": {
+      "main": [
+        [
+          {
+            "node": "Extract Video Task ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Video Task ID": {
+      "main": [
+        [
+          {
+            "node": "Wait for Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Video": {
+      "main": [
+        [
+          {
+            "node": "Poll Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Video Status": {
+      "main": [
+        [
+          {
+            "node": "Video Generation Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video Generation Complete?": {
+      "main": [
+        [
+          {
+            "node": "Store Video Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Video Result": {
+      "main": [
+        [
+          {
+            "node": "Save Video File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Video File": {
+      "main": [
+        [
+          {
+            "node": "Split Video Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Music Cues": {
+      "main": [
+        [
+          {
+            "node": "Split Music Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Music Prompts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Music Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "All Assets Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Music Request": {
+      "main": [
+        [
+          {
+            "node": "Submit Music to Kie.ai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit Music to Kie.ai": {
+      "main": [
+        [
+          {
+            "node": "Extract Music Task ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Music Task ID": {
+      "main": [
+        [
+          {
+            "node": "Wait for Music",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Music": {
+      "main": [
+        [
+          {
+            "node": "Poll Music Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Music Status": {
+      "main": [
+        [
+          {
+            "node": "Music Generation Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Music Generation Complete?": {
+      "main": [
+        [
+          {
+            "node": "Store Music Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Music",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Music Result": {
+      "main": [
+        [
+          {
+            "node": "Save Music File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Music File": {
+      "main": [
+        [
+          {
+            "node": "Split Music Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract SFX Cues": {
+      "main": [
+        [
+          {
+            "node": "Split SFX Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split SFX Prompts": {
+      "main": [
+        [
+          {
+            "node": "Prepare SFX Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "All Assets Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare SFX Request": {
+      "main": [
+        [
+          {
+            "node": "Submit SFX to ElevenLabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit SFX to ElevenLabs": {
+      "main": [
+        [
+          {
+            "node": "Save SFX File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save SFX File": {
+      "main": [
+        [
+          {
+            "node": "Split SFX Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All Assets Complete": {
+      "main": [
+        [
+          {
+            "node": "Phase 2 Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "ruins-untold"
+  },
+  "pinData": {},
+  "staticData": null,
+  "tags": [],
+  "versionId": "phase2-v1"
+}
