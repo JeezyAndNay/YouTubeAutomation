@@ -1241,14 +1241,14 @@
       "main": [
         [
           {
-            "node": "Prepare Image Request",
+            "node": "All Assets Complete",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "All Assets Complete",
+            "node": "Prepare Image Request",
             "type": "main",
             "index": 0
           }
@@ -1365,14 +1365,14 @@
       "main": [
         [
           {
-            "node": "Prepare Video Request",
+            "node": "All Assets Complete",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "All Assets Complete",
+            "node": "Prepare Video Request",
             "type": "main",
             "index": 0
           }
@@ -1489,14 +1489,14 @@
       "main": [
         [
           {
-            "node": "Prepare Music Request",
+            "node": "All Assets Complete",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "All Assets Complete",
+            "node": "Prepare Music Request",
             "type": "main",
             "index": 0
           }
@@ -1613,14 +1613,14 @@
       "main": [
         [
           {
-            "node": "Prepare SFX Request",
+            "node": "All Assets Complete",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "All Assets Complete",
+            "node": "Prepare SFX Request",
             "type": "main",
             "index": 0
           }
