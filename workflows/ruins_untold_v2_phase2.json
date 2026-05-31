@@ -92,8 +92,8 @@
         0
       ],
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "\nconst fs   = require('fs');\nconst dur  = parseFloat(($input.item.json.stdout || '').trim()) || 0;\nconst mm   = Math.floor(dur / 60);\nconst ss   = Math.round(dur % 60);\nconst vars = $('Load Project').first().json;\n\nconst scriptText   = fs.readFileSync(vars.scriptPath, 'utf-8');\nconst voicePackage = JSON.parse(fs.readFileSync(vars.voicePackagePath, 'utf-8'));\nconst wordCount    = scriptText.split(/\\s+/).filter(w => w.length > 0).length;\nconst wpm          = dur > 0 ? Math.round((wordCount / dur) * 60) : 150;\n\nreturn [{ json: {\n  ...vars,\n  durationSeconds: Math.round(dur * 10) / 10,\n  durationMMSS:    `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`,\n  wordCount,\n  wpm,\n  scriptText,\n  voicePackage\n} }];\n"
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fs   = require('fs');\nconst dur  = parseFloat(($input.first().json.stdout || '').trim()) || 0;\nconst mm   = Math.floor(dur / 60);\nconst ss   = Math.round(dur % 60);\nconst vars = $('Load Project').first().json;\n\nconst scriptText   = fs.readFileSync(vars.scriptPath, 'utf-8');\nconst voicePackage = JSON.parse(fs.readFileSync(vars.voicePackagePath, 'utf-8'));\nconst wordCount    = scriptText.split(/\\s+/).filter(w => w.length > 0).length;\nconst wpm          = dur > 0 ? Math.round((wordCount / dur) * 60) : 150;\n\nreturn [{ json: {\n  ...vars,\n  durationSeconds: Math.round(dur * 10) / 10,\n  durationMMSS:    `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`,\n  wordCount,\n  wpm,\n  scriptText,\n  voicePackage\n} }];"
       }
     },
     {
