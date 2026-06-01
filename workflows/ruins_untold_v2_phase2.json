@@ -1,5 +1,5 @@
 {
-  "name": "Ruins Untold v2 — Phase 2: Media Generation",
+  "name": "Ruins Untold v2 \u2014 Phase 2: Media Generation",
   "active": false,
   "isArchived": false,
   "nodes": [
@@ -25,7 +25,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst path = require('path');\nconst base = '/Users/jneal/n8n_projects';\n\nconst dirs = fs.readdirSync(base).filter(d => {\n  try {\n    const full = path.join(base, d);\n    if (!fs.statSync(full).isDirectory()) return false;\n    const hasVoiceover = fs.existsSync(path.join(full, 'audio', 'voiceover_final.mp3'));\n    const hasTimeline  = fs.existsSync(path.join(full, 'scripts', 'media_timeline.json'));\n    return hasVoiceover && !hasTimeline;\n  } catch(e) { return false; }\n}).sort();\n\nif (dirs.length === 0)\n  throw new Error('No Phase 2 ready projects. Need voiceover_final.mp3 but no media_timeline.json.');\n\nconst rows = dirs.map((d, i) => ({\n  caseNumber: i + 1,\n  slug: d,\n  projectDir: path.join(base, d)\n}));\n\nreturn [{ json: { readyProjects: dirs, allRows: JSON.stringify(rows) } }];\n"
+        "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst base = '/Users/jneal/n8n_projects';\n\nconst dirs = fs.readdirSync(base).filter(d => {\n  try {\n    const full = path.join(base, d);\n    if (!fs.statSync(full).isDirectory()) return false;\n    const hasVoiceover       = fs.existsSync(path.join(full, 'audio', 'voiceover_final.mp3'));\n    const hasMetadataPackage = fs.existsSync(path.join(full, 'scripts', 'metadata_package.json'));\n    return hasVoiceover && !hasMetadataPackage;\n  } catch(e) { return false; }\n}).sort();\n\nif (dirs.length === 0)\n  throw new Error('No Phase 2 ready projects. Need voiceover_final.mp3 but no metadata_package.json.');\n\nconst rows = dirs.map((d, i) => ({\n  caseNumber: i + 1,\n  slug: d,\n  projectDir: path.join(base, d)\n}));\n\nreturn [{ json: { readyProjects: dirs, allRows: JSON.stringify(rows) } }];\n"
       }
     },
     {
@@ -39,8 +39,8 @@
       ],
       "parameters": {
         "resume": "form",
-        "formTitle": "RUINS UNTOLD — PHASE 2 PRODUCTION",
-        "formDescription": "={{ 'SELECT EPISODE FOR PHASE 2\\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\nREADY PROJECTS (voiceover complete):\\n' + $('Scan Projects').first().json.readyProjects.map((d,i)=>(i+1)+'. '+d).join('\\n') }}",
+        "formTitle": "RUINS UNTOLD \u2014 PHASE 2 PRODUCTION",
+        "formDescription": "={{ 'SELECT EPISODE FOR PHASE 2\\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\nREADY PROJECTS (voiceover complete):\\n' + $('Scan Projects').first().json.readyProjects.map((d,i)=>(i+1)+'. '+d).join('\\n') }}",
         "formFields": {
           "values": [
             {
@@ -107,7 +107,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/media_placement_agent.md', 'utf-8');\n\nconst slimPackage = {\n  topic:                          vars.voicePackage.topic,\n  estimated_total_runtime_seconds: vars.voicePackage.estimated_total_runtime_seconds,\n  segments: (vars.voicePackage.segments || []).map(s => ({\n    segment_id:                 s.segment_id,\n    act:                        s.act,\n    sequence:                   s.sequence,\n    word_count:                 s.word_count,\n    estimated_duration_seconds: s.estimated_duration_seconds,\n    narration_text:             s.narration_text\n  }))\n};\n\nconst authoritative_duration = vars.transcript\n  ? vars.transcript.total_duration_seconds\n  : vars.durationSeconds;\n\nconst input = {\n  voiceover_mp3_path:     vars.voiceFinalPath,\n  voice_package_path:     vars.voicePackagePath,\n  topic:                  vars.topic,\n  total_duration_seconds: authoritative_duration,\n  voice_package:          slimPackage,\n  transcript:             vars.transcript || null\n};\n\nconst prompt = 'Your input:\\n\\n' + JSON.stringify(input, null, 2);\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ system: sys, prompt, model: 'claude-sonnet-4-6', max_tokens: 32768 }) } }];\n"
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/media_placement_agent.md', 'utf-8');\n\nconst slimPackage = {\n  topic:                          vars.voicePackage.topic,\n  estimated_total_runtime_seconds: vars.voicePackage.estimated_total_runtime_seconds,\n  segments: (vars.voicePackage.segments || []).map(s => ({\n    segment_id:                 s.segment_id,\n    act:                        s.act,\n    sequence:                   s.sequence,\n    word_count:                 s.word_count,\n    estimated_duration_seconds: s.estimated_duration_seconds,\n    narration_text:             s.narration_text\n  }))\n};\n\nconst authoritative_duration = vars.transcript\n  ? vars.transcript.total_duration_seconds\n  : vars.durationSeconds;\n\n// Filter transcript words to sentence-boundary words only (ending with . ? !)\n// The agent uses these to find precise scene cut points \u2014 it does not need every word.\nconst slimTranscript = vars.transcript ? {\n  total_duration_seconds: vars.transcript.total_duration_seconds,\n  full_text: vars.transcript.full_text,\n  words: (vars.transcript.words || []).filter(w => /[.?!]$/.test(w.word))\n} : null;\n\nconst input = {\n  voiceover_mp3_path:     vars.voiceFinalPath,\n  voice_package_path:     vars.voicePackagePath,\n  topic:                  vars.topic,\n  total_duration_seconds: authoritative_duration,\n  voice_package:          slimPackage,\n  transcript:             slimTranscript\n};\n\nconst prompt = 'Your input:\\n\\n' + JSON.stringify(input, null, 2);\n// Return slim vars \u2014 don't carry scriptText, voicePackage, or transcript through item data\nreturn [{ json: {\n  slug:              vars.slug,\n  topic:             vars.topic,\n  projectDir:        vars.projectDir,\n  voiceFinalPath:    vars.voiceFinalPath,\n  scriptPath:        vars.scriptPath,\n  researchPath:      vars.researchPath,\n  voicePackagePath:  vars.voicePackagePath,\n  mediaTimelinePath: vars.mediaTimelinePath,\n  imageManifestPath: vars.imageManifestPath,\n  videoManifestPath: vars.videoManifestPath,\n  metadataPath:      vars.metadataPath,\n  claudeBody: JSON.stringify({ system: sys, prompt, model: 'claude-sonnet-4-6', max_tokens: 32768 })\n} }];\n"
       }
     },
     {
@@ -128,7 +128,8 @@
         "options": {
           "timeout": 1800000
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "id": "node-p2-08-parse-media",
@@ -141,7 +142,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Media Placement Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Media Placement Agent error: ' + inp.error);\n\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet timeline;\ntry { timeline = JSON.parse(raw); }\ncatch(e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse media_timeline.json. Raw: ' + raw.substring(0,300));\n  timeline = JSON.parse(raw.substring(s, en + 1));\n}\n\nfs.writeFileSync(vars.mediaTimelinePath, JSON.stringify(timeline, null, 2), 'utf-8');\nconsole.log(`media_timeline.json saved: ${(timeline.scenes||[]).length} scenes, ${(timeline.music_cues||[]).length} music cues, ${(timeline.sfx_cues||[]).length} sfx cues`);\nreturn [{ json: { ...vars, timeline } }];\n"
+        "jsCode": "const fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Media Placement Prompt').first().json;\n\n// Agent call failed: bridge error, HTTP timeout (continueOnFail), or bypassed via IF node\nconst agentFailed = !inp.output || (inp.exitCode !== undefined && inp.exitCode !== 0);\n\nif (agentFailed) {\n  if (fs.existsSync(vars.mediaTimelinePath)) {\n    const timeline = JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\n    console.log('Agent skipped/failed \u2014 loaded timeline from disk: ' + (timeline.scenes||[]).length + ' scenes');\n    return [{ json: {\n      slug:              vars.slug,\n      topic:             vars.topic,\n      projectDir:        vars.projectDir,\n      voiceFinalPath:    vars.voiceFinalPath,\n      scriptPath:        vars.scriptPath,\n      researchPath:      vars.researchPath,\n      voicePackagePath:  vars.voicePackagePath,\n      mediaTimelinePath: vars.mediaTimelinePath,\n      imageManifestPath: vars.imageManifestPath,\n      videoManifestPath: vars.videoManifestPath,\n      metadataPath:      vars.metadataPath\n    } }];\n  }\n  throw new Error('Media Placement Agent failed and no timeline on disk. Error: ' + (inp.error || JSON.stringify(inp)));\n}\n\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet timeline;\ntry { timeline = JSON.parse(raw); } catch(e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s >= 0 && en >= 0) {\n    try { timeline = JSON.parse(raw.substring(s, en + 1)); } catch(e2) {}\n  }\n}\n\nif (!timeline) {\n  if (fs.existsSync(vars.mediaTimelinePath)) {\n    timeline = JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\n    console.log('Parse failed \u2014 loaded timeline from disk: ' + (timeline.scenes||[]).length + ' scenes');\n  } else {\n    throw new Error('Cannot parse media_timeline.json and no file on disk. Raw: ' + raw.substring(0, 500));\n  }\n} else {\n  fs.writeFileSync(vars.mediaTimelinePath, JSON.stringify(timeline, null, 2), 'utf-8');\n}\n\nconsole.log('media_timeline.json: ' + (timeline.scenes||[]).length + ' scenes, ' + (timeline.music_cues||[]).length + ' music cues, ' + (timeline.sfx_cues||[]).length + ' sfx cues');\nreturn [{ json: {\n  slug:              vars.slug,\n  topic:             vars.topic,\n  projectDir:        vars.projectDir,\n  voiceFinalPath:    vars.voiceFinalPath,\n  scriptPath:        vars.scriptPath,\n  researchPath:      vars.researchPath,\n  voicePackagePath:  vars.voicePackagePath,\n  mediaTimelinePath: vars.mediaTimelinePath,\n  imageManifestPath: vars.imageManifestPath,\n  videoManifestPath: vars.videoManifestPath,\n  metadataPath:      vars.metadataPath\n} }];"
       }
     },
     {
@@ -155,7 +156,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/image_agent.md', 'utf-8');\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst prompt = sys + '\\n\\n---\\n\\nYour input (media_timeline.json):\\n\\n' + JSON.stringify(timeline, null, 2);\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, model: 'claude-haiku-4-5-20251001' }) } }];\n"
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/image_agent.md', 'utf-8');\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst prompt = sys + '\\n\\n---\\n\\nYour input (media_timeline.json):\\n\\n' + JSON.stringify(timeline, null, 2);\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, model: 'claude-haiku-4-5-20251001', max_tokens: 65536 }) } }];\n"
       }
     },
     {
@@ -189,7 +190,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Image Agent Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Image Agent error: ' + inp.error);\n\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet manifest;\ntry { manifest = JSON.parse(raw); }\ncatch(e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse image_manifest.json. Raw: ' + raw.substring(0,300));\n  manifest = JSON.parse(raw.substring(s, en + 1));\n}\n\nfs.writeFileSync(vars.imageManifestPath, JSON.stringify(manifest, null, 2), 'utf-8');\nconsole.log(`image_manifest.json saved: ${(manifest.image_prompts||[]).length} image prompts`);\nreturn [{ json: { ...vars, imageManifest: manifest } }];\n"
+        "jsCode": "const fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Image Agent Prompt').first().json;\n\nconst agentFailed = !inp.output || (inp.exitCode !== undefined && inp.exitCode !== 0);\n\nif (agentFailed) {\n  if (fs.existsSync(vars.imageManifestPath)) {\n    const manifest = JSON.parse(fs.readFileSync(vars.imageManifestPath, 'utf-8'));\n    console.log('Agent skipped/failed \u2014 loaded manifest from disk: ' + (manifest.image_prompts||[]).length + ' prompts');\n    return [{ json: { ...vars, imageManifest: manifest } }];\n  }\n  throw new Error('Image Agent failed and no manifest on disk. Error: ' + (inp.error || JSON.stringify(inp)));\n}\n\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet manifest;\ntry { manifest = JSON.parse(raw); }\ncatch(e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse image_manifest.json. Raw: ' + raw.substring(0,300));\n  manifest = JSON.parse(raw.substring(s, en + 1));\n}\n\nfs.writeFileSync(vars.imageManifestPath, JSON.stringify(manifest, null, 2), 'utf-8');\nconsole.log('image_manifest.json saved: ' + (manifest.image_prompts||[]).length + ' image prompts');\nreturn [{ json: { ...vars, imageManifest: manifest } }];\n"
       }
     },
     {
@@ -501,7 +502,7 @@
         -600
       ],
       "parameters": {
-        "jsCode": "\nconst poll = $input.item.json;\nconst meta = $('Prepare Image Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\n\nlet rj = {};\ntry { rj = JSON.parse(poll.data.resultJson || '{}'); } catch(e) {}\nconst assetUrl = (rj.resultUrls || [])[0] || '';\nif (!assetUrl) throw new Error(`No URL for ${meta.filename} — state: ${poll.data.state}`);\n\nsd.imageCost  = (sd.imageCost  || 0) + (poll.data.creditsConsumed || 0);\nsd.imageCount = (sd.imageCount || 0) + 1;\n\nreturn [{ json: {\n  ...meta,\n  assetUrl,\n  filepath: meta.assetDir + '/' + meta.filename + '.png',\n  creditsConsumed: poll.data.creditsConsumed || 0\n} }];\n"
+        "jsCode": "\nconst poll = $input.item.json;\nconst meta = $('Prepare Image Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\n\nlet rj = {};\ntry { rj = JSON.parse(poll.data.resultJson || '{}'); } catch(e) {}\nconst assetUrl = (rj.resultUrls || [])[0] || '';\nif (!assetUrl) throw new Error(`No URL for ${meta.filename} \u2014 state: ${poll.data.state}`);\n\nsd.imageCost  = (sd.imageCost  || 0) + (poll.data.creditsConsumed || 0);\nsd.imageCount = (sd.imageCount || 0) + 1;\n\nreturn [{ json: {\n  ...meta,\n  assetUrl,\n  filepath: meta.assetDir + '/' + meta.filename + '.png',\n  creditsConsumed: poll.data.creditsConsumed || 0\n} }];\n"
       }
     },
     {
@@ -514,7 +515,7 @@
         -600
       ],
       "parameters": {
-        "command": "={{ 'mkdir -p \"' + $json.assetDir + '\" && curl -fsSL -o \"' + $json.filepath + '\" \"' + $json.assetUrl + '\" && echo \"✓ ' + $json.filename + '\"' }}"
+        "command": "={{ 'mkdir -p \"' + $json.assetDir + '\" && wget -q -O \"' + $json.filepath + '\" \"' + $json.assetUrl + '\" && echo \"\u2713 ' + $json.filename + '\"' }}"
       }
     },
     {
@@ -674,7 +675,7 @@
         -200
       ],
       "parameters": {
-        "jsCode": "\nconst poll = $input.item.json;\nconst meta = $('Prepare Video Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\n\nconst data = poll.data || {};\nif (data.errorCode)\n  throw new Error(`${meta.filename} failed: ${data.errorCode} — ${data.errorMessage}`);\n\nlet resp = data.response || {};\nif (typeof resp === 'string') { try { resp = JSON.parse(resp); } catch(e) {} }\nconst assetUrl = (resp.resultUrls||[])[0] || resp.videoUrl || resp.url || resp.video_url || '';\nif (!assetUrl) throw new Error(`No URL for ${meta.filename} — response: ${JSON.stringify(resp).slice(0,200)}`);\n\nsd.videoCost  = (sd.videoCost  || 0) + (data.creditsConsumed || 0);\nsd.videoCount = (sd.videoCount || 0) + 1;\n\nreturn [{ json: {\n  ...meta,\n  assetUrl,\n  filepath: meta.assetDir + '/' + meta.filename + '.mp4',\n  creditsConsumed: data.creditsConsumed || 0\n} }];\n"
+        "jsCode": "\nconst poll = $input.item.json;\nconst meta = $('Prepare Video Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\n\nconst data = poll.data || {};\nif (data.errorCode)\n  throw new Error(`${meta.filename} failed: ${data.errorCode} \u2014 ${data.errorMessage}`);\n\nlet resp = data.response || {};\nif (typeof resp === 'string') { try { resp = JSON.parse(resp); } catch(e) {} }\nconst assetUrl = (resp.resultUrls||[])[0] || resp.videoUrl || resp.url || resp.video_url || '';\nif (!assetUrl) throw new Error(`No URL for ${meta.filename} \u2014 response: ${JSON.stringify(resp).slice(0,200)}`);\n\nsd.videoCost  = (sd.videoCost  || 0) + (data.creditsConsumed || 0);\nsd.videoCount = (sd.videoCount || 0) + 1;\n\nreturn [{ json: {\n  ...meta,\n  assetUrl,\n  filepath: meta.assetDir + '/' + meta.filename + '.mp4',\n  creditsConsumed: data.creditsConsumed || 0\n} }];\n"
       }
     },
     {
@@ -687,7 +688,7 @@
         -200
       ],
       "parameters": {
-        "command": "={{ 'mkdir -p \"' + $json.assetDir + '\" && curl -fsSL -o \"' + $json.filepath + '\" \"' + $json.assetUrl + '\" && echo \"✓ ' + $json.filename + '\"' }}"
+        "command": "={{ 'mkdir -p \"' + $json.assetDir + '\" && wget -q -O \"' + $json.filepath + '\" \"' + $json.assetUrl + '\" && echo \"\u2713 ' + $json.filename + '\"' }}"
       }
     },
     {
@@ -860,7 +861,7 @@
         600
       ],
       "parameters": {
-        "command": "={{ 'mkdir -p \"' + $json.assetDir + '\" && curl -fsSL -o \"' + $json.filepath + '\" \"' + $json.assetUrl + '\" && echo \"✓ ' + $json.filename + '\"' }}"
+        "command": "={{ 'mkdir -p \"' + $json.assetDir + '\" && wget -q -O \"' + $json.filepath + '\" \"' + $json.assetUrl + '\" && echo \"\u2713 ' + $json.filename + '\"' }}"
       }
     },
     {
@@ -982,7 +983,7 @@
         -280
       ],
       "parameters": {
-        "content": "## Ruins Untold v2 — Phase 2\n\n**Picks up from:** Phase 1 completed project (voiceover_final.mp3 exists)\n\n**Runs:**\n1. Media Placement Agent → media_timeline.json\n2. Image Agent → image_manifest.json\n3. Video Agent → video_manifest.json\n4. Metadata Agent → metadata_package.json\n5. Image generation (Kie.ai NB2)\n6. Video generation (Kie.ai Veo3Lite)\n7. Music generation (Kie.ai Suno V4.5)\n8. SFX generation (ElevenLabs)\n\n**Runtime:** 2-4 hours depending on asset count",
+        "content": "## Ruins Untold v2 \u2014 Phase 2\n\n**Picks up from:** Phase 1 completed project (voiceover_final.mp3 exists)\n\n**Runs:**\n1. Media Placement Agent \u2192 media_timeline.json\n2. Image Agent \u2192 image_manifest.json\n3. Video Agent \u2192 video_manifest.json\n4. Metadata Agent \u2192 metadata_package.json\n5. Image generation (Kie.ai NB2)\n6. Video generation (Kie.ai Veo3Lite)\n7. Music generation (Kie.ai Suno V4.5)\n8. SFX generation (ElevenLabs)\n\n**Runtime:** 2-4 hours depending on asset count",
         "height": 240,
         "width": 420
       }
@@ -1029,6 +1030,98 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const http = require('http');\nconst vars = $input.first().json;\n\nconst body = JSON.stringify({\n  audio_path:  vars.voiceFinalPath,\n  output_base: vars.projectDir + '/scripts/transcript'\n});\n\nconst transcript = await new Promise((resolve, reject) => {\n  const options = {\n    hostname: 'host.docker.internal',\n    port: 3333,\n    path: '/transcribe',\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'Content-Length': Buffer.byteLength(body)\n    }\n  };\n  const req = http.request(options, (res) => {\n    let data = '';\n    res.on('data', chunk => data += chunk);\n    res.on('end', () => {\n      if (res.statusCode !== 200) {\n        reject(new Error(`Transcribe endpoint returned ${res.statusCode}: ${data.substring(0, 300)}`));\n        return;\n      }\n      try { resolve(JSON.parse(data)); }\n      catch(e) { reject(new Error('Invalid JSON from /transcribe: ' + data.substring(0, 200))); }\n    });\n  });\n  req.on('error', reject);\n  req.setTimeout(1800000, () => { req.destroy(); reject(new Error('Transcription timed out after 30 min')); });\n  req.write(body);\n  req.end();\n});\n\nconsole.log(`Transcript: ${transcript.words.length} words, ${transcript.total_duration_seconds.toFixed(1)}s`);\nreturn [{ json: { ...vars, transcript } }];\n"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst vars = $input.first().json;\nreturn [{ json: { ...vars, timelineExists: fs.existsSync(vars.mediaTimelinePath) } }];"
+      },
+      "id": null,
+      "name": "Check Media Timeline",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1550,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-timeline-exists",
+              "leftValue": "={{ $json.timelineExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": null,
+      "name": "Has Timeline?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        700
+      ]
+    },
+    {
+      "id": "node-check-image-manifest",
+      "name": "Check Image Manifest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        100
+      ],
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst vars = $input.first().json;\nreturn [{ json: { ...vars, manifestExists: fs.existsSync(vars.imageManifestPath) } }];\n"
+      }
+    },
+    {
+      "id": "node-has-image-manifest",
+      "name": "Has Image Manifest?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-manifest-exists",
+              "leftValue": "={{ $json.manifestExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       }
     }
   ],
@@ -1103,7 +1196,7 @@
       "main": [
         [
           {
-            "node": "Call Media Placement Agent",
+            "node": "Check Media Timeline",
             "type": "main",
             "index": 0
           }
@@ -1128,26 +1221,6 @@
             "node": "Build Image Agent Prompt",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Build Video Agent Prompt",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Build Metadata Agent Prompt",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Extract Music Cues",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Extract SFX Cues",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -1156,7 +1229,7 @@
       "main": [
         [
           {
-            "node": "Call Image Agent",
+            "node": "Check Image Manifest",
             "type": "main",
             "index": 0
           }
@@ -1255,7 +1328,7 @@
       "main": [
         [
           {
-            "node": "All Assets Complete",
+            "node": "Build Video Agent Prompt",
             "type": "main",
             "index": 0
           }
@@ -1379,7 +1452,7 @@
       "main": [
         [
           {
-            "node": "All Assets Complete",
+            "node": "Extract Music Cues",
             "type": "main",
             "index": 0
           }
@@ -1503,7 +1576,7 @@
       "main": [
         [
           {
-            "node": "All Assets Complete",
+            "node": "Extract SFX Cues",
             "type": "main",
             "index": 0
           }
@@ -1627,7 +1700,7 @@
       "main": [
         [
           {
-            "node": "All Assets Complete",
+            "node": "Build Metadata Agent Prompt",
             "type": "main",
             "index": 0
           }
@@ -1690,6 +1763,64 @@
         [
           {
             "node": "Build Media Placement Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Media Timeline": {
+      "main": [
+        [
+          {
+            "node": "Has Timeline?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Timeline?": {
+      "main": [
+        [
+          {
+            "node": "Parse Media Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Media Placement Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Image Manifest": {
+      "main": [
+        [
+          {
+            "node": "Has Image Manifest?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Image Manifest?": {
+      "main": [
+        [
+          {
+            "node": "Parse Image Manifest",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Image Agent",
             "type": "main",
             "index": 0
           }
