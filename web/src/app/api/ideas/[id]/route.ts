@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { updateIdea } from "@/lib/sheets";
+import { updateIdea, type IdeaStatus } from "@/lib/sheets";
+
+const VALID_STATUSES: IdeaStatus[] = ["New", "In Progress", "Complete"];
 
 // [id] is the sheet row number (2-based)
 export async function PATCH(
@@ -13,6 +15,13 @@ export async function PATCH(
   }
 
   const patch = await request.json();
+
+  if (patch.status !== undefined && !VALID_STATUSES.includes(patch.status)) {
+    return NextResponse.json(
+      { error: `Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}` },
+      { status: 400 }
+    );
+  }
 
   try {
     await updateIdea(rowNumber, patch);

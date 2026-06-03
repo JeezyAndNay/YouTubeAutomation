@@ -15,7 +15,7 @@ const COLUMNS = [
   "TONE_DIAL", "RELATED_VIDEO", "NOTES",
 ] as const;
 
-export type IdeaStatus = "new" | "queued" | "In Progress" | "done" | "rejected";
+export type IdeaStatus = "New" | "In Progress" | "Complete";
 
 export type Idea = {
   id: string;
@@ -57,12 +57,10 @@ function sheets() {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function normalizeStatus(raw: string): IdeaStatus {
-  const lower = raw.trim().toLowerCase();
-  if (lower === "in progress") return "In Progress";
-  if (lower === "queued")      return "queued";
-  if (lower === "done")        return "done";
-  if (lower === "rejected")    return "rejected";
-  return "new";
+  const trimmed = raw.trim();
+  if (trimmed === "In Progress") return "In Progress";
+  if (trimmed === "Complete")    return "Complete";
+  return "New";
 }
 
 function rowToIdea(row: string[], rowNumber: number): Idea {

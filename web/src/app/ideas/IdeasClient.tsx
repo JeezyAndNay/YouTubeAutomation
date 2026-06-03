@@ -12,22 +12,18 @@ type StatusFilter = IdeaStatus | "all";
 // ── Status display ────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<IdeaStatus, string> = {
-  new:          "New",
-  queued:       "Queued",
+  "New":         "New",
   "In Progress": "In Progress",
-  done:         "Done",
-  rejected:     "Rejected",
+  "Complete":    "Complete",
 };
 
 const STATUS_COLORS: Record<IdeaStatus, string> = {
-  new:           "text-bone-white   bg-weathered-stone/30",
-  queued:        "text-portal-gold  bg-portal-gold/10",
-  "In Progress": "text-cosmic-teal  bg-cosmic-teal/10",
-  done:          "text-portal-gold  bg-portal-gold/20",
-  rejected:      "text-bone-white   bg-deep-crimson/50",
+  "New":         "text-bone-white  bg-weathered-stone/30",
+  "In Progress": "text-cosmic-teal bg-cosmic-teal/10",
+  "Complete":    "text-portal-gold bg-portal-gold/20",
 };
 
-const ALL_STATUSES: IdeaStatus[] = ["new", "queued", "In Progress", "done", "rejected"];
+const ALL_STATUSES: IdeaStatus[] = ["New", "In Progress", "Complete"];
 
 // ── Fetchers ──────────────────────────────────────────────────────────────────
 
