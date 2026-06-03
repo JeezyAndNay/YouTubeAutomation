@@ -216,6 +216,9 @@ Sound effects add immersion and punctuate key moments. There are three SFX types
 Continuous background texture tied to the location being described. One ambient layer per narrative location.
 
 - Placed at the start of the relevant scene, ends when the location shifts
+- `start` = scene audio_in timestamp where location begins
+- `end` = scene audio_out timestamp where location ends
+- `duration` = end - start (the full span the ambient layer plays in the episode)
 - Volume: -28 dB relative to narration (barely perceptible — fills silence)
 - Examples: desert wind, underground dripping, ocean waves, crowd murmur, fire crackling
 
@@ -223,7 +226,7 @@ Continuous background texture tied to the location being described. One ambient 
 Short, sharp effects at specific dramatic moments. Maximum 6 per episode — use only at genuine emotional peaks.
 
 - Placed at the exact word timestamp that describes the event
-- Duration: 1–3 seconds
+- `duration`: 1.5–3 seconds
 - Volume: -12 dB relative to narration
 - Examples: stone impact, thunder crack, deep resonant tone on a major reveal, heartbeat pulse on a tense moment
 
@@ -231,10 +234,42 @@ Short, sharp effects at specific dramatic moments. Maximum 6 per episode — use
 Brief whoosh or tonal effect at major act transitions only — not at every scene change.
 
 - Placed 0.5 seconds before the act transition visual cut
-- Duration: 1.5–2 seconds
+- `duration`: 1.5–2.5 seconds maximum
 - Volume: -15 dB relative to narration
 
-Write a `prompt` string for each SFX cue — this is passed to the ElevenLabs SFX generation API.
+---
+
+#### SFX Prompt Writing Rules
+
+Every SFX cue **must** include a `prompt` string. This is passed directly to the ElevenLabs SFX API. A missing or vague prompt produces unusable audio. Write it with the same care as a visual prompt seed.
+
+**Three mandatory elements in every prompt:**
+1. **Source mechanism** — what physical object or force creates the sound (not "desert sound" — "dry wind moving across flat exposed limestone")
+2. **Acoustic character** — quality, texture, dynamics (use specific vocabulary: crisp, gritty, warm, dark, bright, brittle, thunderous, mellow, subterranean, hollow)
+3. **Acoustic environment** — the space it lives in (small cave interior, open desert plateau, stone-walled archive room, cathedral reverb)
+
+**Format rules:**
+- Length: 15–45 words. Shorter = generic. Longer = incoherent. Count if uncertain.
+- Tense: present tense, active voice. "Wind moves through stone corridors" — not "the sound of wind in corridors."
+- For sequences: describe events in order. "Stone block strikes floor, sharp crack on impact, then low rumble and short reverb."
+- No narrative language: never write "ominous," "revealing," "the feeling of dread," "the moment of discovery." Describe what physically makes the sound.
+- Be specific: "1960s institutional fluorescent tube hum at 60hz" not "electrical hum."
+
+**Per-type prompt standards:**
+
+Ambient — describe continuous texture, not a one-shot event. End with a steady-state quality word: "steady and low," "constant and still," "slow and continuous."
+- Desert: `"Dry desert wind moving steadily across flat limestone plateau, sparse sand particles sliding across rock surface, open sky ambience, distant cliff echo, steady and low"`
+- Underground: `"Deep stone chamber resonance, slow water drip echoing in far dark, faint subterranean air movement, cold and still, constant"`
+- Archive: `"Fluorescent tube lights humming at 60hz, slow air circulation from a ventilation duct, paper and dust, tile floor reverb, flat and continuous"`
+
+Punctuation — lead with the attack (the onset is the emotional trigger), then body and decay. Include reverb tail.
+- Ceramic shatter: `"Thick clay pottery jar dropped and shattering on stone floor, sharp high crack on impact, multiple shards skittering across rock, brief reverb in a small enclosed cave"`
+- Revelation tone: `"Single large bronze bowl struck with a wooden mallet, deep sustained fundamental tone, long slow decay, high stone room reverb"`
+- Impact: `"Heavy stone block dropped onto hard floor, deep thud and low rumble, short reverb in stone room"`
+
+Transition — describe movement quality (sweeping, rising, falling) and spectral character (dark, tonal, noisy). Effect should feel like passing through something.
+- Time shift: `"Low subterranean rumble rising from underground to open air, dark tonal resonance expanding outward, 2 second duration, stone cave to desert reverb shift"`
+- Act bridge: `"Deep whoosh sweep from enclosed to open acoustic space, dark harmonic wash, rapid onset, 2 second natural tail"`
 
 ---
 
@@ -288,14 +323,14 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
   ],
   "sfx_cues": [
     {
-      "cue_id": "string",
-      "type": "ambient | punctuation | transition",
-      "start": number,
-      "end": number,
-      "duration": number,
+      "cue_id": "string — format: sfx_amb_NNN | sfx_punc_NNN | sfx_trans_NNN",
+      "type": "ambient | punctuation | transition — FIELD NAME IS 'type', NOT 'sfx_type'",
+      "start": "number — FIELD NAME IS 'start', NOT 'start_time'",
+      "end": "number — start + duration for ambient; start + cue duration for punctuation/transition",
+      "duration": "number — FIELD NAME IS 'duration', NOT 'duration_seconds'",
       "description": "string",
-      "prompt": "string",
-      "volume_db": number,
+      "prompt": "string — REQUIRED, 15–45 words, physical sound source + acoustic character + acoustic environment, no narrative language",
+      "volume_db": "number — ambient: -28 | punctuation: -12 | transition: -15",
       "asset_path": null
     }
   ],
@@ -337,3 +372,7 @@ Before outputting, verify all timing is internally consistent:
 - [ ] Image:video ratio ≤ 3:1 (pinned excluded); scenes under 5 seconds are `image` type; no `prompt_seed` contains narrator, on-screen text, or camera directions
 - [ ] Pinned scene: `visual_type: pinned_video`, correct `asset_path`, `prompt_seed: null`, `include_clip_audio: true`, `clip_audio_level_db: -3`; non-pinned: `include_clip_audio: false`, `clip_audio_level_db: null`
 - [ ] Exactly 5 music cues; punctuation SFX ≤ 6; all non-pinned `asset_path` fields `null`; `placement_stats` totals accurate
+- [ ] Every `sfx_cue` has a non-empty `prompt` field (15–45 words, physical sound only, no narrative language)
+- [ ] SFX field names are exactly `type` (not `sfx_type`), `start` (not `start_time`), `duration` (not `duration_seconds`); `end` field present on every cue
+- [ ] Ambient cue `duration` = full narrative span the layer plays (not 8 — that is the generated clip length, set by the SFX Agent downstream)
+- [ ] Transition cue `duration` ≤ 2.5 seconds

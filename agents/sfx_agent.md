@@ -154,7 +154,7 @@ ElevenLabs SFX generates to a target duration. Set `duration_seconds` as follows
 
 | Type | Rule |
 |---|---|
-| `ambient` | `8` seconds — n8n loops or fades this layer over the scene; 8s gives enough texture to loop cleanly |
+| `ambient` | `22` seconds — n8n loops this layer over the scene; 22s gives enough organic variation that the loop seam is imperceptible over a 2–4 minute ambient span |
 | `punctuation` | Match the cue `duration` from `media_timeline.json`, capped at `3.0` seconds |
 | `transition` | Match the cue `duration`, capped at `2.5` seconds — minimum `1.5` |
 
@@ -221,7 +221,7 @@ Before outputting the manifest, verify every item:
 - [ ] Every `elevenlabs_prompt` describes physical sound source, acoustic character, and acoustic environment
 - [ ] No `elevenlabs_prompt` contains narrative or emotional language ("ominous," "revealing," "the feeling of")
 - [ ] No `elevenlabs_prompt` describes the narrative context — only the physical sound
-- [ ] All `ambient` cues have `duration_seconds: 8` and `prompt_influence: 0.3`
+- [ ] All `ambient` cues have `duration_seconds: 22` and `prompt_influence: 0.3`
 - [ ] All `punctuation` cues have `duration_seconds ≤ 3.0` and `prompt_influence: 0.5`
 - [ ] All `transition` cues have `1.5 ≤ duration_seconds ≤ 2.5` and `prompt_influence: 0.5`
 - [ ] Every `filename` matches `{cue_id}.mp3` exactly
