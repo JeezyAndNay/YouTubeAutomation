@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { startPhase2, startPhase3, rejectEpisode } from "@/app/actions/episodes";
+import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode } from "@/app/actions/episodes";
 import type { Episode, EpisodeOutputs, FileGroup } from "@/lib/episodes";
 
 // ── Artifact definitions ─────────────────────────────────────────────────────
@@ -212,10 +212,11 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
 
   // Determine available actions
   const isRunning = status === "running";
+  const canPhase1 = phase === null && !isRunning;
   const canPhase2 = phase === 1 && !isRunning;
   const canPhase3 = phase === 2 && !isRunning;
   const canReject = !isRunning && status !== "done" && status !== "rejected";
-  const hasActions = canPhase2 || canPhase3 || canReject;
+  const hasActions = canPhase1 || canPhase2 || canPhase3 || canReject;
 
   return (
     <div className="flex flex-1 min-h-0">
@@ -276,6 +277,15 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
               </div>
             ) : (
               <div className="space-y-2">
+                {canPhase1 && (
+                  <button
+                    onClick={() => runAction(() => startPhase1ForEpisode(slug))}
+                    disabled={isPending}
+                    className="w-full bg-portal-gold text-charcoal font-semibold text-xs py-2 rounded hover:bg-amber-torchlight disabled:opacity-40 transition-colors"
+                  >
+                    {isPending ? "Triggering..." : "Start Phase 1"}
+                  </button>
+                )}
                 {canPhase2 && (
                   <button
                     onClick={() => runAction(() => startPhase2(slug))}
