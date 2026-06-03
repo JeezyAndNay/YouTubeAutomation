@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* ── Ruins Untold brand tokens ── */
+@theme inline {
+  --color-abyss:            #0D1A1E;
+  --color-deep-teal:        #0F2B2F;
+  --color-charcoal:         #1E1E1E;
+  --color-weathered-stone:  #6B6560;
+  --color-aged-parchment:   #C8B89A;
+  --color-portal-gold:      #C8901A;
+  --color-amber-torchlight: #D4700A;
+  --color-bone-white:       #F0EBE0;
+  --color-cosmic-teal:      #00B8C4;
+  --color-deep-crimson:     #7A1515;
+  --color-celestial-blue:   #1A3A5C;
+
+  --font-display: var(--font-cinzel), 'Trajan Pro', serif;
+  --font-body:    var(--font-inter), 'DM Sans', sans-serif;
+}
+
+/* ── Base ── */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: #0D1A1E;
+  color: #F0EBE0;
+  font-family: var(--font-body);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar        { width: 6px; }
+::-webkit-scrollbar-track  { background: #0F2B2F; }
+::-webkit-scrollbar-thumb  { background: #6B6560; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #C8901A; }

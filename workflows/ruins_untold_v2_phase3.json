@@ -174,19 +174,6 @@
       },
       {
         "parameters": {
-          "jsCode": "const fs   = require('fs');\nconst vars = $('Load Project').first().json;\nconst sd   = $getWorkflowStaticData('global');\nconst prev = $input.first().json;\n\n// Read render completion data\nconst complete = JSON.parse(fs.readFileSync(vars.renderCompletePath, 'utf-8'));\n\nconst summary = {\n  project:              vars.slug,\n  topic:                vars.topic,\n  phase3Complete:       true,\n  completedAt:          new Date().toISOString(),\n  render: {\n    outputPath:      complete.output_path,\n    durationSeconds: complete.duration_seconds,\n    durationMin:     parseFloat((complete.duration_seconds / 60).toFixed(1)),\n    scenesRendered:  complete.scenes_rendered,\n    assetsFound:     complete.assets_found,\n    assetsMissing:   complete.assets_missing,\n    renderComplete:  complete.completed_at,\n  },\n  thumbnailPromptPath:  prev.thumbnailPromptPath  || '',\n  thumbnailTextOverlay: prev.thumbnailTextOverlay || '',\n};\n\nfs.writeFileSync(vars.summaryPath, JSON.stringify(summary, null, 2));\nsd.renderCheckAttempts = 0; // reset counter for next run\n\nconsole.log('=== PHASE 3 COMPLETE ===');\nconsole.log(`Video   : ${summary.render.outputPath}`);\nconsole.log(`Duration: ${summary.render.durationMin} min`);\nconsole.log(`Scenes  : ${summary.render.scenesRendered} (${summary.render.assetsMissing} fallback black)`);\nconsole.log(`Thumbnail prompt: ${summary.thumbnailPromptPath}`);\n\nreturn [{ json: summary }];\n"
-        },
-        "id": "p3-012-summary",
-        "name": "Phase 3 Summary",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1080,
-          880
-        ]
-      },
-      {
-        "parameters": {
           "content": "## Phase 3: Video Render\n\n**Input:** Phase 2 complete (scripts/media_timeline.json)\n\n**Output:** renders/final_video.mp4\n\n### Flow\n1. Scan for Phase 2-complete episodes without a render\n2. Select episode via form\n3. Validate all assets (images, videos, music, SFX)\n4. Launch render.js in background\n5. Poll every 60s until renders/render_complete.json appears\n6. Extract thumbnail at T=5s\n7. Write renders/phase3_complete.json\n\n### render.js produces\n- `renders/clips/` \u2014 per-scene video clips\n- `renders/video_raw.mp4` \u2014 assembled visuals\n- `renders/audio_mix.aac` \u2014 mixed voiceover + music + SFX\n- `renders/final_video.mp4` \u2014 final deliverable\n- `renders/render_complete.json` \u2014 completion marker\n\n### Typical render time\n~15\u201330 min for a 25\u201330 min episode\nMax poll wait: 40 checks \u00d7 60s = 40 min",
           "height": 380,
           "width": 500
@@ -216,115 +203,6 @@
         ]
       },
       {
-        "parameters": {
-          "resume": "form",
-          "formTitle": "RUINS UNTOLD \u2014 THUMBNAIL STYLE",
-          "formDescription": "={{ 'EPISODE: ' + $(\\'Load Project\\').first().json.topic + '\\n' + '\u2501'.repeat(42) + '\\nSELECT THUMBNAIL TEMPLATE:\\n1 \u2014 Revelation Shot  (artifact + vault/dig-site + doc stamp)\\n2 \u2014 Explorer Face    (host reaction + location background)\\n3 \u2014 Split Reveal     (official story vs suppressed truth)\\n4 \u2014 Mystery Object   (single artifact on pure black)\\n5 \u2014 Location Atmosphere  (full-bleed environment, no face)' }}",
-          "formFields": {
-            "values": [
-              {
-                "fieldLabel": "TEMPLATE NUMBER",
-                "fieldType": "number",
-                "placeholder": "1",
-                "requiredField": true
-              },
-              {
-                "fieldLabel": "EPISODE TITLE OVERRIDE",
-                "fieldType": "text",
-                "placeholder": "Leave blank to use project title",
-                "requiredField": false
-              }
-            ]
-          },
-          "responseMode": "lastNode",
-          "options": {}
-        },
-        "id": "p3-011-thumb-style",
-        "name": "Select Thumbnail Style",
-        "type": "n8n-nodes-base.wait",
-        "typeVersion": 1.1,
-        "position": [
-          -320,
-          880
-        ],
-        "webhookId": "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-      },
-      {
-        "parameters": {
-          "jsCode": "const fs   = require('fs');\nconst vars = $('Load Project').first().json;\nconst form = $input.first().json;\n\nconst templateNum  = parseInt(form['TEMPLATE NUMBER'], 10) || 1;\nconst titleOverride = (form['EPISODE TITLE OVERRIDE'] || '').trim();\nconst episodeTitle  = titleOverride || vars.topic;\n\nconst templateNames = {\n  1: 'Revelation Shot',\n  2: 'Explorer Face',\n  3: 'Split Reveal',\n  4: 'Mystery Object',\n  5: 'Location Atmosphere',\n};\n\nconst systemPrompt = fs.readFileSync(\n  '/Users/jneal/n8n_projects/ruins_untold_system_prompts/thumbnail_agent.md',\n  'utf-8'\n);\n\nconst fullPrompt = systemPrompt\n  + '\\n\\n---\\n\\nTemplate: ' + templateNum\n  + ' \u2014 ' + (templateNames[templateNum] || 'Unknown')\n  + '\\nEpisode title: ' + episodeTitle;\n\nconst thumbnailPromptPath = vars.projectDir + '/scripts/thumbnail_prompt.json';\n\nreturn [{ json: {\n  ...vars,\n  thumbnailTemplate:      templateNum,\n  thumbnailEpisodeTitle:  episodeTitle,\n  thumbnailPromptPath,\n  claudeBody: JSON.stringify({ prompt: fullPrompt }),\n} }];\n"
-        },
-        "id": "p3-011a-build-thumb",
-        "name": "Build Thumbnail Prompt",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          -40,
-          880
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "http://host.docker.internal:3333/generate",
-          "sendBody": true,
-          "contentType": "raw",
-          "rawContentType": "application/json",
-          "body": "={{ $json.claudeBody }}",
-          "options": {
-            "timeout": 1500000
-          }
-        },
-        "id": "p3-011b-call-thumb",
-        "name": "Call Claude Thumbnail",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          240,
-          880
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const fs   = require('fs');\nconst vars = $('Build Thumbnail Prompt').first().json;\nconst resp = $input.first().json;\nconst raw  = resp.output || '';\n\n// Extract JSON block\nconst jsonMatch = raw.match(/```json\\n([\\s\\S]*?)\\n```/);\nlet thumbnailJson = null;\nif (jsonMatch) {\n  try { thumbnailJson = JSON.parse(jsonMatch[1]); } catch (e) {}\n}\n\n// Extract annotation lines\nconst textMatch = raw.match(/>\\s*Text overlay suggestion:\\s*(.+)/);\nconst genMatch  = raw.match(/>\\s*To generate:\\s*(.+)/);\n\nconst pkg = {\n  episode_title:  vars.thumbnailEpisodeTitle,\n  template:       vars.thumbnailTemplate,\n  generated_at:   new Date().toISOString(),\n  thumbnail_json: thumbnailJson,\n  text_overlay:   textMatch ? textMatch[1].trim() : '',\n  kie_command:    genMatch  ? genMatch[1].trim()  : '',\n  raw_output:     raw,\n};\n\nfs.writeFileSync(vars.thumbnailPromptPath, JSON.stringify(pkg, null, 2));\n\nconsole.log('Thumbnail prompt saved:', vars.thumbnailPromptPath);\nif (pkg.text_overlay) console.log('Text overlay:', pkg.text_overlay);\n\nreturn [{ json: {\n  slug:                 vars.slug,\n  topic:                vars.topic,\n  projectDir:           vars.projectDir,\n  summaryPath:          vars.summaryPath,\n  renderCompletePath:   vars.renderCompletePath,\n  thumbnailPromptPath:  vars.thumbnailPromptPath,\n  thumbnailTextOverlay: pkg.text_overlay,\n  thumbnailKieCommand:  pkg.kie_command,\n} }];\n"
-        },
-        "id": "p3-011c-save-thumb",
-        "name": "Save Thumbnail Prompt",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          520,
-          880
-        ]
-      },
-      {
-        "parameters": {
-          "resume": "form",
-          "formTitle": "RUINS UNTOLD \u2014 THUMBNAIL PROMPT READY",
-          "formDescription": "={{ 'EPISODE: ' + $json.topic + '\\n' + '\u2501'.repeat(42) + '\\nThumbnail prompt generated and saved.\\n\\nTEXT OVERLAY: ' + $json.thumbnailTextOverlay + '\\n\\nFILE: ' + $json.thumbnailPromptPath + '\\n\\nCOMMAND:\\n' + $json.thumbnailKieCommand + '\\n\\n\u2501'.repeat(42) + '\\nReview the prompt file, then submit to complete Phase 3.' }}",
-          "formFields": {
-            "values": [
-              {
-                "fieldLabel": "NOTES",
-                "fieldType": "text",
-                "placeholder": "Optional notes (e.g. tweaks needed)",
-                "requiredField": false
-              }
-            ]
-          },
-          "responseMode": "lastNode",
-          "options": {}
-        },
-        "id": "p3-011d-review-thumb",
-        "name": "Review Thumbnail Prompt",
-        "type": "n8n-nodes-base.wait",
-        "typeVersion": 1.1,
-        "position": [
-          800,
-          880
-        ],
-        "webhookId": "c3d4e5f6-a7b8-9012-cdef-123456789012"
-      },
-      {
         "id": "p3-009a-read-row",
         "name": "Read Ideas Row",
         "type": "n8n-nodes-base.googleSheets",
@@ -340,7 +218,7 @@
           }
         },
         "parameters": {
-          "operation": "lookup",
+          "operation": "read",
           "documentId": {
             "__rl": true,
             "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
@@ -351,8 +229,6 @@
             "value": "Ideas",
             "mode": "name"
           },
-          "lookupColumn": "TOPIC",
-          "lookupValue": "={{ $('Load Project').first().json.topic }}",
           "options": {}
         }
       },
@@ -386,17 +262,17 @@
           "columns": {
             "mappingMode": "defineBelow",
             "value": {
-              "ID": "={{ $('Read Ideas Row').first().json.ID || '' }}",
-              "DATE_ADDED": "={{ $('Read Ideas Row').first().json.DATE_ADDED || '' }}",
+              "ID": "={{ $('Filter Ideas Row').first().json.ID || '' }}",
+              "DATE_ADDED": "={{ $('Filter Ideas Row').first().json.DATE_ADDED || '' }}",
               "STATUS": "Complete",
-              "TOPIC": "={{ $('Read Ideas Row').first().json.TOPIC || '' }}",
-              "ANGLE": "={{ $('Read Ideas Row').first().json.ANGLE || '' }}",
-              "KEY_EVIDENCE": "={{ $('Read Ideas Row').first().json.KEY_EVIDENCE || '' }}",
-              "KEY_RESEARCHERS": "={{ $('Read Ideas Row').first().json.KEY_RESEARCHERS || '' }}",
-              "HOOK_STYLE": "={{ $('Read Ideas Row').first().json.HOOK_STYLE || '' }}",
-              "TONE_DIAL": "={{ $('Read Ideas Row').first().json.TONE_DIAL || '' }}",
-              "RELATED_VIDEO": "={{ $('Read Ideas Row').first().json.RELATED_VIDEO || '' }}",
-              "NOTES": "={{ $('Read Ideas Row').first().json.NOTES || '' }}"
+              "TOPIC": "={{ $('Filter Ideas Row').first().json.TOPIC || '' }}",
+              "ANGLE": "={{ $('Filter Ideas Row').first().json.ANGLE || '' }}",
+              "KEY_EVIDENCE": "={{ $('Filter Ideas Row').first().json.KEY_EVIDENCE || '' }}",
+              "KEY_RESEARCHERS": "={{ $('Filter Ideas Row').first().json.KEY_RESEARCHERS || '' }}",
+              "HOOK_STYLE": "={{ $('Filter Ideas Row').first().json.HOOK_STYLE || '' }}",
+              "TONE_DIAL": "={{ $('Filter Ideas Row').first().json.TONE_DIAL || '' }}",
+              "RELATED_VIDEO": "={{ $('Filter Ideas Row').first().json.RELATED_VIDEO || '' }}",
+              "NOTES": "={{ $('Filter Ideas Row').first().json.NOTES || '' }}"
             },
             "matchingColumns": [],
             "schema": [
@@ -534,8 +410,409 @@
             "mode": "name"
           },
           "toDelete": "rows",
-          "startIndex": "={{ $('Read Ideas Row').first().json.row_number - 1 }}",
+          "startIndex": "={{ $('Filter Ideas Row').first().json.row_number - 1 }}",
           "amount": 1
+        }
+      },
+      {
+        "id": "p3-009a2-filter-row",
+        "name": "Filter Ideas Row",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -1200,
+          880
+        ],
+        "parameters": {
+          "jsCode": "const topic = $('Load Project').first().json.topic;\nconst allRows = $input.all();\nconst matched = allRows.find(r => r.json.TOPIC === topic);\nif (!matched) throw new Error(`No Ideas row found with TOPIC: ${topic}`);\nreturn [matched];"
+        }
+      },
+      {
+        "id": "p3-011-thumb-style",
+        "name": "Select Thumbnail Style",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          -400,
+          880
+        ],
+        "webhookId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+        "parameters": {
+          "resume": "form",
+          "formTitle": "RUINS UNTOLD \u2014 THUMBNAIL STYLE",
+          "formDescription": "={{ 'EPISODE: ' + $('Load Project').first().json.topic + '\\n' + '\u2501'.repeat(42) + '\\nSELECT THUMBNAIL TEMPLATE:\\n1 \u2014 Revelation Shot  (artifact + vault/dig-site + doc stamp)\\n2 \u2014 Explorer Face    (host reaction + location background)\\n3 \u2014 Split Reveal     (official story vs suppressed truth)\\n4 \u2014 Mystery Object   (single artifact on pure black)\\n5 \u2014 Location Atmosphere  (full-bleed environment, no face)' }}",
+          "formFields": {
+            "values": [
+              {
+                "fieldLabel": "TEMPLATE NUMBER",
+                "fieldType": "number",
+                "placeholder": "1",
+                "requiredField": true
+              },
+              {
+                "fieldLabel": "EPISODE TITLE OVERRIDE",
+                "fieldType": "text",
+                "placeholder": "Leave blank to use project title",
+                "requiredField": false
+              }
+            ]
+          },
+          "responseMode": "lastNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "p3-011a-build-thumb",
+        "name": "Build Thumbnail Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          0,
+          880
+        ],
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst vars = $('Load Project').first().json;\nconst form = $input.first().json;\n\nconst templateNum   = parseInt(form['TEMPLATE NUMBER'] || form.templateNum, 10) || 1;\nconst titleOverride = (form['EPISODE TITLE OVERRIDE'] || form.titleOverride || '').trim();\nconst generationNum = parseInt(form.generationNum != null ? form.generationNum : 1, 10);\nconst episodeTitle  = titleOverride || vars.topic;\n\nconst templateNames = {\n  1: 'Revelation Shot',\n  2: 'Explorer Face',\n  3: 'Split Reveal',\n  4: 'Mystery Object',\n  5: 'Location Atmosphere',\n};\n\nconst systemPrompt = fs.readFileSync(\n  '/Users/jneal/n8n_projects/ruins_untold_system_prompts/thumbnail_agent.md',\n  'utf-8'\n);\n\nconst fullPrompt = systemPrompt\n  + '\\n\\n---\\n\\nTemplate: ' + templateNum\n  + ' \u2014 ' + (templateNames[templateNum] || 'Unknown')\n  + '\\nEpisode title: ' + episodeTitle;\n\nconst thumbnailPromptPath = vars.projectDir + '/scripts/thumbnail_prompt_' + generationNum + '.json';\n\nreturn [{ json: {\n  ...vars,\n  thumbnailTemplate:      templateNum,\n  thumbnailEpisodeTitle:  episodeTitle,\n  generationNum,\n  thumbnailPromptPath,\n  claudeBody: JSON.stringify({ prompt: fullPrompt }),\n} }];\n"
+        }
+      },
+      {
+        "id": "p3-011b-call-thumb",
+        "name": "Call Claude Thumbnail",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          400,
+          880
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://host.docker.internal:3333/generate",
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.claudeBody }}",
+          "options": {
+            "timeout": 1500000
+          }
+        }
+      },
+      {
+        "id": "p3-011c-save-thumb",
+        "name": "Save Thumbnail Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          800,
+          880
+        ],
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst vars = $('Build Thumbnail Prompt').first().json;\nconst resp = $input.first().json;\nconst raw  = resp.output || '';\n\nconst jsonMatch = raw.match(/```json\\n([\\s\\S]*?)\\n```/);\nlet thumbnailJson = null;\nif (jsonMatch) {\n  try { thumbnailJson = JSON.parse(jsonMatch[1]); } catch (e) {}\n}\n\nconst textMatch = raw.match(/>\\s*Text overlay suggestion:\\s*(.+)/);\nconst genMatch  = raw.match(/>\\s*To generate:\\s*(.+)/);\n\nconst pkg = {\n  episode_title:  vars.thumbnailEpisodeTitle,\n  template:       vars.thumbnailTemplate,\n  generation:     vars.generationNum,\n  generated_at:   new Date().toISOString(),\n  thumbnail_json: thumbnailJson,\n  text_overlay:   textMatch ? textMatch[1].trim() : '',\n  kie_command:    genMatch  ? genMatch[1].trim()  : '',\n  raw_output:     raw,\n};\n\nfs.writeFileSync(vars.thumbnailPromptPath, JSON.stringify(pkg, null, 2));\n\nconsole.log('Thumbnail prompt saved:', vars.thumbnailPromptPath);\nif (pkg.text_overlay) console.log('Text overlay:', pkg.text_overlay);\n\nreturn [{ json: {\n  slug:                 vars.slug,\n  topic:                vars.topic,\n  projectDir:           vars.projectDir,\n  summaryPath:          vars.summaryPath,\n  renderCompletePath:   vars.renderCompletePath,\n  thumbnailPromptPath:  vars.thumbnailPromptPath,\n  thumbnailTextOverlay: pkg.text_overlay,\n  thumbnailKieCommand:  pkg.kie_command,\n  generationNum:        vars.generationNum,\n} }];\n"
+        }
+      },
+      {
+        "id": "p3-011d-review-thumb",
+        "name": "Review Thumbnail Prompt",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1200,
+          880
+        ],
+        "webhookId": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+        "parameters": {
+          "resume": "form",
+          "formTitle": "RUINS UNTOLD \u2014 THUMBNAIL PROMPT READY",
+          "formDescription": "={{ 'EPISODE: ' + $json.topic + '\\n' + '\u2501'.repeat(42) + '\\nPrompt ' + $json.generationNum + ' saved.' + '\\n\\nTEXT OVERLAY: ' + $json.thumbnailTextOverlay + '\\n\\nFILE: ' + $json.thumbnailPromptPath + '\\n\\nCOMMAND:\\n' + $json.thumbnailKieCommand + '\\n\\n\u2501'.repeat(42) + '\\nEnter NEXT TEMPLATE NUMBER (1-5) to generate another, or leave blank to finish.' }}",
+          "formFields": {
+            "values": [
+              {
+                "fieldLabel": "NOTES",
+                "fieldType": "text",
+                "placeholder": "Optional notes",
+                "requiredField": false
+              },
+              {
+                "fieldLabel": "NEXT TEMPLATE NUMBER",
+                "fieldType": "number",
+                "placeholder": "1-5 for another prompt, leave blank to finish",
+                "requiredField": false
+              },
+              {
+                "fieldLabel": "NEXT TITLE OVERRIDE",
+                "fieldType": "text",
+                "placeholder": "Leave blank to use episode title",
+                "requiredField": false
+              }
+            ]
+          },
+          "responseMode": "lastNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "p3-011e-if-another",
+        "name": "Generate Another?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1600,
+          880
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "check-next-template",
+                "leftValue": "={{ $json['NEXT TEMPLATE NUMBER'] }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "p3-g2-prep",
+        "name": "Prep Gen 2",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2000,
+          580
+        ],
+        "parameters": {
+          "jsCode": "const review = $input.first().json;\nconst load   = $('Load Project').first().json;\nreturn [{ json: {\n  ...load,\n  templateNum:   parseInt(review['NEXT TEMPLATE NUMBER'], 10) || 1,\n  titleOverride: (review['NEXT TITLE OVERRIDE'] || '').trim(),\n  generationNum: 2,\n} }];\n"
+        }
+      },
+      {
+        "id": "p3-g2-build",
+        "name": "Build Thumbnail Prompt 2",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2400,
+          580
+        ],
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst vars = $('Load Project').first().json;\nconst form = $input.first().json;\n\nconst templateNum   = parseInt(form['TEMPLATE NUMBER'] || form.templateNum, 10) || 1;\nconst titleOverride = (form['EPISODE TITLE OVERRIDE'] || form.titleOverride || '').trim();\nconst generationNum = parseInt(form.generationNum != null ? form.generationNum : 1, 10);\nconst episodeTitle  = titleOverride || vars.topic;\n\nconst templateNames = {\n  1: 'Revelation Shot',\n  2: 'Explorer Face',\n  3: 'Split Reveal',\n  4: 'Mystery Object',\n  5: 'Location Atmosphere',\n};\n\nconst systemPrompt = fs.readFileSync(\n  '/Users/jneal/n8n_projects/ruins_untold_system_prompts/thumbnail_agent.md',\n  'utf-8'\n);\n\nconst fullPrompt = systemPrompt\n  + '\\n\\n---\\n\\nTemplate: ' + templateNum\n  + ' \u2014 ' + (templateNames[templateNum] || 'Unknown')\n  + '\\nEpisode title: ' + episodeTitle;\n\nconst thumbnailPromptPath = vars.projectDir + '/scripts/thumbnail_prompt_' + generationNum + '.json';\n\nreturn [{ json: {\n  ...vars,\n  thumbnailTemplate:      templateNum,\n  thumbnailEpisodeTitle:  episodeTitle,\n  generationNum,\n  thumbnailPromptPath,\n  claudeBody: JSON.stringify({ prompt: fullPrompt }),\n} }];\n"
+        }
+      },
+      {
+        "id": "p3-g2-call",
+        "name": "Call Claude Thumbnail 2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2800,
+          580
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://host.docker.internal:3333/generate",
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.claudeBody }}",
+          "options": {
+            "timeout": 1500000
+          }
+        }
+      },
+      {
+        "id": "p3-g2-save",
+        "name": "Save Thumbnail Prompt 2",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3200,
+          580
+        ],
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst vars = $('Build Thumbnail Prompt 2').first().json;\nconst resp = $input.first().json;\nconst raw  = resp.output || '';\n\nconst jsonMatch = raw.match(/```json\\n([\\s\\S]*?)\\n```/);\nlet thumbnailJson = null;\nif (jsonMatch) {\n  try { thumbnailJson = JSON.parse(jsonMatch[1]); } catch (e) {}\n}\n\nconst textMatch = raw.match(/>\\s*Text overlay suggestion:\\s*(.+)/);\nconst genMatch  = raw.match(/>\\s*To generate:\\s*(.+)/);\n\nconst pkg = {\n  episode_title:  vars.thumbnailEpisodeTitle,\n  template:       vars.thumbnailTemplate,\n  generation:     vars.generationNum,\n  generated_at:   new Date().toISOString(),\n  thumbnail_json: thumbnailJson,\n  text_overlay:   textMatch ? textMatch[1].trim() : '',\n  kie_command:    genMatch  ? genMatch[1].trim()  : '',\n  raw_output:     raw,\n};\n\nfs.writeFileSync(vars.thumbnailPromptPath, JSON.stringify(pkg, null, 2));\n\nconsole.log('Thumbnail prompt saved:', vars.thumbnailPromptPath);\nif (pkg.text_overlay) console.log('Text overlay:', pkg.text_overlay);\n\nreturn [{ json: {\n  slug:                 vars.slug,\n  topic:                vars.topic,\n  projectDir:           vars.projectDir,\n  summaryPath:          vars.summaryPath,\n  renderCompletePath:   vars.renderCompletePath,\n  thumbnailPromptPath:  vars.thumbnailPromptPath,\n  thumbnailTextOverlay: pkg.text_overlay,\n  thumbnailKieCommand:  pkg.kie_command,\n  generationNum:        vars.generationNum,\n} }];\n"
+        }
+      },
+      {
+        "id": "p3-g2-review",
+        "name": "Review Thumbnail Prompt 2",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          3600,
+          580
+        ],
+        "webhookId": "d4e5f6a7-b8c9-0123-def0-234567890123",
+        "parameters": {
+          "resume": "form",
+          "formTitle": "RUINS UNTOLD \u2014 THUMBNAIL PROMPT 2 READY",
+          "formDescription": "={{ 'EPISODE: ' + $json.topic + '\\n' + '\u2501'.repeat(42) + '\\nPrompt ' + $json.generationNum + ' saved.' + '\\n\\nTEXT OVERLAY: ' + $json.thumbnailTextOverlay + '\\n\\nFILE: ' + $json.thumbnailPromptPath + '\\n\\nCOMMAND:\\n' + $json.thumbnailKieCommand + '\\n\\n\u2501'.repeat(42) + '\\nEnter NEXT TEMPLATE NUMBER (1-5) to generate another, or leave blank to finish.' }}",
+          "formFields": {
+            "values": [
+              {
+                "fieldLabel": "NOTES",
+                "fieldType": "text",
+                "placeholder": "Optional notes",
+                "requiredField": false
+              },
+              {
+                "fieldLabel": "NEXT TEMPLATE NUMBER",
+                "fieldType": "number",
+                "placeholder": "1-5 for another prompt, leave blank to finish",
+                "requiredField": false
+              },
+              {
+                "fieldLabel": "NEXT TITLE OVERRIDE",
+                "fieldType": "text",
+                "placeholder": "Leave blank to use episode title",
+                "requiredField": false
+              }
+            ]
+          },
+          "responseMode": "lastNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "p3-g2-if",
+        "name": "Generate Another? (2)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          4000,
+          580
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "check-next-template",
+                "leftValue": "={{ $json['NEXT TEMPLATE NUMBER'] }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "p3-g3-prep",
+        "name": "Prep Gen 3",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4400,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const review = $input.first().json;\nconst load   = $('Load Project').first().json;\nreturn [{ json: {\n  ...load,\n  templateNum:   parseInt(review['NEXT TEMPLATE NUMBER'], 10) || 1,\n  titleOverride: (review['NEXT TITLE OVERRIDE'] || '').trim(),\n  generationNum: 3,\n} }];\n"
+        }
+      },
+      {
+        "id": "p3-g3-build",
+        "name": "Build Thumbnail Prompt 3",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4800,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst vars = $('Load Project').first().json;\nconst form = $input.first().json;\n\nconst templateNum   = parseInt(form['TEMPLATE NUMBER'] || form.templateNum, 10) || 1;\nconst titleOverride = (form['EPISODE TITLE OVERRIDE'] || form.titleOverride || '').trim();\nconst generationNum = parseInt(form.generationNum != null ? form.generationNum : 1, 10);\nconst episodeTitle  = titleOverride || vars.topic;\n\nconst templateNames = {\n  1: 'Revelation Shot',\n  2: 'Explorer Face',\n  3: 'Split Reveal',\n  4: 'Mystery Object',\n  5: 'Location Atmosphere',\n};\n\nconst systemPrompt = fs.readFileSync(\n  '/Users/jneal/n8n_projects/ruins_untold_system_prompts/thumbnail_agent.md',\n  'utf-8'\n);\n\nconst fullPrompt = systemPrompt\n  + '\\n\\n---\\n\\nTemplate: ' + templateNum\n  + ' \u2014 ' + (templateNames[templateNum] || 'Unknown')\n  + '\\nEpisode title: ' + episodeTitle;\n\nconst thumbnailPromptPath = vars.projectDir + '/scripts/thumbnail_prompt_' + generationNum + '.json';\n\nreturn [{ json: {\n  ...vars,\n  thumbnailTemplate:      templateNum,\n  thumbnailEpisodeTitle:  episodeTitle,\n  generationNum,\n  thumbnailPromptPath,\n  claudeBody: JSON.stringify({ prompt: fullPrompt }),\n} }];\n"
+        }
+      },
+      {
+        "id": "p3-g3-call",
+        "name": "Call Claude Thumbnail 3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          5200,
+          280
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://host.docker.internal:3333/generate",
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.claudeBody }}",
+          "options": {
+            "timeout": 1500000
+          }
+        }
+      },
+      {
+        "id": "p3-g3-save",
+        "name": "Save Thumbnail Prompt 3",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5600,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst vars = $('Build Thumbnail Prompt 3').first().json;\nconst resp = $input.first().json;\nconst raw  = resp.output || '';\n\nconst jsonMatch = raw.match(/```json\\n([\\s\\S]*?)\\n```/);\nlet thumbnailJson = null;\nif (jsonMatch) {\n  try { thumbnailJson = JSON.parse(jsonMatch[1]); } catch (e) {}\n}\n\nconst textMatch = raw.match(/>\\s*Text overlay suggestion:\\s*(.+)/);\nconst genMatch  = raw.match(/>\\s*To generate:\\s*(.+)/);\n\nconst pkg = {\n  episode_title:  vars.thumbnailEpisodeTitle,\n  template:       vars.thumbnailTemplate,\n  generation:     vars.generationNum,\n  generated_at:   new Date().toISOString(),\n  thumbnail_json: thumbnailJson,\n  text_overlay:   textMatch ? textMatch[1].trim() : '',\n  kie_command:    genMatch  ? genMatch[1].trim()  : '',\n  raw_output:     raw,\n};\n\nfs.writeFileSync(vars.thumbnailPromptPath, JSON.stringify(pkg, null, 2));\n\nconsole.log('Thumbnail prompt saved:', vars.thumbnailPromptPath);\nif (pkg.text_overlay) console.log('Text overlay:', pkg.text_overlay);\n\nreturn [{ json: {\n  slug:                 vars.slug,\n  topic:                vars.topic,\n  projectDir:           vars.projectDir,\n  summaryPath:          vars.summaryPath,\n  renderCompletePath:   vars.renderCompletePath,\n  thumbnailPromptPath:  vars.thumbnailPromptPath,\n  thumbnailTextOverlay: pkg.text_overlay,\n  thumbnailKieCommand:  pkg.kie_command,\n  generationNum:        vars.generationNum,\n} }];\n"
+        }
+      },
+      {
+        "id": "p3-g3-review",
+        "name": "Review Thumbnail Prompt 3",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          6000,
+          280
+        ],
+        "webhookId": "e5f6a7b8-c9d0-1234-ef01-345678901234",
+        "parameters": {
+          "resume": "form",
+          "formTitle": "RUINS UNTOLD \u2014 THUMBNAIL PROMPT 3 READY",
+          "formDescription": "={{ 'EPISODE: ' + $json.topic + '\\n' + '\u2501'.repeat(42) + '\\nPrompt ' + $json.generationNum + ' saved.' + '\\n\\nTEXT OVERLAY: ' + $json.thumbnailTextOverlay + '\\n\\nFILE: ' + $json.thumbnailPromptPath + '\\n\\nCOMMAND:\\n' + $json.thumbnailKieCommand + '\\n\\n\u2501'.repeat(42) + '\\nEnter NEXT TEMPLATE NUMBER (1-5) to generate another, or leave blank to finish.' }}",
+          "formFields": {
+            "values": [
+              {
+                "fieldLabel": "NOTES",
+                "fieldType": "text",
+                "placeholder": "Optional notes",
+                "requiredField": false
+              }
+            ]
+          },
+          "responseMode": "lastNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "p3-012-summary",
+        "name": "Phase 3 Summary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          6400,
+          880
+        ],
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst vars = $('Load Project').first().json;\nconst sd   = $getWorkflowStaticData('global');\nconst prev = $input.first().json;\n\nconst complete = JSON.parse(fs.readFileSync(vars.renderCompletePath, 'utf-8'));\n\nconst thumbFiles = [1,2,3].map(n => vars.projectDir + '/scripts/thumbnail_prompt_' + n + '.json')\n                          .filter(p => { try { fs.accessSync(p); return true; } catch(e) { return false; } });\n\nconst summary = {\n  project:              vars.slug,\n  topic:                vars.topic,\n  phase3Complete:       true,\n  completedAt:          new Date().toISOString(),\n  render: {\n    outputPath:      complete.output_path,\n    durationSeconds: complete.duration_seconds,\n    durationMin:     parseFloat((complete.duration_seconds / 60).toFixed(1)),\n    scenesRendered:  complete.scenes_rendered,\n    assetsFound:     complete.assets_found,\n    assetsMissing:   complete.assets_missing,\n    renderComplete:  complete.completed_at,\n  },\n  thumbnailPrompts:     thumbFiles,\n  thumbnailTextOverlay: prev.thumbnailTextOverlay || '',\n};\n\nfs.writeFileSync(vars.summaryPath, JSON.stringify(summary, null, 2));\nsd.renderCheckAttempts = 0;\n\nconsole.log('=== PHASE 3 COMPLETE ===');\nconsole.log('Video   :', summary.render.outputPath);\nconsole.log('Duration:', summary.render.durationMin, 'min');\nconsole.log('Scenes  :', summary.render.scenesRendered, '(' + summary.render.assetsMissing + ' fallback black)');\nconsole.log('Thumbnails:', thumbFiles.length, 'prompt(s) generated');\nthumbFiles.forEach(p => console.log(' -', p));\n\nreturn [{ json: summary }];\n"
         }
       }
     ],
@@ -657,6 +934,50 @@
           ]
         ]
       },
+      "Read Ideas Row": {
+        "main": [
+          [
+            {
+              "node": "Filter Ideas Row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Append to Completed": {
+        "main": [
+          [
+            {
+              "node": "Delete from Ideas",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Delete from Ideas": {
+        "main": [
+          [
+            {
+              "node": "Select Thumbnail Style",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter Ideas Row": {
+        "main": [
+          [
+            {
+              "node": "Append to Completed",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
       "Select Thumbnail Style": {
         "main": [
           [
@@ -705,6 +1026,24 @@
         "main": [
           [
             {
+              "node": "Generate Another?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Another?": {
+        "main": [
+          [
+            {
+              "node": "Prep Gen 2",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
               "node": "Phase 3 Summary",
               "type": "main",
               "index": 0
@@ -712,33 +1051,128 @@
           ]
         ]
       },
-      "Read Ideas Row": {
+      "Prep Gen 2": {
         "main": [
           [
             {
-              "node": "Append to Completed",
+              "node": "Build Thumbnail Prompt 2",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Append to Completed": {
+      "Build Thumbnail Prompt 2": {
         "main": [
           [
             {
-              "node": "Delete from Ideas",
+              "node": "Call Claude Thumbnail 2",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Delete from Ideas": {
+      "Call Claude Thumbnail 2": {
         "main": [
           [
             {
-              "node": "Select Thumbnail Style",
+              "node": "Save Thumbnail Prompt 2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Thumbnail Prompt 2": {
+        "main": [
+          [
+            {
+              "node": "Review Thumbnail Prompt 2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Review Thumbnail Prompt 2": {
+        "main": [
+          [
+            {
+              "node": "Generate Another? (2)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Another? (2)": {
+        "main": [
+          [
+            {
+              "node": "Prep Gen 3",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Phase 3 Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep Gen 3": {
+        "main": [
+          [
+            {
+              "node": "Build Thumbnail Prompt 3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Thumbnail Prompt 3": {
+        "main": [
+          [
+            {
+              "node": "Call Claude Thumbnail 3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Claude Thumbnail 3": {
+        "main": [
+          [
+            {
+              "node": "Save Thumbnail Prompt 3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Thumbnail Prompt 3": {
+        "main": [
+          [
+            {
+              "node": "Review Thumbnail Prompt 3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Review Thumbnail Prompt 3": {
+        "main": [
+          [
+            {
+              "node": "Phase 3 Summary",
               "type": "main",
               "index": 0
             }
