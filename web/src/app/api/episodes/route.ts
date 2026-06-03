@@ -30,6 +30,7 @@ export async function POST(request: Request) {
     for (const dir of EPISODE_SUBDIRS) {
       fs.mkdirSync(path.join(projectDir, dir), { recursive: true });
     }
+    fs.writeFileSync(path.join(projectDir, ".topic"), clean, "utf-8");
     return NextResponse.json({ slug }, { status: 201 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

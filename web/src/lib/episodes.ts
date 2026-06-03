@@ -31,7 +31,8 @@ export function episodeDir(slug: string) {
 
 function deriveEpisode(slug: string): Episode {
   const dir = path.join(PROJECTS_DIR, slug);
-  const topic = slug.replace(/_\d{12}$/, "").replace(/_/g, " ");
+  const topic = readOptionalFile(path.join(dir, ".topic"))
+    ?? slug.replace(/_\d{12}$/, "").replace(/_/g, " ");
 
   const phase = detectPhase(dir);
   const status = detectStatus(dir);
