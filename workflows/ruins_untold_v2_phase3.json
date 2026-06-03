@@ -1,7 +1,7 @@
 [
   {
     "id": "rU-phase3-v2-2026",
-    "name": "Ruins Untold v2 — Phase 3: Video Render",
+    "name": "Ruins Untold v2 \u2014 Phase 3: Video Render",
     "description": null,
     "active": false,
     "isArchived": false,
@@ -12,7 +12,10 @@
         "name": "Manual Trigger",
         "type": "n8n-nodes-base.manualTrigger",
         "typeVersion": 1,
-        "position": [-3600, 880]
+        "position": [
+          -3600,
+          880
+        ]
       },
       {
         "parameters": {
@@ -22,13 +25,16 @@
         "name": "Scan Projects",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [-3360, 880]
+        "position": [
+          -3360,
+          880
+        ]
       },
       {
         "parameters": {
           "resume": "form",
-          "formTitle": "RUINS UNTOLD — PHASE 3 RENDER",
-          "formDescription": "={{ 'SELECT EPISODE FOR PHASE 3 RENDER\\n' + '━'.repeat(42) + '\\nREADY PROJECTS (media_timeline.json complete):\\n' + $('Scan Projects').first().json.readyProjects.map((d,i) => (i+1) + '. ' + d).join('\\n') }}",
+          "formTitle": "RUINS UNTOLD \u2014 PHASE 3 RENDER",
+          "formDescription": "={{ 'SELECT EPISODE FOR PHASE 3 RENDER\\n' + '\u2501'.repeat(42) + '\\nREADY PROJECTS (media_timeline.json complete):\\n' + $('Scan Projects').first().json.readyProjects.map((d,i) => (i+1) + '. ' + d).join('\\n') }}",
           "formFields": {
             "values": [
               {
@@ -46,18 +52,24 @@
         "name": "Select Episode",
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
-        "position": [-3120, 880],
+        "position": [
+          -3120,
+          880
+        ],
         "webhookId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
       },
       {
         "parameters": {
-          "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Scan Projects').first().json.allRows);\n\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection: ${selection}. Choose 1–${allRows.length}.`);\n\nconst row        = allRows[selection - 1];\nconst projectDir = row.projectDir;\nconst slug       = row.slug;\n\nconst timelinePath = path.join(projectDir, 'scripts', 'media_timeline.json');\nconst timeline     = JSON.parse(fs.readFileSync(timelinePath, 'utf-8'));\nconst topic        = timeline.episode_title || slug;\n\nconst renderDir = path.join(projectDir, 'renders');\n\nreturn [{ json: {\n  slug,\n  projectDir,\n  topic,\n  timelinePath,\n  renderDir,\n  renderScript:       '/Users/jneal/n8n_projects/render.js',\n  renderLogPath:      path.join(renderDir, 'render.log'),\n  renderPidPath:      path.join(renderDir, 'render.pid'),\n  renderCompletePath: path.join(renderDir, 'render_complete.json'),\n  finalVideoPath:     path.join(renderDir, 'final_video.mp4'),\n  thumbnailPath:      path.join(renderDir, 'thumbnail.jpg'),\n  summaryPath:        path.join(renderDir, 'phase3_complete.json'),\n} }];\n"
+          "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Scan Projects').first().json.allRows);\n\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection: ${selection}. Choose 1\u2013${allRows.length}.`);\n\nconst row        = allRows[selection - 1];\nconst projectDir = row.projectDir;\nconst slug       = row.slug;\n\nconst timelinePath = path.join(projectDir, 'scripts', 'media_timeline.json');\nconst timeline     = JSON.parse(fs.readFileSync(timelinePath, 'utf-8'));\nconst topic        = timeline.episode_title || slug;\n\nconst renderDir = path.join(projectDir, 'renders');\n\nreturn [{ json: {\n  slug,\n  projectDir,\n  topic,\n  timelinePath,\n  renderDir,\n  renderScript:       '/Users/jneal/n8n_projects/render.js',\n  renderLogPath:      path.join(renderDir, 'render.log'),\n  renderPidPath:      path.join(renderDir, 'render.pid'),\n  renderCompletePath: path.join(renderDir, 'render_complete.json'),\n  finalVideoPath:     path.join(renderDir, 'final_video.mp4'),\n  thumbnailPath:      path.join(renderDir, 'thumbnail.jpg'),\n  summaryPath:        path.join(renderDir, 'phase3_complete.json'),\n} }];\n"
         },
         "id": "p3-004-load-project",
         "name": "Load Project",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [-2880, 880]
+        "position": [
+          -2880,
+          880
+        ]
       },
       {
         "parameters": {
@@ -67,7 +79,10 @@
         "name": "Validate Assets",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [-2640, 880]
+        "position": [
+          -2640,
+          880
+        ]
       },
       {
         "parameters": {
@@ -77,7 +92,10 @@
         "name": "Launch Render",
         "type": "n8n-nodes-base.executeCommand",
         "typeVersion": 1,
-        "position": [-2400, 880]
+        "position": [
+          -2400,
+          880
+        ]
       },
       {
         "parameters": {
@@ -89,7 +107,10 @@
         "name": "Wait 90s",
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1,
-        "position": [-2160, 880]
+        "position": [
+          -2160,
+          880
+        ]
       },
       {
         "parameters": {
@@ -99,7 +120,10 @@
         "name": "Check Render",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [-1920, 880]
+        "position": [
+          -1920,
+          880
+        ]
       },
       {
         "parameters": {
@@ -128,7 +152,10 @@
         "name": "Render Done?",
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
-        "position": [-1680, 880]
+        "position": [
+          -1680,
+          880
+        ]
       },
       {
         "parameters": {
@@ -140,31 +167,27 @@
         "name": "Wait 60s",
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1,
-        "position": [-1680, 1120]
+        "position": [
+          -1680,
+          1120
+        ]
       },
       {
         "parameters": {
-          "command": "={{ 'ffmpeg -y -ss 5 -i \"' + $json.finalVideoPath + '\" -frames:v 1 -vf \"scale=1280:720\" \"' + $json.thumbnailPath + '\" && echo \"Thumbnail OK\"' }}"
-        },
-        "id": "p3-011-gen-thumbnail",
-        "name": "Generate Thumbnail",
-        "type": "n8n-nodes-base.executeCommand",
-        "typeVersion": 1,
-        "position": [-1440, 880]
-      },
-      {
-        "parameters": {
-          "jsCode": "const fs   = require('fs');\nconst vars = $('Load Project').first().json;\nconst sd   = $getWorkflowStaticData('global');\n\n// Read render completion data\nconst complete = JSON.parse(fs.readFileSync(vars.renderCompletePath, 'utf-8'));\n\nconst summary = {\n  project:        vars.slug,\n  topic:          vars.topic,\n  phase3Complete: true,\n  completedAt:    new Date().toISOString(),\n  render: {\n    outputPath:      complete.output_path,\n    durationSeconds: complete.duration_seconds,\n    durationMin:     parseFloat((complete.duration_seconds / 60).toFixed(1)),\n    scenesRendered:  complete.scenes_rendered,\n    assetsFound:     complete.assets_found,\n    assetsMissing:   complete.assets_missing,\n    renderComplete:  complete.completed_at,\n  },\n  thumbnailPath:  vars.thumbnailPath,\n};\n\nfs.writeFileSync(vars.summaryPath, JSON.stringify(summary, null, 2));\nsd.renderCheckAttempts = 0; // reset counter for next run\n\nconsole.log('=== PHASE 3 COMPLETE ===');\nconsole.log(`Video   : ${summary.render.outputPath}`);\nconsole.log(`Duration: ${summary.render.durationMin} min`);\nconsole.log(`Scenes  : ${summary.render.scenesRendered} (${summary.render.assetsMissing} fallback black)`);\n\nreturn [{ json: summary }];\n"
+          "jsCode": "const fs   = require('fs');\nconst vars = $('Load Project').first().json;\nconst sd   = $getWorkflowStaticData('global');\nconst prev = $input.first().json;\n\n// Read render completion data\nconst complete = JSON.parse(fs.readFileSync(vars.renderCompletePath, 'utf-8'));\n\nconst summary = {\n  project:              vars.slug,\n  topic:                vars.topic,\n  phase3Complete:       true,\n  completedAt:          new Date().toISOString(),\n  render: {\n    outputPath:      complete.output_path,\n    durationSeconds: complete.duration_seconds,\n    durationMin:     parseFloat((complete.duration_seconds / 60).toFixed(1)),\n    scenesRendered:  complete.scenes_rendered,\n    assetsFound:     complete.assets_found,\n    assetsMissing:   complete.assets_missing,\n    renderComplete:  complete.completed_at,\n  },\n  thumbnailPromptPath:  prev.thumbnailPromptPath  || '',\n  thumbnailTextOverlay: prev.thumbnailTextOverlay || '',\n};\n\nfs.writeFileSync(vars.summaryPath, JSON.stringify(summary, null, 2));\nsd.renderCheckAttempts = 0; // reset counter for next run\n\nconsole.log('=== PHASE 3 COMPLETE ===');\nconsole.log(`Video   : ${summary.render.outputPath}`);\nconsole.log(`Duration: ${summary.render.durationMin} min`);\nconsole.log(`Scenes  : ${summary.render.scenesRendered} (${summary.render.assetsMissing} fallback black)`);\nconsole.log(`Thumbnail prompt: ${summary.thumbnailPromptPath}`);\n\nreturn [{ json: summary }];\n"
         },
         "id": "p3-012-summary",
         "name": "Phase 3 Summary",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [-1200, 880]
+        "position": [
+          -40,
+          880
+        ]
       },
       {
         "parameters": {
-          "content": "## Phase 3: Video Render\n\n**Input:** Phase 2 complete (scripts/media_timeline.json)\n\n**Output:** renders/final_video.mp4\n\n### Flow\n1. Scan for Phase 2-complete episodes without a render\n2. Select episode via form\n3. Validate all assets (images, videos, music, SFX)\n4. Launch render.js in background\n5. Poll every 60s until renders/render_complete.json appears\n6. Extract thumbnail at T=5s\n7. Write renders/phase3_complete.json\n\n### render.js produces\n- `renders/clips/` — per-scene video clips\n- `renders/video_raw.mp4` — assembled visuals\n- `renders/audio_mix.aac` — mixed voiceover + music + SFX\n- `renders/final_video.mp4` — final deliverable\n- `renders/render_complete.json` — completion marker\n\n### Typical render time\n~15–30 min for a 25–30 min episode\nMax poll wait: 40 checks × 60s = 40 min",
+          "content": "## Phase 3: Video Render\n\n**Input:** Phase 2 complete (scripts/media_timeline.json)\n\n**Output:** renders/final_video.mp4\n\n### Flow\n1. Scan for Phase 2-complete episodes without a render\n2. Select episode via form\n3. Validate all assets (images, videos, music, SFX)\n4. Launch render.js in background\n5. Poll every 60s until renders/render_complete.json appears\n6. Extract thumbnail at T=5s\n7. Write renders/phase3_complete.json\n\n### render.js produces\n- `renders/clips/` \u2014 per-scene video clips\n- `renders/video_raw.mp4` \u2014 assembled visuals\n- `renders/audio_mix.aac` \u2014 mixed voiceover + music + SFX\n- `renders/final_video.mp4` \u2014 final deliverable\n- `renders/render_complete.json` \u2014 completion marker\n\n### Typical render time\n~15\u201330 min for a 25\u201330 min episode\nMax poll wait: 40 checks \u00d7 60s = 40 min",
           "height": 380,
           "width": 500
         },
@@ -172,11 +195,14 @@
         "name": "Note: Phase 3 Overview",
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
-        "position": [-3600, 1100]
+        "position": [
+          -3600,
+          1100
+        ]
       },
       {
         "parameters": {
-          "content": "## render.js\n\nPath: `/Users/jneal/n8n_projects/render.js`\n\n### Scene clip logic\n- **Image:** Ken Burns zoom-in (1.0→1.04) via zoompan filter\n- **Video:** Scale + crop to 1920×1080, trim to scene duration\n- **Missing asset:** Black screen fallback\n\n### Transitions\nxfade cross-dissolve (0.75s) between all scenes\nFalls back to simple concat if xfade fails\n\n### Audio mix\n- Voiceover at 0dB (full)\n- Music cues: timed + volume + fade in/out\n- SFX cues: timed + volume\n- amix with duration=first\n\n### Re-run safety\nSkips existing clips with valid duration\nDeletes video_raw.mp4 if < 50% expected length",
+          "content": "## render.js\n\nPath: `/Users/jneal/n8n_projects/render.js`\n\n### Scene clip logic\n- **Image:** Ken Burns zoom-in (1.0\u21921.04) via zoompan filter\n- **Video:** Scale + crop to 1920\u00d71080, trim to scene duration\n- **Missing asset:** Black screen fallback\n\n### Transitions\nxfade cross-dissolve (0.75s) between all scenes\nFalls back to simple concat if xfade fails\n\n### Audio mix\n- Voiceover at 0dB (full)\n- Music cues: timed + volume + fade in/out\n- SFX cues: timed + volume\n- amix with duration=first\n\n### Re-run safety\nSkips existing clips with valid duration\nDeletes video_raw.mp4 if < 50% expected length",
           "height": 300,
           "width": 400
         },
@@ -184,45 +210,293 @@
         "name": "Note: Render Script",
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
-        "position": [-2400, 1100]
+        "position": [
+          -2400,
+          1100
+        ]
+      },
+      {
+        "parameters": {
+          "resume": "form",
+          "formTitle": "RUINS UNTOLD \u2014 THUMBNAIL STYLE",
+          "formDescription": "={{ 'EPISODE: ' + $(\\'Load Project\\').first().json.topic + '\\n' + '\u2501'.repeat(42) + '\\nSELECT THUMBNAIL TEMPLATE:\\n1 \u2014 Revelation Shot  (artifact + vault/dig-site + doc stamp)\\n2 \u2014 Explorer Face    (host reaction + location background)\\n3 \u2014 Split Reveal     (official story vs suppressed truth)\\n4 \u2014 Mystery Object   (single artifact on pure black)\\n5 \u2014 Location Atmosphere  (full-bleed environment, no face)' }}",
+          "formFields": {
+            "values": [
+              {
+                "fieldLabel": "TEMPLATE NUMBER",
+                "fieldType": "number",
+                "placeholder": "1",
+                "requiredField": true
+              },
+              {
+                "fieldLabel": "EPISODE TITLE OVERRIDE",
+                "fieldType": "text",
+                "placeholder": "Leave blank to use project title",
+                "requiredField": false
+              }
+            ]
+          },
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "id": "p3-011-thumb-style",
+        "name": "Select Thumbnail Style",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          -1440,
+          880
+        ],
+        "webhookId": "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+      },
+      {
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst vars = $('Load Project').first().json;\nconst form = $input.first().json;\n\nconst templateNum  = parseInt(form['TEMPLATE NUMBER'], 10) || 1;\nconst titleOverride = (form['EPISODE TITLE OVERRIDE'] || '').trim();\nconst episodeTitle  = titleOverride || vars.topic;\n\nconst templateNames = {\n  1: 'Revelation Shot',\n  2: 'Explorer Face',\n  3: 'Split Reveal',\n  4: 'Mystery Object',\n  5: 'Location Atmosphere',\n};\n\nconst systemPrompt = fs.readFileSync(\n  '/Users/jneal/n8n_projects/ruins_untold_system_prompts/thumbnail_agent.md',\n  'utf-8'\n);\n\nconst fullPrompt = systemPrompt\n  + '\\n\\n---\\n\\nTemplate: ' + templateNum\n  + ' \u2014 ' + (templateNames[templateNum] || 'Unknown')\n  + '\\nEpisode title: ' + episodeTitle;\n\nconst thumbnailPromptPath = vars.projectDir + '/scripts/thumbnail_prompt.json';\n\nreturn [{ json: {\n  ...vars,\n  thumbnailTemplate:      templateNum,\n  thumbnailEpisodeTitle:  episodeTitle,\n  thumbnailPromptPath,\n  claudeBody: JSON.stringify({ prompt: fullPrompt }),\n} }];\n"
+        },
+        "id": "p3-011a-build-thumb",
+        "name": "Build Thumbnail Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -1160,
+          880
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://host.docker.internal:3333/generate",
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.claudeBody }}",
+          "options": {
+            "timeout": 1500000
+          }
+        },
+        "id": "p3-011b-call-thumb",
+        "name": "Call Claude Thumbnail",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -880,
+          880
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst vars = $('Build Thumbnail Prompt').first().json;\nconst resp = $input.first().json;\nconst raw  = resp.output || '';\n\n// Extract JSON block\nconst jsonMatch = raw.match(/```json\\n([\\s\\S]*?)\\n```/);\nlet thumbnailJson = null;\nif (jsonMatch) {\n  try { thumbnailJson = JSON.parse(jsonMatch[1]); } catch (e) {}\n}\n\n// Extract annotation lines\nconst textMatch = raw.match(/>\\s*Text overlay suggestion:\\s*(.+)/);\nconst genMatch  = raw.match(/>\\s*To generate:\\s*(.+)/);\n\nconst pkg = {\n  episode_title:  vars.thumbnailEpisodeTitle,\n  template:       vars.thumbnailTemplate,\n  generated_at:   new Date().toISOString(),\n  thumbnail_json: thumbnailJson,\n  text_overlay:   textMatch ? textMatch[1].trim() : '',\n  kie_command:    genMatch  ? genMatch[1].trim()  : '',\n  raw_output:     raw,\n};\n\nfs.writeFileSync(vars.thumbnailPromptPath, JSON.stringify(pkg, null, 2));\n\nconsole.log('Thumbnail prompt saved:', vars.thumbnailPromptPath);\nif (pkg.text_overlay) console.log('Text overlay:', pkg.text_overlay);\n\nreturn [{ json: {\n  slug:                 vars.slug,\n  topic:                vars.topic,\n  projectDir:           vars.projectDir,\n  summaryPath:          vars.summaryPath,\n  renderCompletePath:   vars.renderCompletePath,\n  thumbnailPromptPath:  vars.thumbnailPromptPath,\n  thumbnailTextOverlay: pkg.text_overlay,\n  thumbnailKieCommand:  pkg.kie_command,\n} }];\n"
+        },
+        "id": "p3-011c-save-thumb",
+        "name": "Save Thumbnail Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -600,
+          880
+        ]
+      },
+      {
+        "parameters": {
+          "resume": "form",
+          "formTitle": "RUINS UNTOLD \u2014 THUMBNAIL PROMPT READY",
+          "formDescription": "={{ 'EPISODE: ' + $json.topic + '\\n' + '\u2501'.repeat(42) + '\\nThumbnail prompt generated and saved.\\n\\nTEXT OVERLAY: ' + $json.thumbnailTextOverlay + '\\n\\nFILE: ' + $json.thumbnailPromptPath + '\\n\\nCOMMAND:\\n' + $json.thumbnailKieCommand + '\\n\\n\u2501'.repeat(42) + '\\nReview the prompt file, then submit to complete Phase 3.' }}",
+          "formFields": {
+            "values": [
+              {
+                "fieldLabel": "NOTES",
+                "fieldType": "text",
+                "placeholder": "Optional notes (e.g. tweaks needed)",
+                "requiredField": false
+              }
+            ]
+          },
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "id": "p3-011d-review-thumb",
+        "name": "Review Thumbnail Prompt",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          -320,
+          880
+        ],
+        "webhookId": "c3d4e5f6-a7b8-9012-cdef-123456789012"
       }
     ],
     "connections": {
       "Manual Trigger": {
-        "main": [[{"node": "Scan Projects", "type": "main", "index": 0}]]
+        "main": [
+          [
+            {
+              "node": "Scan Projects",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       },
       "Scan Projects": {
-        "main": [[{"node": "Select Episode", "type": "main", "index": 0}]]
+        "main": [
+          [
+            {
+              "node": "Select Episode",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       },
       "Select Episode": {
-        "main": [[{"node": "Load Project", "type": "main", "index": 0}]]
+        "main": [
+          [
+            {
+              "node": "Load Project",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       },
       "Load Project": {
-        "main": [[{"node": "Validate Assets", "type": "main", "index": 0}]]
+        "main": [
+          [
+            {
+              "node": "Validate Assets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       },
       "Validate Assets": {
-        "main": [[{"node": "Launch Render", "type": "main", "index": 0}]]
+        "main": [
+          [
+            {
+              "node": "Launch Render",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       },
       "Launch Render": {
-        "main": [[{"node": "Wait 90s", "type": "main", "index": 0}]]
+        "main": [
+          [
+            {
+              "node": "Wait 90s",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       },
       "Wait 90s": {
-        "main": [[{"node": "Check Render", "type": "main", "index": 0}]]
+        "main": [
+          [
+            {
+              "node": "Check Render",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       },
       "Check Render": {
-        "main": [[{"node": "Render Done?", "type": "main", "index": 0}]]
+        "main": [
+          [
+            {
+              "node": "Render Done?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       },
       "Render Done?": {
         "main": [
-          [{"node": "Generate Thumbnail", "type": "main", "index": 0}],
-          [{"node": "Wait 60s", "type": "main", "index": 0}]
+          [
+            {
+              "node": "Select Thumbnail Style",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait 60s",
+              "type": "main",
+              "index": 0
+            }
+          ]
         ]
       },
       "Wait 60s": {
-        "main": [[{"node": "Check Render", "type": "main", "index": 0}]]
+        "main": [
+          [
+            {
+              "node": "Check Render",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       },
-      "Generate Thumbnail": {
-        "main": [[{"node": "Phase 3 Summary", "type": "main", "index": 0}]]
+      "Select Thumbnail Style": {
+        "main": [
+          [
+            {
+              "node": "Build Thumbnail Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Thumbnail Prompt": {
+        "main": [
+          [
+            {
+              "node": "Call Claude Thumbnail",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Claude Thumbnail": {
+        "main": [
+          [
+            {
+              "node": "Save Thumbnail Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Thumbnail Prompt": {
+        "main": [
+          [
+            {
+              "node": "Review Thumbnail Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Review Thumbnail Prompt": {
+        "main": [
+          [
+            {
+              "node": "Phase 3 Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "settings": {
