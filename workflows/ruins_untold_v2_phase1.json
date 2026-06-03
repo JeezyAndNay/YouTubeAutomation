@@ -1,6 +1,6 @@
 {
   "id": "RuinsUntoldV2Phase1",
-  "name": "Ruins Untold v2 — Production Pipeline",
+  "name": "Ruins Untold v2 \u2014 Production Pipeline",
   "nodes": [
     {
       "id": "2a000001-0001-40010-8000-000000000001",
@@ -68,8 +68,8 @@
       ],
       "parameters": {
         "resume": "form",
-        "formTitle": "RUINS UNTOLD — CASE FILE SELECTION",
-        "formDescription": "={{ 'CLASSIFIED — INTERNAL PRODUCTION USE ONLY\\n'+ '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n'+ 'OPEN CASE FILES — STATUS: NEW\\n'+ '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n'+ $json.topicList+ '\\n\\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n'+ 'Enter the case number to open for production.' }}",
+        "formTitle": "RUINS UNTOLD \u2014 CASE FILE SELECTION",
+        "formDescription": "={{ 'CLASSIFIED \u2014 INTERNAL PRODUCTION USE ONLY\\n'+ '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n'+ 'OPEN CASE FILES \u2014 STATUS: NEW\\n'+ '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n\\n'+ $json.topicList+ '\\n\\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n'+ 'Enter the case number to open for production.' }}",
         "formFields": {
           "values": [
             {
@@ -95,7 +95,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Aggregate Topics').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection \"${selection}\". Enter 1–${allRows.length}.`);\nconst row  = allRows[selection - 1];\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nreturn [{\n  json: {\n    topic:      row.TOPIC || '',\n    audience:   'curious history fans, conspiracy-adjacent adults 25–45',\n    runtime:    20,\n    slug,\n    projectDir: '/Users/jneal/n8n_projects/' + slug\n  }\n}];\n"
+        "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Aggregate Topics').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection \"${selection}\". Enter 1\u2013${allRows.length}.`);\nconst row  = allRows[selection - 1];\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nreturn [{\n  json: {\n    topic:      row.TOPIC || '',\n    audience:   'curious history fans, conspiracy-adjacent adults 25\u201345',\n    runtime:    20,\n    slug,\n    projectDir: '/Users/jneal/n8n_projects/' + slug\n  }\n}];\n"
       }
     },
     {
@@ -320,7 +320,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Research Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = vars.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\n// Pass only project vars — research_package.json is on disk\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Research Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = vars.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\n// Pass only project vars \u2014 research_package.json is on disk\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
       }
     },
     {
@@ -368,7 +368,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Script Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nconst script = (inp.output || '').trim();\nif (!script) throw new Error('Script Agent returned empty output');\nfs.writeFileSync(vars.projectDir + '/scripts/script.md', script, 'utf-8');\n// script.md is on disk — don't carry large string through item data\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Script Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nconst script = (inp.output || '').trim();\nif (!script) throw new Error('Script Agent returned empty output');\nfs.writeFileSync(vars.projectDir + '/scripts/script.md', script, 'utf-8');\n// script.md is on disk \u2014 don't carry large string through item data\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
       }
     },
     {
@@ -554,7 +554,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3900,
+        4380,
         580
       ],
       "parameters": {
@@ -587,7 +587,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4140,
+        4620,
         580
       ],
       "parameters": {
@@ -600,7 +600,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4380,
+        4860,
         580
       ],
       "parameters": {
@@ -620,7 +620,7 @@
       "type": "n8n-nodes-base.writeBinaryFile",
       "typeVersion": 1,
       "position": [
-        4620,
+        5100,
         580
       ],
       "parameters": {
@@ -651,7 +651,7 @@
         100
       ],
       "parameters": {
-        "content": "## Ruins Untold v2 — Phase 1\n**Topic → Research → Script → Voice → TTS (Kie.ai) → Concat**\n\n- Claude bridge must be running\n- `Kie AI API` credential set\n- `Google Sheets account` credential set",
+        "content": "## Ruins Untold v2 \u2014 Phase 1\n**Topic \u2192 Research \u2192 Script \u2192 Voice \u2192 TTS (Kie.ai) \u2192 Concat**\n\n- Claude bridge must be running\n- `Kie AI API` credential set\n- `Google Sheets account` credential set",
         "height": 180,
         "width": 600
       }
@@ -666,7 +666,7 @@
         380
       ],
       "parameters": {
-        "content": "## Agent Pattern\nEach agent = **Build Prompt** (Code) → **Call Claude** (HTTP) → **Parse + Save** (Code)\n\nNo `fetch` or `async` in Code nodes — HTTP calls are httpRequest nodes.",
+        "content": "## Agent Pattern\nEach agent = **Build Prompt** (Code) \u2192 **Call Claude** (HTTP) \u2192 **Parse + Save** (Code)\n\nNo `fetch` or `async` in Code nodes \u2014 HTTP calls are httpRequest nodes.",
         "height": 180,
         "width": 600
       }
@@ -683,6 +683,160 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const fs       = require('fs');\nconst allItems = $input.all();\nconst vars     = allItems[0].json;\n\nlet allSegments = [];\nlet seq = 1;\nfor (const item of allItems) {\n  for (const seg of (item.json.segments || [])) {\n    seg.sequence = seq++;\n    allSegments.push(seg);\n  }\n}\n\nconst voicePackage = {\n  topic:    vars.topic,\n  voice_id: '4YYIPFl9wE5c4L2eu2Gb',\n  model:    'eleven_v3',\n  stability: 'natural',\n  total_word_count: allSegments.reduce((s, seg) => s + (seg.word_count || 0), 0),\n  estimated_total_runtime_seconds: allSegments.reduce((s, seg) => s + (seg.estimated_duration_seconds || 0), 0),\n  segments: allSegments\n};\n\nconst pkgPath = vars.projectDir + '/audio/voice_package.json';\nfs.writeFileSync(pkgPath, JSON.stringify(voicePackage, null, 2), 'utf-8');\n\nconst sd = $getWorkflowStaticData('global');\nsd.ruinsVoicePrevIds = [];\n\nreturn [{ json: { ...vars, voicePackage } }];"
+      }
+    },
+    {
+      "id": "check-kie-state-0001",
+      "name": "Check Kie.ai State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3900,
+        580
+      ],
+      "parameters": {
+        "jsCode": "const res  = $input.item.json;\nconst meta = $('Prepare TTS Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\nconst taskId = $('Extract Task ID').item.json.kieTaskId;\nconst state  = (res.data && res.data.state) ? res.data.state : '';\n\n// Terminal error states \u2014 fail fast instead of looping forever\nconst errorStates = ['failed', 'error', 'cancelled', 'expired'];\nif (errorStates.includes(state)) {\n  delete sd['pollCount_' + taskId];\n  throw new Error('Kie.ai task ' + taskId + ' (segment ' + meta.segmentId + ') reached terminal state: ' + state + '. msg=' + ((res.data && res.data.msg) || res.msg || 'none'));\n}\n\n// Timeout guard \u2014 36 polls \u00d7 10s = 6 minutes max per segment\nconst counterKey = 'pollCount_' + taskId;\nsd[counterKey] = (sd[counterKey] || 0) + 1;\nif (sd[counterKey] > 36) {\n  delete sd[counterKey];\n  throw new Error('Kie.ai task ' + taskId + ' (segment ' + meta.segmentId + ') timed out after 36 polls. Last state: ' + state);\n}\n\nif (state === 'success') delete sd[counterKey];\nreturn [{ json: res }];\n"
+      },
+      "onError": "continueErrorOutput",
+      "continueOnFail": true
+    },
+    {
+      "id": "is-kie-error-0001",
+      "name": "Is Error?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4140,
+        580
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-iserror",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "notify-kie-error-0001",
+      "name": "Notify Kie.ai Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4380,
+        820
+      ],
+      "parameters": {
+        "jsCode": "const item    = $input.item.json;\nconst meta    = $('Prepare TTS Request').item.json;\nconst taskId  = $('Extract Task ID').item.json.kieTaskId;\nconst errMsg  = (item.error && item.error.message) ? item.error.message : (item.error || 'Unknown Kie.ai error');\nconst resume  = $execution.resumeUrl;\n\nconst errInfo = {\n  timestamp:  new Date().toISOString(),\n  segmentId:  meta.segmentId,\n  taskId,\n  error:      errMsg,\n  actions: {\n    retry: resume + '?action=retry',\n    skip:  resume + '?action=skip',\n    abort: resume + '?action=abort'\n  }\n};\n\nconst fs   = require('fs');\nconst path = require('path');\nconst errDir = path.join(meta.projectDir, 'errors');\nif (!fs.existsSync(errDir)) fs.mkdirSync(errDir, { recursive: true });\nfs.writeFileSync(\n  path.join(errDir, 'kie_error_' + meta.segmentId + '.json'),\n  JSON.stringify(errInfo, null, 2)\n);\n\nconsole.log('[KIE ERROR] Segment:', meta.segmentId, '| Error:', errMsg);\nconsole.log('[KIE ERROR] Retry :', errInfo.actions.retry);\nconsole.log('[KIE ERROR] Skip  :', errInfo.actions.skip);\nconsole.log('[KIE ERROR] Abort :', errInfo.actions.abort);\n\nreturn [{ json: { ...meta, kieTaskId: taskId, kieError: errMsg } }];\n"
+      }
+    },
+    {
+      "id": "wait-user-action-0001",
+      "name": "Wait - User Action",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        4620,
+        820
+      ],
+      "parameters": {
+        "resume": "webhook"
+      }
+    },
+    {
+      "id": "retry-if-0001",
+      "name": "Retry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4860,
+        820
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-retry",
+              "leftValue": "={{ $json.query && $json.query.action ? $json.query.action : '' }}",
+              "rightValue": "retry",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "skip-if-0001",
+      "name": "Skip?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5100,
+        820
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-skip",
+              "leftValue": "={{ $json.query && $json.query.action ? $json.query.action : '' }}",
+              "rightValue": "skip",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "abort-workflow-0001",
+      "name": "Abort Workflow",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5340,
+        820
+      ],
+      "parameters": {
+        "jsCode": "const meta = $input.item.json;\nthrow new Error('User aborted workflow at segment ' + meta.segmentId + '. Kie.ai error: ' + meta.kieError);\n"
       }
     }
   ],
@@ -918,7 +1072,7 @@
       "main": [
         [
           {
-            "node": "TTS Complete?",
+            "node": "Check Kie.ai State",
             "type": "main",
             "index": 0
           }
@@ -1003,6 +1157,93 @@
         [
           {
             "node": "Extract Voice Segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Kie.ai State": {
+      "main": [
+        [
+          {
+            "node": "Is Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Error?": {
+      "main": [
+        [
+          {
+            "node": "Notify Kie.ai Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TTS Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Kie.ai Error": {
+      "main": [
+        [
+          {
+            "node": "Wait - User Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait - User Action": {
+      "main": [
+        [
+          {
+            "node": "Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry?": {
+      "main": [
+        [
+          {
+            "node": "Prepare TTS Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip?": {
+      "main": [
+        [
+          {
+            "node": "Split Segments",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Abort Workflow",
             "type": "main",
             "index": 0
           }
