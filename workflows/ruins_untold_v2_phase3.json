@@ -181,7 +181,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          -40,
+          1080,
           880
         ]
       },
@@ -244,7 +244,7 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          -1440,
+          -320,
           880
         ],
         "webhookId": "b2c3d4e5-f6a7-8901-bcde-f12345678901"
@@ -258,7 +258,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          -1160,
+          -40,
           880
         ]
       },
@@ -279,7 +279,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          -880,
+          240,
           880
         ]
       },
@@ -292,7 +292,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          -600,
+          520,
           880
         ]
       },
@@ -319,10 +319,224 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          -320,
+          800,
           880
         ],
         "webhookId": "c3d4e5f6-a7b8-9012-cdef-123456789012"
+      },
+      {
+        "id": "p3-009a-read-row",
+        "name": "Read Ideas Row",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          -1400,
+          880
+        ],
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "5KlwkkXYEjhrIznj",
+            "name": "Google Sheets account"
+          }
+        },
+        "parameters": {
+          "operation": "lookup",
+          "documentId": {
+            "__rl": true,
+            "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Ideas",
+            "mode": "name"
+          },
+          "lookupColumn": "TOPIC",
+          "lookupValue": "={{ $('Load Project').first().json.topic }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "p3-009b-append-completed",
+        "name": "Append to Completed",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          -1120,
+          880
+        ],
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "5KlwkkXYEjhrIznj",
+            "name": "Google Sheets account"
+          }
+        },
+        "parameters": {
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Completed",
+            "mode": "name"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "ID": "={{ $('Read Ideas Row').first().json.ID || '' }}",
+              "DATE_ADDED": "={{ $('Read Ideas Row').first().json.DATE_ADDED || '' }}",
+              "STATUS": "Complete",
+              "TOPIC": "={{ $('Read Ideas Row').first().json.TOPIC || '' }}",
+              "ANGLE": "={{ $('Read Ideas Row').first().json.ANGLE || '' }}",
+              "KEY_EVIDENCE": "={{ $('Read Ideas Row').first().json.KEY_EVIDENCE || '' }}",
+              "KEY_RESEARCHERS": "={{ $('Read Ideas Row').first().json.KEY_RESEARCHERS || '' }}",
+              "HOOK_STYLE": "={{ $('Read Ideas Row').first().json.HOOK_STYLE || '' }}",
+              "TONE_DIAL": "={{ $('Read Ideas Row').first().json.TONE_DIAL || '' }}",
+              "RELATED_VIDEO": "={{ $('Read Ideas Row').first().json.RELATED_VIDEO || '' }}",
+              "NOTES": "={{ $('Read Ideas Row').first().json.NOTES || '' }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "ID",
+                "displayName": "ID",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "DATE_ADDED",
+                "displayName": "DATE_ADDED",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "STATUS",
+                "displayName": "STATUS",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "TOPIC",
+                "displayName": "TOPIC",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "ANGLE",
+                "displayName": "ANGLE",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "KEY_EVIDENCE",
+                "displayName": "KEY_EVIDENCE",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "KEY_RESEARCHERS",
+                "displayName": "KEY_RESEARCHERS",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "HOOK_STYLE",
+                "displayName": "HOOK_STYLE",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "TONE_DIAL",
+                "displayName": "TONE_DIAL",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "RELATED_VIDEO",
+                "displayName": "RELATED_VIDEO",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "NOTES",
+                "displayName": "NOTES",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "p3-009c-delete-ideas",
+        "name": "Delete from Ideas",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          -840,
+          880
+        ],
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "5KlwkkXYEjhrIznj",
+            "name": "Google Sheets account"
+          }
+        },
+        "parameters": {
+          "operation": "delete",
+          "documentId": {
+            "__rl": true,
+            "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Ideas",
+            "mode": "name"
+          },
+          "toDelete": "rows",
+          "startIndex": "={{ $('Read Ideas Row').first().json.row_number - 1 }}",
+          "amount": 1
+        }
       }
     ],
     "connections": {
@@ -418,7 +632,7 @@
         "main": [
           [
             {
-              "node": "Select Thumbnail Style",
+              "node": "Read Ideas Row",
               "type": "main",
               "index": 0
             }
@@ -492,6 +706,39 @@
           [
             {
               "node": "Phase 3 Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read Ideas Row": {
+        "main": [
+          [
+            {
+              "node": "Append to Completed",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Append to Completed": {
+        "main": [
+          [
+            {
+              "node": "Delete from Ideas",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Delete from Ideas": {
+        "main": [
+          [
+            {
+              "node": "Select Thumbnail Style",
               "type": "main",
               "index": 0
             }
