@@ -204,7 +204,7 @@ Music runs underneath the entire episode at low volume, shifting mood at act tra
 
 Use timestamps from the transcript to identify act transition points. If act boundaries are ambiguous in the audio, use the `voice_package.json` segment IDs to locate them.
 
-Write a `style_prompt` for each music cue. This will be passed to Suno via the Kie.ai music generation API.
+Write a `style_prompt` for each music cue. This will be passed to Suno via the Kie.ai music generation API. Every `style_prompt` must include `"instrumental"` — no vocals, no lyrics, no sung elements of any kind.
 
 ---
 
@@ -314,7 +314,7 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
       "end": number,
       "duration": number,
       "mood": "string",
-      "style_prompt": "string",
+      "style_prompt": "string — must include 'instrumental'; no vocals",
       "volume_db": -20,
       "fade_in_seconds": number,
       "fade_out_seconds": number,
