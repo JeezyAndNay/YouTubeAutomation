@@ -321,7 +321,8 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Research Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = vars.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\n// Pass only project vars — research_package.json is on disk\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
-      }
+      },
+      "continueOnFail": true
     },
     {
       "id": "2a000012-0012-40120-8000-000000000012",
@@ -369,7 +370,8 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Script Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Claude bridge error: ' + inp.error);\nconst script = (inp.output || '').trim();\nif (!script) throw new Error('Script Agent returned empty output');\nfs.writeFileSync(vars.projectDir + '/scripts/script.md', script, 'utf-8');\n// script.md is on disk — don't carry large string through item data\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
-      }
+      },
+      "continueOnFail": true
     },
     {
       "id": "2a000015-0015-40150-8000-000000000015",
@@ -417,7 +419,8 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const responses    = $input.all();\nconst sectionItems = $('Split Script by Section').all();\n\nreturn responses.map((resp, i) => {\n  const vars  = sectionItems[i].json;\n  const actId = vars.actId;\n  const inp   = resp.json;\n\n  if (inp.exitCode !== undefined && inp.exitCode !== 0)\n    throw new Error('Voice chunk error [' + actId + ']: ' + inp.error);\n\n  let raw = (inp.output || '').trim();\n  const m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\n  if (m) raw = m[1].trim();\n\n  let segments;\n  try {\n    segments = JSON.parse(raw);\n  } catch (e) {\n    const s = raw.indexOf('['), en = raw.lastIndexOf(']');\n    if (s === -1 || en === -1)\n      throw new Error('Cannot parse segments for ' + actId + '. Raw: ' + raw.substring(0, 200));\n    segments = JSON.parse(raw.substring(s, en + 1));\n  }\n\n  if (!Array.isArray(segments))\n    throw new Error('Expected array for ' + actId + ', got ' + typeof segments);\n\n  return { json: { ...vars, segments } };\n});"
-      }
+      },
+      "continueOnFail": true
     },
     {
       "id": "2a000018-0018-40180-8000-000000000018",
