@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode } from "@/app/actions/episodes";
+import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, setYoutubeUrl } from "@/app/actions/episodes";
 import type { Episode, EpisodeOutputs, FileGroup } from "@/lib/episodes";
 
 // ── Artifact definitions ─────────────────────────────────────────────────────
@@ -143,6 +143,104 @@ function fmt(bytes: number) {
 
 // ── Main component ───────────────────────────────────────────────────────────
 
+// ── Phase completion banner ───────────────────────────────────────────────────
+
+function CompletionBanner({
+  slug,
+  outputs,
+  youtubeUrl,
+}: {
+  slug: string;
+  outputs: EpisodeOutputs;
+  youtubeUrl?: string;
+}) {
+  const [url, setUrl] = useState(youtubeUrl ?? "");
+  const [editing, setEditing] = useState(!youtubeUrl);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const phase1Done = outputs.research && outputs.script && outputs.voice;
+  const phase2Done = outputs.timeline && outputs.images && outputs.videos && outputs.voiceover;
+  const phase3Done = outputs.metadata;
+
+  async function handleSave() {
+    if (!url.trim()) return;
+    setSaving(true);
+    setSaveError(null);
+    const result = await setYoutubeUrl(slug, url.trim());
+    setSaving(false);
+    if (result?.error) { setSaveError(result.error); return; }
+    setEditing(false);
+  }
+
+  return (
+    <section className="mb-6">
+      <div className="bg-portal-gold/10 border border-portal-gold/30 rounded-lg p-4">
+        <p className="text-portal-gold text-[10px] font-medium uppercase tracking-widest mb-3">
+          Complete
+        </p>
+        {/* Phase checkmarks */}
+        <div className="space-y-1.5 mb-4">
+          {[
+            { label: "Phase 1", done: phase1Done },
+            { label: "Phase 2", done: phase2Done },
+            { label: "Phase 3", done: phase3Done },
+          ].map(({ label, done }) => (
+            <div key={label} className="flex items-center gap-2 text-xs">
+              <span className={done ? "text-portal-gold" : "text-weathered-stone/40"}>
+                {done ? "✓" : "○"}
+              </span>
+              <span className={done ? "text-bone-white" : "text-weathered-stone/40"}>
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* YouTube URL */}
+        {youtubeUrl && !editing ? (
+          <div className="space-y-1.5">
+            <a
+              href={youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center bg-cosmic-teal/20 border border-cosmic-teal/40 text-cosmic-teal text-xs py-1.5 rounded hover:bg-cosmic-teal/30 transition-colors"
+            >
+              Watch on YouTube
+            </a>
+            <button
+              onClick={() => setEditing(true)}
+              className="w-full text-weathered-stone/50 text-[10px] hover:text-weathered-stone transition-colors"
+            >
+              Edit link
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://youtube.com/watch?v=..."
+              className="w-full bg-charcoal border border-weathered-stone/25 rounded px-2 py-1 text-[11px] text-bone-white placeholder-weathered-stone/40 outline-none focus:border-portal-gold"
+            />
+            <button
+              onClick={handleSave}
+              disabled={saving || !url.trim()}
+              className="w-full bg-portal-gold/80 text-charcoal text-[11px] font-semibold py-1 rounded hover:bg-portal-gold disabled:opacity-40 transition-colors"
+            >
+              {saving ? "Saving..." : "Save YouTube Link"}
+            </button>
+            {saveError && <p className="text-deep-crimson text-[10px]">{saveError}</p>}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
+
 type Props = {
   episode: Episode;
   outputs: EpisodeOutputs;
@@ -150,7 +248,7 @@ type Props = {
 };
 
 export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
-  const { slug, status, phase } = episode;
+  const { slug, status, phase, youtubeUrl } = episode;
   const router = useRouter();
 
   const [selectedKey, setSelectedKey] = useState<keyof EpisodeOutputs | null>(null);
@@ -222,6 +320,11 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
     <div className="flex flex-1 min-h-0">
       {/* ── Left column ─────────────────────────────────────────────────────── */}
       <div className="w-64 shrink-0 border-r border-weathered-stone/15 overflow-y-auto p-6 space-y-8">
+        {/* Completion banner */}
+        {status === "done" && (
+          <CompletionBanner slug={slug} outputs={outputs} youtubeUrl={youtubeUrl} />
+        )}
+
         {/* Artifacts by phase */}
         <section>
           <p className="text-[10px] font-medium uppercase tracking-widest text-weathered-stone mb-3">

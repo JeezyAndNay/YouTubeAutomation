@@ -12,6 +12,7 @@ export type Episode = {
   topic: string;
   phase: EpisodePhase | null;
   status: EpisodeStatus;
+  youtubeUrl?: string;
 };
 
 export function listEpisodes(): Episode[] {
@@ -34,8 +35,9 @@ function deriveEpisode(slug: string): Episode {
 
   const phase = detectPhase(dir);
   const status = detectStatus(dir);
+  const youtubeUrl = readOptionalFile(path.join(dir, ".youtube_url"));
 
-  return { slug, dir, topic, phase, status };
+  return { slug, dir, topic, phase, status, youtubeUrl };
 }
 
 function detectPhase(dir: string): EpisodePhase | null {
@@ -43,6 +45,10 @@ function detectPhase(dir: string): EpisodePhase | null {
   if (fs.existsSync(path.join(dir, "scripts", "media_timeline.json")))    return 2;
   if (fs.existsSync(path.join(dir, "scripts", "script.md")))              return 1;
   return null;
+}
+
+function readOptionalFile(p: string): string | undefined {
+  try { return fs.readFileSync(p, "utf-8").trim() || undefined; } catch { return undefined; }
 }
 
 function detectStatus(dir: string): EpisodeStatus {

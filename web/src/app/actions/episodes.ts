@@ -78,3 +78,17 @@ export async function rejectEpisode(slug: string): Promise<{ error?: string }> {
   revalidatePath(`/episodes/${slug}`);
   return {};
 }
+
+export async function setYoutubeUrl(slug: string, url: string): Promise<{ error?: string }> {
+  const dir = `/Users/jneal/n8n_projects/${slug}`;
+  const fs = await import("fs");
+  const path = await import("path");
+  try {
+    fs.writeFileSync(path.join(dir, ".youtube_url"), url.trim(), "utf-8");
+  } catch (e) {
+    return { error: String(e) };
+  }
+  revalidatePath(`/episodes/${slug}`);
+  revalidatePath("/episodes");
+  return {};
+}
