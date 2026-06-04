@@ -90,7 +90,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Aggregate Topics').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection \"${selection}\". Enter 1\u2013${allRows.length}.`);\nconst row  = allRows[selection - 1];\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nreturn [{\n  json: {\n    topic:      row.TOPIC || '',\n    audience:   'curious history fans, conspiracy-adjacent adults 25\u201345',\n    runtime:    20,\n    slug,\n    projectDir: '/Users/jneal/n8n_projects/' + slug\n  }\n}];\n"
+        "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Aggregate Topics').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection \"${selection}\". Enter 1\u2013${allRows.length}.`);\nconst row  = allRows[selection - 1];\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nreturn [{\n  json: {\n    topic:      row.TOPIC || '',\n    audience:   'curious history fans, conspiracy-adjacent adults 25\u201345',\n    runtime:    20,\n    slug,\n    projectDir: '/Users/jneal/n8n_projects/' + slug,\n    row_number: row.row_number || null\n  }\n}];\n"
       },
       "id": "75fc9b0f-9859-44f2-ab1c-073614e9fbbb",
       "name": "Look Up Selected Row",
@@ -117,11 +117,11 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "TOPIC": "={{ $json.topic }}",
+            "row_number": "={{ $json.row_number }}",
             "STATUS": "In Progress"
           },
           "matchingColumns": [
-            "TOPIC"
+            "row_number"
           ],
           "schema": [
             {
@@ -262,7 +262,9 @@
           "id": "5KlwkkXYEjhrIznj",
           "name": "Google Sheets account"
         }
-      }
+      },
+      "continueOnFail": true,
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -624,7 +626,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst { execSync } = require('child_process');\nconst fs  = require('fs');\nconst inp = $input.first().json;\nconst dir = inp.projectDir + '/audio';\nconst files = fs.readdirSync(dir).filter(f => f.startsWith('seg_') && f.endsWith('.mp3')).sort();\nif (files.length === 0) throw new Error('No segment MP3s found in ' + dir);\n\nconst silencePath = dir + '/silence.mp3';\nexecSync('ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t 0.625 -q:a 9 -acodec libmp3lame \"' + silencePath + '\"', { timeout: 30000 });\n\nconst concatTxt = dir + '/concat.txt';\nconst lines = [];\nfor (let i = 0; i < files.length; i++) {\n  lines.push(\"file '\" + dir + '/' + files[i] + \"'\");\n  if (i < files.length - 1) {\n    lines.push(\"file '\" + silencePath + \"'\");\n  }\n}\nfs.writeFileSync(concatTxt, lines.join('\\n'), 'utf-8');\n\nconst finalPath = dir + '/voiceover_final.mp3';\nexecSync('ffmpeg -y -f concat -safe 0 -i \"' + concatTxt + '\" -acodec libmp3lame -ar 44100 -ac 2 -b:a 128k \"' + finalPath + '\"', { timeout: 300000 });\nreturn [{ json: { ...inp, voiceFinalPath: finalPath } }];\n"
+        "jsCode": "\nconst { execSync } = require('child_process');\nconst fs  = require('fs');\nconst inp = $input.first().json;\nconst dir = inp.projectDir + '/audio';\nconst files = fs.readdirSync(dir).filter(f => f.startsWith('seg_') && f.endsWith('.mp3')).sort();\nif (files.length === 0) throw new Error('No segment MP3s found in ' + dir);\n\nconst silencePath = dir + '/silence.mp3';\nexecSync('ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t 0.625 -q:a 9 -acodec libmp3lame \"' + silencePath + '\"', { timeout: 30000 });\n\nconst concatTxt = dir + '/concat.txt';\nconst lines = [];\nfor (let i = 0; i < files.length; i++) {\n  lines.push(\"file '\" + dir + '/' + files[i] + \"'\");\n  if (i < files.length - 1) {\n    lines.push(\"file '\" + silencePath + \"'\");\n  }\n}\nfs.writeFileSync(concatTxt, lines.join('\\n'), 'utf-8');\n\nconst finalPath = dir + '/voiceover_final.mp3';\nexecSync('ffmpeg -y -f concat -safe 0 -i \"' + concatTxt + '\" -acodec libmp3lame -ar 44100 -ac 2 -b:a 128k \"' + finalPath + '\"', { timeout: 300000 });\n\n// Clean up exec mapping file\ntry { fs.unlinkSync('/Users/jneal/n8n_projects/.exec_map/' + $execution.id); } catch {}\nreturn [{ json: { ...inp, voiceFinalPath: finalPath } }];\n"
       },
       "id": "472aac84-ca49-4d16-92bf-09ce205b1e39",
       "name": "Concatenate Voiceover",
@@ -879,8 +881,32 @@
         40
       ],
       "parameters": {
-        "jsCode": "\nconst body = $input.first().json.body || $input.first().json;\nconst topic = (body.topic || '').trim();\nif (!topic) throw new Error('Webhook payload must include { \"topic\": \"...\" }');\n\n// Use pre-created slug/projectDir if provided (promoted from Ideas page), else generate\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = body.slug || (topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/, '').substring(0, 45) + '_' + ts);\nconst projectDir = body.projectDir || ('/Users/jneal/n8n_projects/' + slug);\n\n// Ensure directories exist (idempotent if already created by web app)\nconst fs   = require('fs');\nconst path = require('path');\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(projectDir, { recursive: true });\nfor (const d of dirs) { fs.mkdirSync(path.join(projectDir, d), { recursive: true }); }\n\n// Write full topic so the web UI can display it without slug truncation\nfs.writeFileSync(path.join(projectDir, '.topic'), topic, 'utf-8');\n\nreturn [{ json: {\n  topic,\n  audience: 'curious history fans, conspiracy-adjacent adults 25-45',\n  runtime:  20,\n  slug,\n  projectDir\n} }];\n"
+        "jsCode": "\nconst body = $input.first().json.body || $input.first().json;\nconst topic = (body.topic || '').trim();\nif (!topic) throw new Error('Webhook payload must include { \"topic\": \"...\" }');\n\n// Use pre-created slug/projectDir if provided (promoted from Ideas page), else generate\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = body.slug || (topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/, '').substring(0, 45) + '_' + ts);\nconst projectDir = body.projectDir || ('/Users/jneal/n8n_projects/' + slug);\n\n// Ensure directories exist (idempotent if already created by web app)\nconst fs   = require('fs');\nconst path = require('path');\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(projectDir, { recursive: true });\nfor (const d of dirs) { fs.mkdirSync(path.join(projectDir, d), { recursive: true }); }\n\n// Write full topic so the web UI can display it without slug truncation\nfs.writeFileSync(path.join(projectDir, '.topic'), topic, 'utf-8');\n\n\n// Write execution -> projectDir mapping for error trigger\nconst execMapDir = '/Users/jneal/n8n_projects/.exec_map';\nfs.mkdirSync(execMapDir, { recursive: true });\nfs.writeFileSync(require('path').join(execMapDir, $execution.id), projectDir, 'utf-8');\nreturn [{ json: {\n  topic,\n  audience: 'curious history fans, conspiracy-adjacent adults 25-45',\n  runtime:  20,\n  slug,\n  projectDir,\n  row_number: body.rowNumber || null\n} }];\n"
       }
+    },
+    {
+      "parameters": {},
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const execId = $json.execution.id;\nconst fs   = require('fs');\nconst path = require('path');\nconst mapFile = '/Users/jneal/n8n_projects/.exec_map/' + execId;\n\nlet projectDir;\ntry {\n  projectDir = fs.readFileSync(mapFile, 'utf-8').trim();\n} catch {\n  console.log('[ERROR TRIGGER] No exec mapping for', execId);\n  return [{ json: { handled: false, execId } }];\n}\n\ntry {\n  fs.writeFileSync(path.join(projectDir, '.status'), 'error', 'utf-8');\n  console.log('[ERROR TRIGGER] Wrote error status to', projectDir);\n} catch (e) {\n  console.log('[ERROR TRIGGER] Failed to write status:', e.message);\n}\n\ntry { fs.unlinkSync(mapFile); } catch {}\n\nreturn [{ json: { handled: true, projectDir, execId } }];\n"
+      },
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Write Error Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        800
+      ]
     }
   ],
   "connections": {
@@ -1309,6 +1335,17 @@
         [
           {
             "node": "Mark In Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Write Error Status",
             "type": "main",
             "index": 0
           }

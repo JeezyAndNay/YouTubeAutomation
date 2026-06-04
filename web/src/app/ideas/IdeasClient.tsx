@@ -54,7 +54,7 @@ async function promoteToEpisode(idea: Idea): Promise<string> {
   const res = await fetch("/api/episodes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ topic: idea.topic }),
+    body: JSON.stringify({ topic: idea.topic, rowNumber: idea.rowNumber }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

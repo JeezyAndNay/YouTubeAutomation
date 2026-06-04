@@ -3,27 +3,29 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-type Status = "idle" | "running" | "awaiting_review" | "done" | "error" | "rejected";
+type Status = "idle" | "running" | "awaiting_review" | "awaiting_media_approval" | "done" | "error" | "rejected";
 
 const styles: Record<Status, string> = {
-  idle:            "text-weathered-stone bg-deep-teal",
-  running:         "text-cosmic-teal    bg-cosmic-teal/10",
-  awaiting_review: "text-portal-gold    bg-portal-gold/10",
-  done:            "text-portal-gold    bg-portal-gold/15",
-  error:           "text-bone-white     bg-deep-crimson/70",
-  rejected:        "text-bone-white     bg-deep-crimson/50",
+  idle:                    "text-weathered-stone bg-deep-teal",
+  running:                 "text-cosmic-teal    bg-cosmic-teal/10",
+  awaiting_review:         "text-portal-gold    bg-portal-gold/10",
+  awaiting_media_approval: "text-amber-torchlight bg-amber-torchlight/10",
+  done:                    "text-portal-gold    bg-portal-gold/15",
+  error:                   "text-bone-white     bg-deep-crimson/70",
+  rejected:                "text-bone-white     bg-deep-crimson/50",
 };
 
 const labels: Record<Status, string> = {
-  idle:            "Idle",
-  running:         "Running",
-  awaiting_review: "Awaiting Review",
-  done:            "Done",
-  error:           "Error",
-  rejected:        "Rejected",
+  idle:                    "Idle",
+  running:                 "Running",
+  awaiting_review:         "Awaiting Review",
+  awaiting_media_approval: "Media Review",
+  done:                    "Done",
+  error:                   "Error",
+  rejected:                "Rejected",
 };
 
-const ALL: Status[] = ["idle", "running", "awaiting_review", "done", "error", "rejected"];
+const ALL: Status[] = ["idle", "running", "awaiting_review", "awaiting_media_approval", "done", "error", "rejected"];
 
 export default function StatusSelect({ slug, status }: { slug: string; status: Status }) {
   const router = useRouter();

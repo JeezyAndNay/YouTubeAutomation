@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, setYoutubeUrl } from "@/app/actions/episodes";
+import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, approveMediaPrompts, setYoutubeUrl } from "@/app/actions/episodes";
 import type { Episode, EpisodeOutputs, FileGroup } from "@/lib/episodes";
 
 // ── Artifact definitions ─────────────────────────────────────────────────────
@@ -143,6 +143,69 @@ function fmt(bytes: number) {
 
 // ── Main component ───────────────────────────────────────────────────────────
 
+// ── Media approval banner ─────────────────────────────────────────────────────
+
+function MediaApprovalBanner({
+  pendingEdits,
+  onApprove,
+  onReject,
+  isPending,
+  error,
+}: {
+  pendingEdits: Record<string, string>;
+  onApprove: () => void;
+  onReject: () => void;
+  isPending: boolean;
+  error: string | null;
+}) {
+  const hasImageEdit = "scripts/image_manifest.json" in pendingEdits;
+  const hasVideoEdit = "scripts/video_manifest.json" in pendingEdits;
+
+  return (
+    <section className="mb-6">
+      <div className="bg-amber-torchlight/10 border border-amber-torchlight/30 rounded-lg p-4">
+        <p className="text-amber-torchlight text-[10px] font-medium uppercase tracking-widest mb-2">
+          Media Review
+        </p>
+        <p className="text-bone-white/70 text-[11px] mb-3 leading-relaxed">
+          Review and optionally edit image and video prompts before sending to generation.
+        </p>
+        <div className="space-y-1 mb-3">
+          {[
+            { label: "Image Manifest", edited: hasImageEdit },
+            { label: "Video Manifest", edited: hasVideoEdit },
+          ].map(({ label, edited }) => (
+            <div key={label} className="flex items-center gap-2 text-[11px]">
+              <span className="text-portal-gold/70">✓</span>
+              <span className="text-bone-white/70">{label}</span>
+              {edited && (
+                <span className="text-cosmic-teal text-[10px] font-medium">edited</span>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="space-y-1.5">
+          <button
+            onClick={onApprove}
+            disabled={isPending}
+            className="w-full bg-portal-gold text-charcoal font-semibold text-xs py-2 rounded hover:bg-amber-torchlight disabled:opacity-40 transition-colors"
+          >
+            {isPending ? "Sending to generation..." : "Approve & Generate"}
+          </button>
+          <button
+            onClick={onReject}
+            disabled={isPending}
+            className="w-full border border-deep-crimson/50 text-deep-crimson text-xs py-2 rounded hover:bg-deep-crimson/10 disabled:opacity-40 transition-colors"
+          >
+            Reject
+          </button>
+        </div>
+        {error && <p className="text-deep-crimson text-[10px] mt-2">{error}</p>}
+      </div>
+    </section>
+  );
+}
+
 // ── Phase completion banner ───────────────────────────────────────────────────
 
 function CompletionBanner({
@@ -258,6 +321,14 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  // Edit state for media approval
+  const [editMode, setEditMode] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [pendingEdits, setPendingEdits] = useState<Record<string, string>>({});
+  // Ref so artifact-switch handler can read latest values without stale closure
+  const editRef = useRef({ editMode: false, editContent: "", selectedPath: "" });
+  editRef.current = { editMode, editContent, selectedPath: ARTIFACTS.find(a => a.key === selectedKey)?.path ?? "" };
+
   // Auto-select first available artifact on mount
   useEffect(() => {
     const first = ARTIFACTS.find((a) => outputs[a.key]);
@@ -265,9 +336,9 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-refresh while running
+  // Auto-refresh while running or awaiting media approval (prompts may still be writing)
   useEffect(() => {
-    if (status !== "running") return;
+    if (status !== "running" && status !== "awaiting_media_approval") return;
     const id = setInterval(() => router.refresh(), 5000);
     return () => clearInterval(id);
   }, [status, router]);
@@ -308,18 +379,72 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
     });
   }
 
+  // Save current edit to pendingEdits and exit edit mode
+  function commitEdit() {
+    const { editMode: em, editContent: ec, selectedPath: sp } = editRef.current;
+    if (em && sp && ec !== (content ?? "")) {
+      setPendingEdits((prev) => ({ ...prev, [sp]: ec }));
+    }
+    setEditMode(false);
+  }
+
+  // Switch artifact — commit any in-progress edit first
+  function selectArtifact(key: keyof EpisodeOutputs) {
+    commitEdit();
+    setSelectedKey(key);
+  }
+
+  // Enter edit mode for the current JSON artifact
+  function enterEditMode() {
+    const initial = pendingEdits[selected!.path] ?? content ?? "";
+    setEditContent(initial);
+    setEditMode(true);
+  }
+
+  // Approve: flush any open edit, then call action
+  function handleApprove() {
+    const { editMode: em, editContent: ec, selectedPath: sp } = editRef.current;
+    const latestEdits = { ...pendingEdits };
+    if (em && sp && ec !== (content ?? "")) latestEdits[sp] = ec;
+    setEditMode(false);
+    runAction(() =>
+      approveMediaPrompts(slug, {
+        imageManifest: latestEdits["scripts/image_manifest.json"],
+        videoManifest: latestEdits["scripts/video_manifest.json"],
+      })
+    );
+  }
+
   // Determine available actions
   const isRunning = status === "running";
-  const canPhase1 = phase === null && !isRunning;
-  const canPhase2 = phase === 1 && !isRunning;
-  const canPhase3 = phase === 2 && !isRunning;
-  const canReject = !isRunning && status !== "done" && status !== "rejected";
+  const isAwaitingMediaApproval = status === "awaiting_media_approval";
+  const canPhase1 = phase === null && !isRunning && !isAwaitingMediaApproval;
+  const canPhase2 = phase === 1 && !isRunning && !isAwaitingMediaApproval;
+  const canPhase3 = phase === 2 && !isRunning && !isAwaitingMediaApproval;
+  const canReject = !isRunning && !isAwaitingMediaApproval && status !== "done" && status !== "rejected";
   const hasActions = canPhase1 || canPhase2 || canPhase3 || canReject;
+
+  // Whether the selected artifact is editable in media review mode
+  const canEditArtifact =
+    isAwaitingMediaApproval &&
+    selected?.type === "json" &&
+    (selected.path === "scripts/image_manifest.json" || selected.path === "scripts/video_manifest.json");
 
   return (
     <div className="flex flex-1 min-h-0">
       {/* ── Left column ─────────────────────────────────────────────────────── */}
       <div className="w-64 shrink-0 border-r border-weathered-stone/15 overflow-y-auto p-6 space-y-8">
+        {/* Media approval banner */}
+        {isAwaitingMediaApproval && (
+          <MediaApprovalBanner
+            pendingEdits={pendingEdits}
+            onApprove={handleApprove}
+            onReject={() => runAction(() => rejectEpisode(slug))}
+            isPending={isPending}
+            error={actionError}
+          />
+        )}
+
         {/* Completion banner */}
         {status === "done" && (
           <CompletionBanner slug={slug} outputs={outputs} youtubeUrl={youtubeUrl} />
@@ -344,7 +469,7 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
                       <button
                         key={a.key}
                         disabled={!available}
-                        onClick={() => available && setSelectedKey(a.key)}
+                        onClick={() => available && selectArtifact(a.key)}
                         className={[
                           "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-xs transition-colors",
                           active
@@ -453,7 +578,7 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
         )}
       </div>
 
-      {/* ── Right column: preview ────────────────────────────────────────────── */}
+      {/* ── Right column: preview / edit ─────────────────────────────────────── */}
       <div className="flex-1 min-w-0 overflow-y-auto bg-abyss">
         {!selected ? (
           <div className="h-full flex items-center justify-center">
@@ -479,15 +604,56 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
             <p className="text-deep-crimson text-sm">{fetchError}</p>
           </div>
         ) : content ? (
-          <div className="p-8">
-            <p className="text-[10px] font-medium uppercase tracking-widest text-weathered-stone mb-4">
-              {selected.label}
-            </p>
-            {selected.type === "json" ? (
-              <JsonView raw={content} />
-            ) : (
-              <MarkdownView raw={content} />
-            )}
+          <div className="flex flex-col h-full">
+            {/* Header row */}
+            <div className="flex items-center justify-between px-8 pt-8 pb-4 shrink-0">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-weathered-stone">
+                {selected.label}
+                {pendingEdits[selected.path] && (
+                  <span className="ml-2 text-cosmic-teal normal-case">(edited)</span>
+                )}
+              </p>
+              {canEditArtifact && !editMode && (
+                <button
+                  onClick={enterEditMode}
+                  className="text-[10px] uppercase tracking-widest text-weathered-stone/60 hover:text-portal-gold border border-weathered-stone/20 hover:border-portal-gold/40 px-2 py-0.5 rounded transition-colors"
+                >
+                  Edit
+                </button>
+              )}
+              {editMode && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={commitEdit}
+                    className="text-[10px] uppercase tracking-widest text-cosmic-teal border border-cosmic-teal/40 px-2 py-0.5 rounded hover:bg-cosmic-teal/10 transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditMode(false)}
+                    className="text-[10px] uppercase tracking-widest text-weathered-stone/50 hover:text-weathered-stone px-2 py-0.5 rounded transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Content area */}
+            <div className="flex-1 min-h-0 px-8 pb-8 overflow-y-auto">
+              {editMode ? (
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  spellCheck={false}
+                  className="w-full h-full min-h-[60vh] bg-charcoal border border-weathered-stone/20 rounded p-4 text-xs font-mono text-bone-white/90 leading-relaxed resize-none outline-none focus:border-portal-gold/50 transition-colors"
+                />
+              ) : selected.type === "json" ? (
+                <JsonView raw={pendingEdits[selected.path] ?? content} />
+              ) : (
+                <MarkdownView raw={content} />
+              )}
+            </div>
           </div>
         ) : null}
       </div>

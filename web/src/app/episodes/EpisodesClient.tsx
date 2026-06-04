@@ -8,15 +8,16 @@ import type { Episode, EpisodeStatus } from "@/lib/episodes";
 type Filter = EpisodeStatus | "all";
 
 const STATUS_LABELS: Record<EpisodeStatus, string> = {
-  idle:            "Idle",
-  running:         "Running",
-  awaiting_review: "Awaiting Review",
-  done:            "Done",
-  error:           "Error",
-  rejected:        "Rejected",
+  idle:                    "Idle",
+  running:                 "Running",
+  awaiting_review:         "Awaiting Review",
+  awaiting_media_approval: "Media Review",
+  done:                    "Done",
+  error:                   "Error",
+  rejected:                "Rejected",
 };
 
-const FILTERS: Filter[] = ["all", "idle", "running", "awaiting_review", "done", "error", "rejected"];
+const FILTERS: Filter[] = ["all", "idle", "running", "awaiting_review", "awaiting_media_approval", "done", "error", "rejected"];
 
 export default function EpisodesClient({ episodes }: { episodes: Episode[] }) {
   const [filter, setFilter] = useState<Filter>("all");
@@ -73,15 +74,13 @@ export default function EpisodesClient({ episodes }: { episodes: Episode[] }) {
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   {ep.youtubeUrl && ep.status === "done" && (
-                    <a
-                      href={ep.youtubeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(ep.youtubeUrl, "_blank", "noopener,noreferrer"); }}
                       className="text-[11px] text-cosmic-teal border border-cosmic-teal/40 px-2 py-0.5 rounded hover:bg-cosmic-teal/10 transition-colors shrink-0"
                     >
                       Watch
-                    </a>
+                    </button>
                   )}
                   {ep.phase && (
                     <span className="text-weathered-stone text-xs">Phase {ep.phase}</span>

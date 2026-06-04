@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { topic } = await request.json();
+  const { topic, rowNumber } = await request.json();
   if (!topic?.trim()) {
     return NextResponse.json({ error: "topic required" }, { status: 400 });
   }
@@ -31,6 +31,9 @@ export async function POST(request: Request) {
       fs.mkdirSync(path.join(projectDir, dir), { recursive: true });
     }
     fs.writeFileSync(path.join(projectDir, ".topic"), clean, "utf-8");
+    if (rowNumber && typeof rowNumber === "number") {
+      fs.writeFileSync(path.join(projectDir, ".row_number"), String(rowNumber), "utf-8");
+    }
     return NextResponse.json({ slug }, { status: 201 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
