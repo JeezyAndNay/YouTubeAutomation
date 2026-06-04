@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-04T10:54:56.962Z",
+  "updatedAt": "2026-06-04T13:32:42.480Z",
   "createdAt": "2026-06-01T08:59:10.053Z",
   "id": "nw7PXooaFleaw4AU",
   "name": "Ruins Untold v2 — Phase 2: Media Generation",
@@ -87,7 +87,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const fs   = require('fs');\nconst dur  = parseFloat(($input.first().json.stdout || '').trim()) || 0;\nconst mm   = Math.floor(dur / 60);\nconst ss   = Math.round(dur % 60);\nconst vars = $('Load Project').first().json;\n\nconst scriptText   = fs.readFileSync(vars.scriptPath, 'utf-8');\nconst voicePackage = JSON.parse(fs.readFileSync(vars.voicePackagePath, 'utf-8'));\nconst wordCount    = scriptText.split(/\\s+/).filter(w => w.length > 0).length;\nconst wpm          = dur > 0 ? Math.round((wordCount / dur) * 60) : 150;\n\nreturn [{ json: {\n  ...vars,\n  durationSeconds: Math.round(dur * 10) / 10,\n  durationMMSS:    `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`,\n  wordCount,\n  wpm,\n  scriptText,\n  voicePackage\n} }];"
+        "jsCode": "const fs   = require('fs');\\nconst dur  = parseFloat(($input.first().json.stdout || '').trim()) || 0;\\nconst mm   = Math.floor(dur / 60);\\nconst ss   = Math.round(dur % 60);\\nconst vars = (() => {\\n  try { return $('Load Project').first().json; } catch (_) {}\\n  return $('Load Project from Slug').first().json;\\n})();\\n\\nconst scriptText   = fs.readFileSync(vars.scriptPath, 'utf-8');\\nconst voicePackage = JSON.parse(fs.readFileSync(vars.voicePackagePath, 'utf-8'));\\nconst wordCount    = scriptText.split(/\\s+/).filter(w => w.length > 0).length;\\nconst wpm          = dur > 0 ? Math.round((wordCount / dur) * 60) : 150;\\n\\nreturn [{ json: {\\n  ...vars,\\n  durationSeconds: Math.round(dur * 10) / 10,\\n  durationMMSS:    `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`,\\n  wordCount,\\n  wpm,\\n  scriptText,\\n  voicePackage\\n} }];"
       },
       "id": "7dbb91fd-a33a-4298-b8a7-76fdb02d5ac8",
       "name": "Prep Media Analysis",
@@ -2392,9 +2392,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "6b1696bd-2cf0-4de8-a476-c00f1a0f1b60",
-  "activeVersionId": "dce17aa6-107c-430d-9815-2cb1889bbe38",
-  "versionCounter": 282,
+  "versionId": "895a290f-5cbd-49d0-8226-2bdd3468adda",
+  "activeVersionId": "895a290f-5cbd-49d0-8226-2bdd3468adda",
+  "versionCounter": 285,
   "triggerCount": 1,
   "shared": [
     {
@@ -2417,9 +2417,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-06-04T10:25:52.469Z",
-    "createdAt": "2026-06-04T10:25:52.469Z",
-    "versionId": "dce17aa6-107c-430d-9815-2cb1889bbe38",
+    "updatedAt": "2026-06-04T13:32:42.488Z",
+    "createdAt": "2026-06-04T13:32:42.488Z",
+    "versionId": "895a290f-5cbd-49d0-8226-2bdd3468adda",
     "workflowId": "nw7PXooaFleaw4AU",
     "nodes": [
       {
@@ -2442,8 +2442,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          -384,
-          3344
+          -336,
+          3360
         ]
       },
       {
@@ -2470,7 +2470,7 @@
         "typeVersion": 1.1,
         "position": [
           -144,
-          3344
+          3360
         ],
         "webhookId": "d040dd1d-7fcb-4c59-8fd9-54096012ee9a"
       },
@@ -2483,8 +2483,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          96,
-          3344
+          64,
+          3360
         ]
       },
       {
@@ -2502,14 +2502,14 @@
       },
       {
         "parameters": {
-          "jsCode": "const fs   = require('fs');\nconst dur  = parseFloat(($input.first().json.stdout || '').trim()) || 0;\nconst mm   = Math.floor(dur / 60);\nconst ss   = Math.round(dur % 60);\nconst vars = $('Load Project').first().json;\n\nconst scriptText   = fs.readFileSync(vars.scriptPath, 'utf-8');\nconst voicePackage = JSON.parse(fs.readFileSync(vars.voicePackagePath, 'utf-8'));\nconst wordCount    = scriptText.split(/\\s+/).filter(w => w.length > 0).length;\nconst wpm          = dur > 0 ? Math.round((wordCount / dur) * 60) : 150;\n\nreturn [{ json: {\n  ...vars,\n  durationSeconds: Math.round(dur * 10) / 10,\n  durationMMSS:    `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`,\n  wordCount,\n  wpm,\n  scriptText,\n  voicePackage\n} }];"
+          "jsCode": "const fs   = require('fs');\\nconst dur  = parseFloat(($input.first().json.stdout || '').trim()) || 0;\\nconst mm   = Math.floor(dur / 60);\\nconst ss   = Math.round(dur % 60);\\nconst vars = (() => {\\n  try { return $('Load Project').first().json; } catch (_) {}\\n  return $('Load Project from Slug').first().json;\\n})();\\n\\nconst scriptText   = fs.readFileSync(vars.scriptPath, 'utf-8');\\nconst voicePackage = JSON.parse(fs.readFileSync(vars.voicePackagePath, 'utf-8'));\\nconst wordCount    = scriptText.split(/\\s+/).filter(w => w.length > 0).length;\\nconst wpm          = dur > 0 ? Math.round((wordCount / dur) * 60) : 150;\\n\\nreturn [{ json: {\\n  ...vars,\\n  durationSeconds: Math.round(dur * 10) / 10,\\n  durationMMSS:    `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`,\\n  wordCount,\\n  wpm,\\n  scriptText,\\n  voicePackage\\n} }];"
         },
         "id": "7dbb91fd-a33a-4298-b8a7-76fdb02d5ac8",
         "name": "Prep Media Analysis",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          496,
+          512,
           3344
         ]
       },
@@ -2522,8 +2522,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          912,
-          3344
+          304,
+          3584
         ]
       },
       {
@@ -2542,8 +2542,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1552,
-          3456
+          1088,
+          3680
         ],
         "continueOnFail": true
       },
@@ -2556,8 +2556,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1776,
-          3312
+          1328,
+          3360
         ]
       },
       {
@@ -2569,8 +2569,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1936,
-          2656
+          2096,
+          2560
         ]
       },
       {
@@ -2589,8 +2589,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2208,
-          2704
+          3600,
+          2592
         ]
       },
       {
@@ -2602,8 +2602,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2528,
-          2704
+          3808,
+          2592
         ]
       },
       {
@@ -2615,8 +2615,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2016,
-          3104
+          2064,
+          3024
         ]
       },
       {
@@ -2635,8 +2635,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2256,
-          3104
+          2288,
+          3024
         ]
       },
       {
@@ -2648,8 +2648,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2496,
-          3104
+          2512,
+          3024
         ]
       },
       {
@@ -2661,8 +2661,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2608,
-          3504
+          3472,
+          4448
         ]
       },
       {
@@ -2681,8 +2681,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2800,
-          3504
+          3680,
+          4448
         ]
       },
       {
@@ -2694,8 +2694,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3040,
-          3504
+          3888,
+          4448
         ]
       },
       {
@@ -2707,8 +2707,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2704,
-          2256
+          2928,
+          3024
         ]
       },
       {
@@ -2720,8 +2720,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2736,
-          3104
+          2928,
+          3424
         ]
       },
       {
@@ -2746,8 +2746,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2016,
-          4304
+          2000,
+          4400
         ]
       },
       {
@@ -2759,8 +2759,8 @@
         "type": "n8n-nodes-base.splitInBatches",
         "typeVersion": 3,
         "position": [
-          2976,
-          2704
+          3120,
+          3024
         ]
       },
       {
@@ -2772,8 +2772,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3216,
-          2720
+          3344,
+          3024
         ]
       },
       {
@@ -2804,8 +2804,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3456,
-          2704
+          3728,
+          3040
         ],
         "credentials": {
           "httpHeaderAuth": {
@@ -2823,8 +2823,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3696,
-          2704
+          3920,
+          3040
         ]
       },
       {
@@ -2836,8 +2836,8 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          3936,
-          2704
+          4144,
+          3040
         ],
         "webhookId": "14bf2177-6301-40ea-9117-7186b9ac1b04"
       },
@@ -2855,8 +2855,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          4176,
-          2704
+          4368,
+          3040
         ],
         "credentials": {
           "httpHeaderAuth": {
@@ -2903,8 +2903,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          4416,
-          2704
+          4608,
+          3040
         ]
       },
       {
@@ -2916,8 +2916,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4656,
-          2704
+          4848,
+          3024
         ]
       },
       {
@@ -2929,8 +2929,8 @@
         "type": "n8n-nodes-base.executeCommand",
         "typeVersion": 1,
         "position": [
-          4896,
-          2704
+          5088,
+          3024
         ]
       },
       {
@@ -2942,8 +2942,8 @@
         "type": "n8n-nodes-base.splitInBatches",
         "typeVersion": 3,
         "position": [
-          2976,
-          3104
+          3104,
+          3424
         ]
       },
       {
@@ -2955,8 +2955,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3216,
-          3104
+          3312,
+          3440
         ]
       },
       {
@@ -2987,8 +2987,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3456,
-          3104
+          3712,
+          3424
         ],
         "credentials": {
           "httpHeaderAuth": {
@@ -3006,8 +3006,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3696,
-          3104
+          3920,
+          3424
         ],
         "retryOnFail": false
       },
@@ -3020,8 +3020,8 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          3936,
-          3104
+          4128,
+          3424
         ],
         "webhookId": "ca92faf4-3060-4469-84bc-27eaf139a215",
         "retryOnFail": true
@@ -3040,8 +3040,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          4176,
-          3104
+          4320,
+          3424
         ],
         "credentials": {
           "httpHeaderAuth": {
@@ -3088,8 +3088,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          4416,
-          3104
+          4544,
+          3424
         ]
       },
       {
@@ -3101,8 +3101,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4656,
-          3104
+          4912,
+          3408
         ]
       },
       {
@@ -3114,8 +3114,8 @@
         "type": "n8n-nodes-base.executeCommand",
         "typeVersion": 1,
         "position": [
-          4896,
-          3104
+          5088,
+          3408
         ]
       },
       {
@@ -3311,7 +3311,7 @@
         "typeVersion": 3,
         "position": [
           2256,
-          4304
+          4400
         ]
       },
       {
@@ -3324,7 +3324,7 @@
         "typeVersion": 2,
         "position": [
           2496,
-          4304
+          4416
         ]
       },
       {
@@ -3362,7 +3362,7 @@
         "typeVersion": 4.2,
         "position": [
           2736,
-          4304
+          4416
         ],
         "credentials": {
           "httpHeaderAuth": {
@@ -3383,20 +3383,7 @@
         "typeVersion": 1,
         "position": [
           2976,
-          4304
-        ]
-      },
-      {
-        "parameters": {
-          "mode": "waitForAll"
-        },
-        "id": "85d477ca-411c-4b3e-aa16-fcf6ec933ecd",
-        "name": "All Assets Complete",
-        "type": "n8n-nodes-base.merge",
-        "typeVersion": 3,
-        "position": [
-          5216,
-          3504
+          4416
         ]
       },
       {
@@ -3408,14 +3395,14 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          5456,
-          3504
+          4144,
+          4448
         ]
       },
       {
         "parameters": {
           "content": "## Ruins Untold v2 — Phase 2\n\n**Picks up from:** Phase 1 completed project (voiceover_final.mp3 exists)\n\n**Runs:**\n1. Media Placement Agent → media_timeline.json\n2. Image Agent → image_manifest.json\n3. Video Agent → video_manifest.json\n4. Metadata Agent → metadata_package.json\n5. Image generation (Kie.ai NB2)\n6. Video generation (Kie.ai Veo3Lite)\n7. Music generation (Kie.ai Suno V4.5)\n8. SFX generation (ElevenLabs)\n\n**Runtime:** 2-4 hours depending on asset count",
-          "height": 240,
+          "height": 336,
           "width": 420
         },
         "id": "f61c6fc2-a47e-4df6-8dbd-3e3172344e31",
@@ -3423,38 +3410,38 @@
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
         "position": [
-          -144,
-          3024
+          -368,
+          2976
         ]
       },
       {
         "parameters": {
           "content": "## Agent Models\n\n- **Media Placement:** claude-sonnet-4-6 (complex scene analysis)\n- **Image Agent:** claude-haiku-4-5 (template expansion)\n- **Video Agent:** claude-haiku-4-5 (template expansion)\n- **Metadata Agent:** claude-haiku-4-5 (structured output)\n\nAll agents receive system prompt via bridge `system` field for caching.",
-          "height": 180,
-          "width": 360
+          "height": 212,
+          "width": 488
         },
         "id": "5f3a9716-258f-4982-ae69-b28b68827497",
         "name": "Note: Agent Models",
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
         "position": [
-          1296,
-          3024
+          1488,
+          3088
         ]
       },
       {
         "parameters": {
           "content": "## Generation APIs\n\n**Images:** Kie.ai NB2\n`POST /api/v1/jobs/createTask`\nmodel: `nano-banana-2`\nPoll: `/api/v1/jobs/recordInfo`\n\n**Videos:** Kie.ai Veo3Lite\n`POST /api/v1/veo/generate`\nmodel: `veo3_lite`\nPoll: `/api/v1/veo/record-info`\n\n**Music:** Kie.ai Suno\n`POST /api/v1/generate`\nmodel: `V4_5`\n\n**SFX:** ElevenLabs\n`POST /v1/sound-generation`\n(synchronous)",
-          "height": 356,
-          "width": 340
+          "height": 372,
+          "width": 500
         },
         "id": "be24866f-e688-466e-9cf0-378823e250d5",
         "name": "Note: Generation APIs",
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
         "position": [
-          2960,
-          2064
+          1472,
+          3392
         ]
       },
       {
@@ -3479,8 +3466,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1152,
-          3344
+          528,
+          3584
         ]
       },
       {
@@ -3512,8 +3499,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          1328,
-          3344
+          720,
+          3584
         ]
       },
       {
@@ -3525,8 +3512,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2080,
-          2480
+          2368,
+          2560
         ]
       },
       {
@@ -3558,8 +3545,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          2272,
-          2480
+          2640,
+          2560
         ]
       },
       {
@@ -3571,8 +3558,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2544,
-          2496
+          2928,
+          2576
         ]
       },
       {
@@ -3584,8 +3571,8 @@
         "type": "n8n-nodes-base.splitInBatches",
         "typeVersion": 3,
         "position": [
-          2752,
-          2496
+          3152,
+          2576
         ]
       },
       {
@@ -3597,8 +3584,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2992,
-          2512
+          3392,
+          2592
         ]
       },
       {
@@ -3610,8 +3597,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3392,
-          2256
+          2944,
+          2752
         ]
       },
       {
@@ -3643,8 +3630,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          3344,
-          2720
+          3536,
+          3024
         ]
       },
       {
@@ -3676,8 +3663,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          3344,
-          3104
+          3504,
+          3440
         ]
       },
       {
@@ -3709,8 +3696,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          4416,
-          3264
+          4704,
+          3520
         ]
       },
       {
@@ -3722,8 +3709,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2496,
-          3296
+          2096,
+          3408
         ]
       },
       {
@@ -3736,40 +3723,230 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1,
         "position": [
-          2736,
-          3296
+          2352,
+          3408
         ],
         "webhookId": "239aa5fd-ef02-43ee-9070-b6fb335f061a"
       },
       {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "ruins-untold/phase2",
+          "options": {}
+        },
         "id": "a2d000c5-a045-4f7b-9f07-d5981fe7120e",
         "name": "Webhook Trigger",
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2,
         "position": [
           -624,
-          3594
+          3536
         ],
-        "parameters": {
-          "httpMethod": "POST",
-          "path": "ruins-untold/phase2",
-          "responseMode": "onReceived",
-          "responseData": "noData"
-        },
         "webhookId": "fe14fd31-ebd6-4593-9f82-fe0341951d7b"
       },
       {
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst slug = $json.body?.slug || $json.slug;\nif (!slug) throw new Error('No slug in webhook body — expected { slug: \"episode_slug\" }');\n\nconst projectDir = `/Users/jneal/n8n_projects/${slug}`;\nif (!fs.existsSync(projectDir)) throw new Error(`Project directory not found: ${projectDir}`);\n\nconst voicePackage = JSON.parse(fs.readFileSync(path.join(projectDir, 'audio', 'voice_package.json'), 'utf-8'));\nconst topic = voicePackage.topic || slug;\n\nreturn [{ json: {\n  slug,\n  projectDir,\n  topic,\n  voiceFinalPath:    path.join(projectDir, 'audio', 'voiceover_final.mp3'),\n  scriptPath:        path.join(projectDir, 'scripts', 'script.md'),\n  researchPath:      path.join(projectDir, 'scripts', 'research_package.json'),\n  voicePackagePath:  path.join(projectDir, 'audio', 'voice_package.json'),\n  mediaTimelinePath: path.join(projectDir, 'scripts', 'media_timeline.json'),\n  imageManifestPath: path.join(projectDir, 'scripts', 'image_manifest.json'),\n  videoManifestPath: path.join(projectDir, 'scripts', 'video_manifest.json'),\n  metadataPath:      path.join(projectDir, 'scripts', 'metadata_package.json')\n} }];"
+        },
         "id": "c48fd67f-92c0-4a74-b3b5-83ba7e125649",
         "name": "Load Project from Slug",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          96,
-          3594
-        ],
+          64,
+          3536
+        ]
+      },
+      {
         "parameters": {
-          "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst slug = $json.body?.slug || $json.slug;\nif (!slug) throw new Error('No slug in webhook body — expected { slug: \"episode_slug\" }');\n\nconst projectDir = `/Users/jneal/n8n_projects/${slug}`;\nif (!fs.existsSync(projectDir)) throw new Error(`Project directory not found: ${projectDir}`);\n\nconst voicePackage = JSON.parse(fs.readFileSync(path.join(projectDir, 'audio', 'voice_package.json'), 'utf-8'));\nconst topic = voicePackage.topic || slug;\n\nreturn [{ json: {\n  slug,\n  projectDir,\n  topic,\n  voiceFinalPath:    path.join(projectDir, 'audio', 'voiceover_final.mp3'),\n  scriptPath:        path.join(projectDir, 'scripts', 'script.md'),\n  researchPath:      path.join(projectDir, 'scripts', 'research_package.json'),\n  voicePackagePath:  path.join(projectDir, 'audio', 'voice_package.json'),\n  mediaTimelinePath: path.join(projectDir, 'scripts', 'media_timeline.json'),\n  imageManifestPath: path.join(projectDir, 'scripts', 'image_manifest.json'),\n  videoManifestPath: path.join(projectDir, 'scripts', 'video_manifest.json'),\n  metadataPath:      path.join(projectDir, 'scripts', 'metadata_package.json')\n} }];"
-        }
+          "content": "",
+          "height": 1072,
+          "width": 1856,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -384,
+          2960
+        ],
+        "typeVersion": 1,
+        "id": "5b1c05df-f572-465a-b1ad-0133cbc1edd2",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "content": "## Image Prompts\nImage prompts are built and ready for reveiw",
+          "height": 496,
+          "width": 2144,
+          "color": 3
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1984,
+          2400
+        ],
+        "typeVersion": 1,
+        "id": "70cca4f9-e62e-47e9-b7c1-8c85c5006211",
+        "name": "Sticky Note1"
+      },
+      {
+        "parameters": {
+          "content": "## Video Prompts\nVideo prompts are built and ready for reveiw",
+          "height": 320,
+          "width": 720,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1984,
+          2944
+        ],
+        "typeVersion": 1,
+        "id": "7020e74a-baf3-4bf0-9fe7-f2dbc09ae615",
+        "name": "Sticky Note2"
+      },
+      {
+        "parameters": {
+          "content": "## Review/Approve Prompts\nVideo &Image  prompts are Reviwed/Approved",
+          "height": 320,
+          "width": 720,
+          "color": 2
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1984,
+          3296
+        ],
+        "typeVersion": 1,
+        "id": "f04d0a17-b5aa-4e9b-87c1-93eba519c323",
+        "name": "Sticky Note3"
+      },
+      {
+        "parameters": {
+          "content": "## Image Generation\n**Prompts are extracted and sent off to Kie.ai for image generation**",
+          "height": 368,
+          "width": 2464,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          2864,
+          2944
+        ],
+        "typeVersion": 1,
+        "id": "6884fcdf-b862-432e-bb55-efc1d06fd39e",
+        "name": "Sticky Note4"
+      },
+      {
+        "parameters": {
+          "content": "## Kie.ai Polling Loop\n",
+          "height": 304,
+          "width": 688,
+          "color": "#543131"
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          4096,
+          2976
+        ],
+        "typeVersion": 1,
+        "id": "4c15d01b-ca2b-4737-92fc-0f9f92556938",
+        "name": "Sticky Note5"
+      },
+      {
+        "parameters": {
+          "content": "## Video Generation\n**Prompts are extracted and sent off to Kie.ai for video generation**",
+          "height": 416,
+          "width": 2464,
+          "color": 7
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          2864,
+          3344
+        ],
+        "typeVersion": 1,
+        "id": "ed6fecef-0843-4688-b87f-5c10f5a1d6a5",
+        "name": "Sticky Note6"
+      },
+      {
+        "parameters": {
+          "content": "## Kie.ai Polling Loop\n",
+          "height": 336,
+          "width": 784,
+          "color": "#543131"
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          4048,
+          3376
+        ],
+        "typeVersion": 1,
+        "id": "b184aab4-4877-4aa1-9829-cdd96599b8b7",
+        "name": "Sticky Note7"
+      },
+      {
+        "parameters": {
+          "content": "## Music Generation\n**Prompts are extracted and sent off to Kie.ai for generation**",
+          "height": 400,
+          "width": 2416,
+          "color": "#164B2A"
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1984,
+          3808
+        ],
+        "typeVersion": 1,
+        "id": "82387941-942b-46db-9a4b-6c6dabdcb4b4",
+        "name": "Sticky Note8"
+      },
+      {
+        "parameters": {
+          "content": "## Kie.ai Polling Loop\n",
+          "height": 336,
+          "width": 784,
+          "color": "#B4B71A"
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          3104,
+          3840
+        ],
+        "typeVersion": 1,
+        "id": "aaf60d26-c668-4384-8340-f4ed704d20a2",
+        "name": "Sticky Note9"
+      },
+      {
+        "parameters": {
+          "content": "## SFX Generation \n**SFX Prompts are extracted and sent off to ElevenLabs for generation** ",
+          "height": 368,
+          "width": 1280,
+          "color": "#F58484"
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1984,
+          4288
+        ],
+        "typeVersion": 1,
+        "id": "8b7d8a55-367a-49bc-bd5c-20978d30a387",
+        "name": "Sticky Note10"
+      },
+      {
+        "parameters": {
+          "content": "## Finalize Phase 2\n",
+          "height": 368,
+          "width": 1008
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          3392,
+          4272
+        ],
+        "typeVersion": 1,
+        "id": "13f43ef7-c2ba-446c-b617-503f701dd2f8",
+        "name": "Sticky Note11"
       }
     ],
     "connections": {
@@ -4388,17 +4565,6 @@
           ]
         ]
       },
-      "All Assets Complete": {
-        "main": [
-          [
-            {
-              "node": "Phase 2 Summary",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Transcribe Audio": {
         "main": [
           [
@@ -4621,6 +4787,17 @@
             }
           ]
         ]
+      },
+      "Parse Metadata Package": {
+        "main": [
+          [
+            {
+              "node": "Phase 2 Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "JeezyAndNay Neal",
@@ -4629,18 +4806,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-06-04T10:25:52.668Z",
-        "id": 83,
+        "createdAt": "2026-06-04T13:32:42.622Z",
+        "id": 85,
         "workflowId": "nw7PXooaFleaw4AU",
-        "versionId": "dce17aa6-107c-430d-9815-2cb1889bbe38",
+        "versionId": "895a290f-5cbd-49d0-8226-2bdd3468adda",
         "event": "deactivated",
         "userId": "af2abf74-a4e9-4319-875f-87671c53e774"
       },
       {
-        "createdAt": "2026-06-04T10:25:52.733Z",
-        "id": 84,
+        "createdAt": "2026-06-04T13:32:42.711Z",
+        "id": 86,
         "workflowId": "nw7PXooaFleaw4AU",
-        "versionId": "dce17aa6-107c-430d-9815-2cb1889bbe38",
+        "versionId": "895a290f-5cbd-49d0-8226-2bdd3468adda",
         "event": "activated",
         "userId": "af2abf74-a4e9-4319-875f-87671c53e774"
       }
