@@ -43,8 +43,8 @@ function deriveEpisode(slug: string): Episode {
 
 function detectPhase(dir: string): EpisodePhase | null {
   if (fs.existsSync(path.join(dir, "scripts", "metadata_package.json"))) return 3;
-  if (fs.existsSync(path.join(dir, "scripts", "media_timeline.json")))    return 2;
-  if (fs.existsSync(path.join(dir, "scripts", "script.md")))              return 1;
+  if (fs.existsSync(path.join(dir, "scripts", "video_manifest.json")))   return 2;
+  if (fs.existsSync(path.join(dir, "scripts", "script.md")))             return 1;
   return null;
 }
 

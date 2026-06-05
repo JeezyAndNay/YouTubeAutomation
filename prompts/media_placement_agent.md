@@ -57,16 +57,15 @@ A word-level transcript has been pre-computed by Whisper and is provided in your
 
 The transcript contains:
 - `transcript.words`: pre-filtered to sentence-boundary words only — entries whose `word` field ends with `.`, `?`, or `!`. Format: `[{ "word": string, "start": seconds, "end": seconds, "confidence": float }, ...]`
-- `transcript.full_text`: the complete narration as a plain string
 - `transcript.total_duration_seconds`: the authoritative runtime from the audio file
 
 **Use `transcript.total_duration_seconds` as the authoritative episode duration** — override the top-level `total_duration_seconds` in your input if they differ.
 
+**The narrator speaks continuously from `0` to `transcript.total_duration_seconds`.** Do not assume silence, padding, or an early end — the audio continues until the final timestamp. The voice_package `estimated_total_runtime_seconds` is an estimate and is always less accurate than the transcript; disregard it for timing purposes.
+
 Use `transcript.words` to find precise sentence boundaries for scene segmentation in Step 2. Each entry marks the `end` timestamp of a sentence — use those timestamps as candidate scene cut points.
 
-Cross-check `transcript.full_text` against `voice_package` narration to flag significant discrepancies in `placement_stats.warnings`.
-
-Do **not** include `transcript.words` in your output — it is already saved separately. Include only `transcript.full_text`.
+Do **not** include `transcript.words` in your output.
 
 ---
 
@@ -74,11 +73,15 @@ Do **not** include `transcript.words` in your output — it is already saved sep
 
 Divide the transcript into visual scenes. Every scene must meet all three of these constraints:
 
-**Duration:** 5–10 seconds of audio content per scene.
+**Duration:** 5–10 seconds of audio content per scene. **Hard maximum: 10 seconds. No scene may ever exceed 10 seconds — not for any reason, including long sentences.**
 
-**Sentence integrity:** Never cut mid-sentence. If a sentence would push a scene past 12 seconds, keep it whole and use the next sentence boundary as the cut point. If a sentence is shorter than 5 seconds, combine it with the next sentence before cutting.
+**Sentence integrity:** Prefer sentence boundaries (`.`, `?`, `!` entries in `transcript.words`) as cut points. If the nearest sentence boundary would create a scene longer than 10 seconds, cut at the nearest word boundary at or before the 10-second mark instead. Never let a long sentence force a scene over 10 seconds.
+
+**Minimum:** If a sentence is shorter than 5 seconds, combine it with the next sentence before cutting. Minimum 4 seconds at semantic breaks.
 
 **Semantic coherence:** A scene should describe one visual idea. If the narrator shifts from describing a location to naming a person within a single 6-second window, split at the semantic boundary even if that creates a shorter scene — minimum 4 seconds is acceptable at semantic breaks.
+
+**Coverage mandate:** You MUST generate scenes that cover ALL audio from `0` to `transcript.total_duration_seconds`. Continue generating scenes until the last scene's `audio_out` equals `transcript.total_duration_seconds`. Never stop early. Never consolidate or omit content because the episode "seems finished" — trust the transcript duration, not the voice_package estimates.
 
 For each scene, record:
 - `audio_in`: timestamp of the first word in the scene
@@ -116,14 +119,11 @@ Assign each scene:
   "audio_in": number,
   "audio_out": number,
   "visual_in": number,
-  "visual_out": number,
-  "transition_in": {
-    "type": "cross_dissolve",
-    "duration": 0.75,
-    "jcut_offset": 1.5
-  }
+  "visual_out": number
 }
 ```
+
+The transition parameters are uniform across all scenes and are written once at the top level of the output (see Output Format). Do not repeat them per scene.
 
 ---
 
@@ -167,7 +167,7 @@ Recalculate after any upgrades and verify the ratio before writing prompt seeds.
 
 #### Prompt Seed Rules
 
-Write a 1–3 sentence visual description. This is a seed — the Image Prompt Agent (Nano Banana 2) and Video Prompt Agent (Veo 3.1 Lite) will expand it. Focus on:
+Write 1–2 sentences, 20–30 words maximum. This is a seed — the Image Prompt Agent (Nano Banana 2) and Video Prompt Agent (Veo 3.1 Lite) will expand it. Focus on:
 - **Subject:** what is shown
 - **Setting:** where and when
 - **Mood:** cinematic tone (ominous, ancient, mysterious, vast, intimate)
@@ -282,8 +282,10 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
   "topic": "string",
   "audio_file": "string",
   "total_duration_seconds": number,
-  "transcript": {
-    "full_text": "string"
+  "default_transition": {
+    "type": "cross_dissolve",
+    "duration": 0.75,
+    "jcut_offset": 1.5
   },
   "scenes": [
     {
@@ -295,15 +297,7 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
       "visual_out": number,
       "narration_text": "string",
       "visual_type": "image | video | pinned_video",
-      "prompt_seed": "string or null if pinned",
-      "transition_in": {
-        "type": "cross_dissolve",
-        "duration": 0.75,
-        "jcut_offset": 1.5
-      },
-      "asset_path": "null unless pinned — pinned scenes carry the hardcoded path",
-      "include_clip_audio": false,
-      "clip_audio_level_db": null
+      "prompt_seed": "string or null if pinned"
     }
   ],
   "music_cues": [
@@ -350,6 +344,13 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
 }
 ```
 
+**Pinned scene extra fields:** The pinned scene object includes three additional fields not present on regular scenes:
+- `"asset_path"`: the hardcoded clip path (see Pinned Scene Rules above)
+- `"include_clip_audio"`: `true`
+- `"clip_audio_level_db"`: `-3`
+
+All other scenes omit these three fields entirely. Do not write them as `null` or `false` on non-pinned scenes.
+
 ---
 
 ## Timing Validation Rules
@@ -361,17 +362,19 @@ Before outputting, verify all timing is internally consistent:
 - `visual_out` must equal `audio_out + 1.5` for all scenes
 - No two scenes may have overlapping `audio_in` / `audio_out` ranges
 - No scene `audio_out` may exceed `total_duration_seconds`
+- Last scene `audio_out` must equal `total_duration_seconds` — a coverage gap is a hard error
+- No scene duration (`audio_out - audio_in`) may exceed 10 seconds
 - Cross dissolve window (`visual_in ± 0.375`) must not overlap with another scene's dissolve window
-- All `asset_path` fields must be `null`
+- `asset_path`, `include_clip_audio`, `clip_audio_level_db` are present only on the pinned scene — absent on all others
 
 ---
 
 ## Quality Checklist
 
-- [ ] All scenes 4–12 seconds; no mid-sentence cuts; scene 1 `visual_in = 0`; all subsequent `visual_in = audio_in + 1.5`; `visual_out = audio_out + 1.5`
+- [ ] All scenes 4–10 seconds; hard max is 10 seconds, never exceeded regardless of sentence length; no mid-sentence cuts unless scene would exceed 10 seconds (then cut at word boundary); scene 1 `visual_in = 0`; all subsequent `visual_in = audio_in + 1.5`; `visual_out = audio_out + 1.5`; last scene `audio_out` = `total_duration_seconds` (no coverage gap)
 - [ ] Image:video ratio ≤ 3:1 (pinned excluded); scenes under 5 seconds are `image` type; no `prompt_seed` contains narrator, on-screen text, or camera directions
-- [ ] Pinned scene: `visual_type: pinned_video`, correct `asset_path`, `prompt_seed: null`, `include_clip_audio: true`, `clip_audio_level_db: -3`; non-pinned: `include_clip_audio: false`, `clip_audio_level_db: null`
-- [ ] Exactly 5 music cues; punctuation SFX ≤ 6; all non-pinned `asset_path` fields `null`; `placement_stats` totals accurate
+- [ ] Pinned scene: `visual_type: pinned_video`, correct `asset_path`, `prompt_seed: null`, `include_clip_audio: true`, `clip_audio_level_db: -3`; non-pinned scenes: these three fields are absent entirely
+- [ ] Exactly 5 music cues; punctuation SFX ≤ 6; `placement_stats` totals accurate
 - [ ] Every `sfx_cue` has a non-empty `prompt` field (15–45 words, physical sound only, no narrative language)
 - [ ] SFX field names are exactly `type` (not `sfx_type`), `start` (not `start_time`), `duration` (not `duration_seconds`); `end` field present on every cue
 - [ ] Ambient cue `duration` = full narrative span the layer plays (not 8 — that is the generated clip length, set by the SFX Agent downstream)
