@@ -22,7 +22,7 @@ const XFADE_BATCH_SIZE = 25;    // max clips per xfade pass (single FFmpeg comma
 const KEN_BURNS_ZOOM = 1.04;    // maximum zoom factor for images (1.0 = no zoom)
 const ENCODE_PRESET = 'fast';   // libx264 preset
 const ENCODE_CRF = 22;          // quality: 18=high, 22=medium, 28=low
-const NARRATION_PAUSE_SECONDS = 2;  // silence before narration begins (musical lead-in)
+const NARRATION_PAUSE_SECONDS = 1.5;  // silence before narration begins (musical lead-in)
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 const EXEC_OPTS = { shell: '/bin/sh', maxBuffer: 200 * 1024 * 1024 };
