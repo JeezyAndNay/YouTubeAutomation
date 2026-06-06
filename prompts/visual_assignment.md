@@ -96,13 +96,20 @@ Write a prompt seed for every non-pinned scene. Pinned scenes get `prompt_seed: 
 
 **Rules:**
 - 20–30 words maximum — this is a seed, not a final prompt
+- **The seed MUST illustrate what the narrator is literally saying in this scene's `narration_text` — not a related topic, not something that happens later in the episode, not general thematic content.** Before writing, ask: *"What specific subject, object, place, or action is the narrator describing right now in these exact words?"* Then show that specific thing.
 - Focus on: subject, setting, mood, one specific visual detail tied to the narration
 - Do NOT reference the narrator, on-screen text, or camera directions
 - Mood words: ominous, ancient, mysterious, vast, intimate, desolate, reverent, unsettling
+- Do NOT use generic "ancient mystery" filler when the narration names something specific
 
-**Example:**
+**Example (correct):**
 - Narration: "The walls of the temple were covered in symbols no linguist has ever translated."
 - Seed: `"Ancient stone temple wall dense with unknown carvings. Torchlight catches the depth of each inscription. Alien yet methodical, filling every surface. Cinematic, mysterious."`
+
+**Counter-example (wrong):**
+- Narration: "Beneath the soil less than a day's walk from where they drift, there are the foundations of a city."
+- Wrong seed: `"Medieval London illustration circa 1100 AD, thatched rooftops crowding along the Thames."` ← London is mentioned later. This scene is about hidden underground foundations.
+- Correct seed: `"Cross-section of American floodplain revealing buried earthen mound foundations beneath quiet surface. Ancient hidden city beneath undisturbed land. Archaeological, ominous, subterranean."`
 
 ---
 
