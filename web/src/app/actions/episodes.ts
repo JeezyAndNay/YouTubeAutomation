@@ -134,11 +134,7 @@ export async function approveMediaPrompts(
 
   setEpisodeStatus(slug, "running");
   try {
-    const res = await fetch(resumeUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ approved: true }),
-    });
+    const res = await fetch(resumeUrl, { method: "GET" });
     if (!res.ok) {
       setEpisodeStatus(slug, "awaiting_media_approval");
       return { error: `n8n resume failed: HTTP ${res.status}` };
