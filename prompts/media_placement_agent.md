@@ -53,19 +53,21 @@ Work through all six steps in order. Do not skip any step.
 
 ### Step 1 — Use Pre-Computed Transcript
 
-A word-level transcript has been pre-computed by Whisper and is provided in your input under `transcript`. Do not attempt to transcribe the audio — transcription tools are unavailable in this environment.
+A full transcript has been pre-computed by Whisper and is provided in your input under `transcript`. Do not attempt to transcribe the audio — transcription tools are unavailable in this environment.
 
 The transcript contains:
-- `transcript.words`: pre-filtered to sentence-boundary words only — entries whose `word` field ends with `.`, `?`, or `!`. Format: `[{ "word": string, "start": seconds, "end": seconds, "confidence": float }, ...]`
+- `transcript.segments`: all Whisper transcription segments, in order. Format: `[{ "text": string, "start": seconds, "end": seconds }, ...]`
 - `transcript.total_duration_seconds`: the authoritative runtime from the audio file
 
 **Use `transcript.total_duration_seconds` as the authoritative episode duration** — override the top-level `total_duration_seconds` in your input if they differ.
 
 **The narrator speaks continuously from `0` to `transcript.total_duration_seconds`.** Do not assume silence, padding, or an early end — the audio continues until the final timestamp. The voice_package `estimated_total_runtime_seconds` is an estimate and is always less accurate than the transcript; disregard it for timing purposes.
 
-Use `transcript.words` to find precise sentence boundaries for scene segmentation in Step 2. Each entry marks the `end` timestamp of a sentence — use those timestamps as candidate scene cut points.
+**Finding sentence cut points:** Scan `transcript.segments` for entries whose `text` ends with a sentence-boundary character (`.`, `?`, `!`). The `end` timestamp of those entries are your candidate scene cut points for Step 2.
 
-Do **not** include `transcript.words` in your output.
+**Extracting narration text per scene:** For each scene you define (with `audio_in` and `audio_out`), collect all `transcript.segments` whose time range overlaps with `[audio_in, audio_out]`. Concatenate their `text` fields in order — this is the scene's `narration_text`. Trim leading/trailing whitespace. This must be actual narration words — never a placeholder like `[narration 0.00s–10.00s]`.
+
+Do **not** include `transcript.segments` in your output.
 
 ---
 
@@ -75,7 +77,7 @@ Divide the transcript into visual scenes. Every scene must meet all three of the
 
 **Duration:** 5–10 seconds of audio content per scene. **Hard maximum: 10 seconds. No scene may ever exceed 10 seconds — not for any reason, including long sentences.**
 
-**Sentence integrity:** Prefer sentence boundaries (`.`, `?`, `!` entries in `transcript.words`) as cut points. If the nearest sentence boundary would create a scene longer than 10 seconds, cut at the nearest word boundary at or before the 10-second mark instead. Never let a long sentence force a scene over 10 seconds.
+**Sentence integrity:** Prefer sentence boundaries (segments in `transcript.segments` whose `text` ends with `.`, `?`, or `!`) as cut points. If the nearest sentence boundary would create a scene longer than 10 seconds, cut at the `end` timestamp of the nearest segment at or before the 10-second mark instead. Never let a long sentence force a scene over 10 seconds.
 
 **Minimum:** If a sentence is shorter than 5 seconds, combine it with the next sentence before cutting. Minimum 4 seconds at semantic breaks.
 
@@ -167,13 +169,17 @@ Recalculate after any upgrades and verify the ratio before writing prompt seeds.
 
 #### Prompt Seed Rules
 
-Write 1–2 sentences, 20–30 words maximum. This is a seed — the Image Prompt Agent (Nano Banana 2) and Video Prompt Agent (Veo 3.1 Lite) will expand it. Focus on:
-- **Subject:** what is shown
-- **Setting:** where and when
-- **Mood:** cinematic tone (ominous, ancient, mysterious, vast, intimate)
-- **Key detail:** one specific visual element that ties directly to the narration words
+Write 1–2 sentences, 20–30 words maximum. This is a seed — the Image Prompt Agent (Nano Banana 2) and Video Prompt Agent (Veo 3.1 Lite) will expand it.
 
-Do NOT write technical camera instructions in image seeds — those belong to the Video Prompt Agent. Do NOT reference the narrator or any on-screen text.
+**The prompt seed MUST illustrate what the narrator is saying in this exact scene's `narration_text` — not a related topic, not something that happens later in the episode, not general thematic content.** Before writing a seed, ask: *"What specific subject, object, place, or action is the narrator describing right now in these exact words?"* Then illustrate that specific thing.
+
+Focus on:
+- **Subject:** the specific thing being described in `narration_text` — name it precisely
+- **Setting:** where and when (time period, location, conditions)
+- **Mood:** cinematic tone (ominous, ancient, mysterious, vast, intimate)
+- **Key detail:** one visual element that directly mirrors the narration words
+
+Do NOT write technical camera instructions in image seeds — those belong to the Video Prompt Agent. Do NOT reference the narrator or any on-screen text. Do NOT use general "ancient mystery" filler when the narration names something specific.
 
 **Example:**
 ```
@@ -182,6 +188,15 @@ Visual type: image
 Prompt seed: "Ancient stone temple wall covered in dense, intricate carvings and unknown symbols.
 Low torchlight catches the depth of each inscription. The symbols are alien yet methodical,
 filling every surface. Cinematic, mysterious, high detail."
+```
+
+**Counter-example (wrong):**
+```
+Narration: "Beneath the soil less than a day's walk from where they drift, there are the foundations of a city."
+Wrong seed: "Medieval London illustration circa 1100 AD, thatched rooftops crowding along the Thames."
+← WRONG: London is mentioned later in the episode. This scene is about hidden foundations underground.
+Correct seed: "Cross-section view of American floodplain soil revealing buried earthen foundations below the surface.
+Dark underground archaeology. Hidden ancient city structure beneath quiet grassland. Ominous, archaeological."
 ```
 
 ---
@@ -372,6 +387,8 @@ Before outputting, verify all timing is internally consistent:
 ## Quality Checklist
 
 - [ ] All scenes 4–10 seconds; hard max is 10 seconds, never exceeded regardless of sentence length; no mid-sentence cuts unless scene would exceed 10 seconds (then cut at word boundary); scene 1 `visual_in = 0`; all subsequent `visual_in = audio_in + 1.5`; `visual_out = audio_out + 1.5`; last scene `audio_out` = `total_duration_seconds` (no coverage gap)
+- [ ] Every `narration_text` contains actual spoken words from the transcript — no placeholder text like `[narration X.XXs–Y.YYs]` under any circumstances
+- [ ] Every `prompt_seed` illustrates the specific subject/action described in that scene's `narration_text` — not general topic content, not content from a different part of the episode; verify by reading the narration_text and asking "does this seed show exactly what the narrator is saying right now?"
 - [ ] Image:video ratio ≤ 3:1 (pinned excluded); scenes under 5 seconds are `image` type; no `prompt_seed` contains narrator, on-screen text, or camera directions
 - [ ] Pinned scene: `visual_type: pinned_video`, correct `asset_path`, `prompt_seed: null`, `include_clip_audio: true`, `clip_audio_level_db: -3`; non-pinned scenes: these three fields are absent entirely
 - [ ] Exactly 5 music cues; punctuation SFX ≤ 6; `placement_stats` totals accurate
