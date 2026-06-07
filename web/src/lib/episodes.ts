@@ -4,7 +4,7 @@ import path from "path";
 const PROJECTS_DIR = "/Users/jneal/n8n_projects";
 
 export type EpisodePhase = 1 | 2 | 3;
-export type EpisodeStatus = "idle" | "running" | "awaiting_review" | "awaiting_media_approval" | "done" | "error" | "rejected";
+export type EpisodeStatus = "idle" | "running" | "awaiting_review" | "awaiting_media_approval" | "ready_for_phase3" | "done" | "error" | "rejected";
 
 export type Episode = {
   slug: string;
