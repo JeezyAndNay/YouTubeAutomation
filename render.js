@@ -23,6 +23,7 @@ const KEN_BURNS_ZOOM = 1.04;    // maximum zoom factor for images (1.0 = no zoom
 const ENCODE_PRESET = 'fast';   // libx264 preset
 const ENCODE_CRF = 22;          // quality: 18=high, 22=medium, 28=low
 const NARRATION_PAUSE_SECONDS = 1.5;  // silence before narration begins (musical lead-in)
+const NARRATION_TAIL_SECONDS = 2.5;   // breathing room after narration ends (musical outro / no abrupt cut)
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 const EXEC_OPTS = { shell: '/bin/sh', maxBuffer: 200 * 1024 * 1024 };
@@ -377,7 +378,13 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
     const fadeIn   = cue.fade_in_seconds  || 3.0;
     const fadeOut  = cue.fade_out_seconds || 4.0;
     const amp      = Math.pow(10, volDb / 20).toFixed(5);
-    const delayMs  = Math.round(start * 1000);
+    // Cues anchored at t=0 (e.g. music_intro) are meant to bridge the lead-in INTO the
+    // narration — they should keep playing from frame one, not start LEAD_IN seconds late
+    // and leave the pause silent. Everything else is tied to a specific narrative beat
+    // that itself now lands LEAD_IN seconds later in the assembled video, so it shifts
+    // by the same amount to stay aligned. See [LEAD-IN] in main().
+    const shiftedStart = start > 0.01 ? start + NARRATION_PAUSE_SECONDS : start;
+    const delayMs  = Math.round(shiftedStart * 1000);
     const label    = `[mu${inputIdx}]`;
 
     // Outro cues: take the TAIL of the generated track instead of the head.
@@ -433,7 +440,9 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
     const start   = cue.start !== undefined ? cue.start : (cue.start_time || 0);
     const volDb   = cue.volume_db  !== undefined ? cue.volume_db : -28;
     const amp     = Math.pow(10, volDb / 20).toFixed(5);
-    const delayMs = Math.round(start * 1000);
+    // Same lead-in alignment rule as music cues — see comment there and [LEAD-IN] in main().
+    const shiftedStart = start > 0.01 ? start + NARRATION_PAUSE_SECONDS : start;
+    const delayMs = Math.round(shiftedStart * 1000);
     const label   = `[sx${inputIdx}]`;
 
     inputs.push(`-i "${sfxPath}"`);
@@ -456,7 +465,14 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
     const start   = sc.visual_in !== undefined ? sc.visual_in : (sc.audio_in || 0);
     const volDb   = sc.clip_audio_level_db !== undefined ? sc.clip_audio_level_db : 0;
     const amp     = Math.pow(10, volDb / 20).toFixed(5);
-    const delayMs = Math.round(start * 1000);
+    // Pinned-clip audio plays alongside its own scene's visual, which now lands LEAD_IN
+    // seconds later in the assembled video (every clip after the extended opener does) —
+    // so its audio shifts by the same amount to stay locked to that visual. Scene_001
+    // itself can never have include_clip_audio (it's reserved for the pinned channel
+    // intro, never the cold open) so the t=0 guard is just defensive consistency with the
+    // music/SFX rule above. See [LEAD-IN] in main().
+    const shiftedStart = start > 0.01 ? start + NARRATION_PAUSE_SECONDS : start;
+    const delayMs = Math.round(shiftedStart * 1000);
     const label   = `[ca${inputIdx}]`;
 
     inputs.push(`-i "${asset.path}"`);
@@ -465,7 +481,7 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
     );
     mixLabels.push(label);
     inputIdx++;
-    log(`  Pinned clip audio: ${path.basename(asset.path)} at ${start.toFixed(2)}s (${volDb}dB)`);
+    log(`  Pinned clip audio: ${path.basename(asset.path)} at ${shiftedStart.toFixed(2)}s (${volDb}dB)`);
   }
 
   // Build mix ----------------------------------------------------------------
@@ -591,12 +607,24 @@ function main() {
 
     // Drift correction: segmentation agent estimates timestamps before the actual voiceover
     // is produced. Scale all derived durations (and music/sfx cue timestamps) to match the
-    // real voiceover duration + narration pause so video_raw and audio_mix stay in sync.
+    // real voiceover duration so video_raw and audio_mix stay in sync.
+    //
+    // NOTE: the narration lead-in pause is intentionally NOT folded into this target. It
+    // used to be (targetDur = voDurActual + NARRATION_PAUSE_SECONDS), which diluted the
+    // pause proportionally across all 216 scene durations — a few milliseconds each —
+    // while the narration track itself got the FULL pause via a single adelay() in
+    // mixAudio(). That mismatch silently desynced video from narration for the whole
+    // episode (worst at the start, before the per-scene drift had accumulated enough to
+    // mask it — exactly the "video feels ahead of the narrator" symptom). The pause is
+    // instead applied as one fixed extension to the OPENING clip's duration, after all
+    // scaling is final — see [LEAD-IN] below — so every clip after it lands exactly
+    // NARRATION_PAUSE_SECONDS later, matching where mixAudio() now plays narration, music
+    // (cues that don't start at t=0), SFX, and pinned-clip audio.
     const voPathDrift = path.join(projectDir, 'audio', 'voiceover_final.mp3');
     if (fs.existsSync(voPathDrift)) {
       const voDurActual = getDuration(voPathDrift);
       if (voDurActual > 0) {
-        const targetDur     = voDurActual + NARRATION_PAUSE_SECONDS;
+        const targetDur     = voDurActual;
         const numBatchesD   = Math.ceil(scenes.length / XFADE_BATCH_SIZE);
         const xfadeReduction = (scenes.length - numBatchesD) * XFADE_DURATION;
         const sumSceneDur   = scenes.reduce((s, sc) => s + sc.duration_seconds, 0);
@@ -664,6 +692,49 @@ function main() {
       scenes[i + 1].duration_seconds += excess;
       console.log(`[PINNED] ${sc.scene_id}: ${assetDur.toFixed(2)}s clip in ${(assetDur + excess).toFixed(2)}s slot — ${excess.toFixed(2)}s carried to ${scenes[i + 1].scene_id}`);
     }
+  }
+
+  // [LEAD-IN] Narration pause: extend the OPENING clip by NARRATION_PAUSE_SECONDS so the
+  // visual (and any music/ambient cues that start at t=0) establish on screen before the
+  // narrator's voice enters — mirroring the adelay() applied to the narration track in
+  // mixAudio(). Applied as a single fixed addition, LAST — after duration computation,
+  // drift correction, AND the pinned-clip fixup — so it (a) isn't diluted by proportional
+  // scaling and (b) can't be silently overwritten if the opening scene is ever a pinned
+  // clip. Every clip after the first now lands exactly NARRATION_PAUSE_SECONDS later in
+  // the assembled timeline, matching where mixAudio() places its (now-shifted) narration,
+  // music, SFX, and pinned-clip audio — keeping video and audio locked in sync end to end.
+  if (NARRATION_PAUSE_SECONDS > 0 && scenes.length > 0) {
+    scenes[0].duration_seconds += NARRATION_PAUSE_SECONDS;
+    console.log(`[LEAD-IN] Extending opening clip (${scenes[0].scene_id}) by ${NARRATION_PAUSE_SECONDS}s — narration enters at ${NARRATION_PAUSE_SECONDS}s, video/music establish first`);
+  }
+
+  // [TAIL-PAD] Mirror of [LEAD-IN]: extend the CLOSING clip by NARRATION_TAIL_SECONDS so
+  // the video runs comfortably PAST where the narration ends, instead of ending the instant
+  // it stops.
+  //
+  // Two problems this solves at once:
+  //   1. CUTOFF BUG — `mixAudio()` receives the assembled video's duration as a hard
+  //      `-t totalDuration` ceiling, and the final mux uses `-c:a copy -shortest`. So
+  //      whatever the assembled video runs to is exactly where the audio gets truncated —
+  //      including mid-word, if the video is even a fraction of a second short. And it
+  //      WILL be short by a small, episode-varying amount: each of ~216 clips is encoded
+  //      with `-r 30 -t <duration>` (frame-quantized), and those sub-frame rounding losses
+  //      compound across clips and xfade batches into a net drift (observed: ~0.23s on the
+  //      Cahokia render — just enough to clip the narrator's last word). Trying to land the
+  //      assembled duration on the millisecond is fighting ffmpeg's frame quantization —
+  //      a losing, episode-by-episode battle. Padding the tail swallows that drift with
+  //      margin to spare, on every episode, regardless of which way the rounding breaks.
+  //   2. ABRUPT ENDING — even when the timing lands exactly, cutting the instant the
+  //      narrator stops talking feels jarring. A couple seconds of music/visual after the
+  //      last line gives the episode a place to land instead of slamming into the outro.
+  //
+  // Applied LAST, same as [LEAD-IN] and for the same reason: after drift correction (so it
+  // isn't diluted proportionally across all scenes) and after the pinned-clip fixup (so it
+  // can't be silently overwritten if the closing scene is ever a pinned clip).
+  if (NARRATION_TAIL_SECONDS > 0 && scenes.length > 0) {
+    const lastScene = scenes[scenes.length - 1];
+    lastScene.duration_seconds += NARRATION_TAIL_SECONDS;
+    console.log(`[TAIL-PAD] Extending closing clip (${lastScene.scene_id}) by ${NARRATION_TAIL_SECONDS}s — video runs past narration's end so the ending isn't abrupt and the audio mix's "-shortest" cap can never truncate the last line`);
   }
 
   log('=== Ruins Untold Phase 3: Video Render ===');
