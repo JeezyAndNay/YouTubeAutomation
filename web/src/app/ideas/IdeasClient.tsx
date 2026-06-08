@@ -54,6 +54,14 @@ async function triggerGenerate(params: { quantity?: number; keyword?: string }) 
   if (!res.ok) throw new Error("Failed to trigger idea generation");
 }
 
+async function deleteIdeaRow(rowNumber: number) {
+  const res = await fetch(`/api/ideas/${rowNumber}`, { method: "DELETE" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? "Failed to delete idea");
+  }
+}
+
 async function promoteToEpisode(idea: Idea): Promise<string> {
   const res = await fetch("/api/episodes", {
     method: "POST",
@@ -82,6 +90,7 @@ export default function IdeasClient() {
   const [editValue, setEditValue]       = useState("");
   const [genQuantity, setGenQuantity]   = useState(10);
   const [genKeyword, setGenKeyword]     = useState("");
+  const [confirmDeleteRow, setConfirmDeleteRow] = useState<number | null>(null);
 
   const { data: ideas, isLoading, error } = useQuery({
     queryKey: ["ideas"],
@@ -99,6 +108,14 @@ export default function IdeasClient() {
       quantity: genQuantity !== 10 ? genQuantity : undefined,
       keyword:  genKeyword.trim() || undefined,
     }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (rowNumber: number) => deleteIdeaRow(rowNumber),
+    onSuccess: () => {
+      setConfirmDeleteRow(null);
+      qc.invalidateQueries({ queryKey: ["ideas"] });
+    },
   });
 
   const [promoteError, setPromoteError] = useState<string | null>(null);
@@ -358,15 +375,44 @@ export default function IdeasClient() {
                           {idea.dateAdded || "—"}
                         </td>
 
-                        {/* Promote button */}
+                        {/* Promote + Delete buttons */}
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <button
-                            onClick={() => { setPromoteError(null); promoteMutation.mutate(idea); }}
-                            disabled={promoteMutation.isPending || !idea.topic}
-                            className="opacity-0 group-hover:opacity-100 text-xs bg-portal-gold/15 border border-portal-gold/40 text-portal-gold px-3 py-1 rounded hover:bg-portal-gold hover:text-charcoal disabled:opacity-30 transition-all"
-                          >
-                            Promote
-                          </button>
+                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                            <button
+                              onClick={() => { setPromoteError(null); promoteMutation.mutate(idea); }}
+                              disabled={promoteMutation.isPending || !idea.topic}
+                              className="text-xs bg-portal-gold/15 border border-portal-gold/40 text-portal-gold px-3 py-1 rounded hover:bg-portal-gold hover:text-charcoal disabled:opacity-30 transition-colors"
+                            >
+                              Promote
+                            </button>
+                            {confirmDeleteRow === idea.rowNumber ? (
+                              <span className="flex items-center gap-1">
+                                <span className="text-weathered-stone text-xs">Delete?</span>
+                                <button
+                                  onClick={() => deleteMutation.mutate(idea.rowNumber)}
+                                  disabled={deleteMutation.isPending}
+                                  className="text-xs bg-deep-crimson/20 border border-deep-crimson/50 text-deep-crimson px-2 py-1 rounded hover:bg-deep-crimson/40 disabled:opacity-30 transition-colors"
+                                >
+                                  {deleteMutation.isPending ? "…" : "Yes"}
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteRow(null)}
+                                  disabled={deleteMutation.isPending}
+                                  className="text-xs text-weathered-stone hover:text-bone-white px-2 py-1 transition-colors"
+                                >
+                                  No
+                                </button>
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => setConfirmDeleteRow(idea.rowNumber)}
+                                className="text-xs text-weathered-stone/50 hover:text-deep-crimson px-2 py-1 rounded transition-colors"
+                                title="Delete idea"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

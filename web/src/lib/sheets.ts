@@ -131,3 +131,40 @@ export async function updateIdea(
     requestBody: { values: [updated] },
   });
 }
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+
+async function getIdeasSheetId(): Promise<number> {
+  const res = await sheets().spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+  const sheet = res.data.sheets?.find((s) => s.properties?.title === SHEET_NAME);
+  if (sheet?.properties?.sheetId === undefined || sheet.properties.sheetId === null) {
+    throw new Error(`Sheet "${SHEET_NAME}" not found in spreadsheet`);
+  }
+  return sheet.properties.sheetId;
+}
+
+/**
+ * Permanently removes the row for the given rowNumber from the Google Sheet.
+ * All rows below shift up by one — subsequent row numbers become stale, so
+ * always re-fetch the idea list after calling this.
+ */
+export async function deleteIdea(rowNumber: number) {
+  const sheetId = await getIdeasSheetId();
+  await sheets().spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          deleteDimension: {
+            range: {
+              sheetId,
+              dimension: "ROWS",
+              startIndex: rowNumber - 1, // Sheets API is 0-based; row 2 → index 1
+              endIndex:   rowNumber,     // exclusive upper bound
+            },
+          },
+        },
+      ],
+    },
+  });
+}

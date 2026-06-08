@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, approveMediaPrompts, setYoutubeUrl } from "@/app/actions/episodes";
+import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, approveMediaPrompts, setYoutubeUrl, markEpisodeDone } from "@/app/actions/episodes";
 import type { Episode, EpisodeOutputs, FileGroup } from "@/lib/episodes";
 
 // ── Artifact definitions ─────────────────────────────────────────────────────
@@ -418,11 +418,12 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
   // Determine available actions
   const isRunning = status === "running";
   const isAwaitingMediaApproval = status === "awaiting_media_approval";
-  const canPhase1 = phase === null && !isRunning && !isAwaitingMediaApproval;
-  const canPhase2 = phase === 1 && !isRunning && !isAwaitingMediaApproval;
-  const canPhase3 = phase === 2 && !isRunning && !isAwaitingMediaApproval;
-  const canReject = !isRunning && !isAwaitingMediaApproval && status !== "done" && status !== "rejected";
-  const hasActions = canPhase1 || canPhase2 || canPhase3 || canReject;
+  const canPhase1    = phase === null && !isRunning && !isAwaitingMediaApproval;
+  const canPhase2    = phase === 1    && !isRunning && !isAwaitingMediaApproval;
+  const canPhase3    = phase === 2    && !isRunning && !isAwaitingMediaApproval;
+  const canMarkDone  = phase === 3    && !isRunning && !isAwaitingMediaApproval && status !== "done" && status !== "rejected";
+  const canReject    = !isRunning && !isAwaitingMediaApproval && status !== "done" && status !== "rejected";
+  const hasActions   = canPhase1 || canPhase2 || canPhase3 || canMarkDone || canReject;
 
   // Whether the selected artifact is editable in media review mode
   const canEditArtifact =
@@ -530,6 +531,15 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
                     className="w-full bg-portal-gold text-charcoal font-semibold text-xs py-2 rounded hover:bg-amber-torchlight disabled:opacity-40 transition-colors"
                   >
                     {isPending ? "Triggering..." : "Start Phase 3"}
+                  </button>
+                )}
+                {canMarkDone && (
+                  <button
+                    onClick={() => runAction(() => markEpisodeDone(slug))}
+                    disabled={isPending}
+                    className="w-full bg-portal-gold text-charcoal font-semibold text-xs py-2 rounded hover:bg-amber-torchlight disabled:opacity-40 transition-colors"
+                  >
+                    {isPending ? "Saving..." : "Mark as Done"}
                   </button>
                 )}
                 {canReject && (

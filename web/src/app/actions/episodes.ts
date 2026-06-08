@@ -148,6 +148,35 @@ export async function approveMediaPrompts(
   return {};
 }
 
+/**
+ * Mark an episode as done and sync the corresponding idea in Google Sheets to "Complete".
+ * Reads the .row_number sentinel file written when the episode was promoted from the
+ * Idea Catalog. If the file is absent (episode created manually), the sheet sync is
+ * skipped and the episode is still marked done.
+ */
+export async function markEpisodeDone(slug: string): Promise<{ error?: string }> {
+  const fs   = await import("fs");
+  const path = await import("path");
+  const dir  = `/Users/jneal/n8n_projects/${slug}`;
+
+  // Best-effort: sync idea status to Complete
+  try {
+    const raw = fs.readFileSync(path.join(dir, ".row_number"), "utf-8").trim();
+    const rowNumber = parseInt(raw, 10);
+    if (!isNaN(rowNumber) && rowNumber >= 2) {
+      const { updateIdea } = await import("@/lib/sheets");
+      await updateIdea(rowNumber, { status: "Complete" });
+    }
+  } catch {
+    // No .row_number file or sheet update failed — non-fatal, proceed to mark done.
+  }
+
+  setEpisodeStatus(slug, "done");
+  revalidatePath(`/episodes/${slug}`);
+  revalidatePath("/episodes");
+  return {};
+}
+
 export async function setYoutubeUrl(slug: string, url: string): Promise<{ error?: string }> {
   const dir = `/Users/jneal/n8n_projects/${slug}`;
   const fs = await import("fs");
