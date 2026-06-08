@@ -45,8 +45,12 @@ async function patchIdea(rowNumber: number, patch: Partial<Idea>) {
   if (!res.ok) throw new Error("Failed to update idea");
 }
 
-async function triggerGenerate() {
-  const res = await fetch("/api/ideas/generate", { method: "POST" });
+async function triggerGenerate(params: { quantity?: number; keyword?: string }) {
+  const res = await fetch("/api/ideas/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
   if (!res.ok) throw new Error("Failed to trigger idea generation");
 }
 
@@ -76,6 +80,8 @@ export default function IdeasClient() {
   const [editingRow, setEditingRow]     = useState<number | null>(null);
   const [editingField, setEditingField] = useState<keyof Idea | null>(null);
   const [editValue, setEditValue]       = useState("");
+  const [genQuantity, setGenQuantity]   = useState(10);
+  const [genKeyword, setGenKeyword]     = useState("");
 
   const { data: ideas, isLoading, error } = useQuery({
     queryKey: ["ideas"],
@@ -88,7 +94,12 @@ export default function IdeasClient() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["ideas"] }),
   });
 
-  const generateMutation = useMutation({ mutationFn: triggerGenerate });
+  const generateMutation = useMutation({
+    mutationFn: () => triggerGenerate({
+      quantity: genQuantity !== 10 ? genQuantity : undefined,
+      keyword:  genKeyword.trim() || undefined,
+    }),
+  });
 
   const [promoteError, setPromoteError] = useState<string | null>(null);
 
@@ -147,13 +158,37 @@ export default function IdeasClient() {
             Google Sheets · {ideas ? `${ideas.length} ideas` : "loading…"}
           </p>
         </div>
-        <button
-          onClick={() => generateMutation.mutate()}
-          disabled={generateMutation.isPending}
-          className="bg-portal-gold text-charcoal font-semibold text-sm px-5 py-2.5 rounded hover:bg-amber-torchlight disabled:opacity-50 transition-colors"
-        >
-          {generateMutation.isPending ? "Generating…" : "Generate Ideas"}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Quantity input */}
+          <input
+            type="number"
+            min={1}
+            max={50}
+            value={genQuantity}
+            onChange={(e) => setGenQuantity(Math.max(1, parseInt(e.target.value, 10) || 10))}
+            disabled={generateMutation.isPending}
+            className="w-16 bg-deep-teal border border-weathered-stone/25 rounded px-2 py-2 text-sm text-bone-white text-center outline-none focus:border-portal-gold disabled:opacity-40"
+            title="Number of ideas"
+          />
+          {/* Keyword input */}
+          <input
+            type="text"
+            placeholder="topic filter…"
+            value={genKeyword}
+            onChange={(e) => setGenKeyword(e.target.value)}
+            disabled={generateMutation.isPending}
+            className="w-36 bg-deep-teal border border-weathered-stone/25 rounded px-3 py-2 text-sm text-bone-white placeholder-weathered-stone/40 outline-none focus:border-portal-gold disabled:opacity-40"
+            title="Optional topic/keyword filter"
+          />
+          {/* Generate button */}
+          <button
+            onClick={() => generateMutation.mutate()}
+            disabled={generateMutation.isPending}
+            className="bg-portal-gold text-charcoal font-semibold text-sm px-5 py-2.5 rounded hover:bg-amber-torchlight disabled:opacity-50 transition-colors whitespace-nowrap"
+          >
+            {generateMutation.isPending ? "Generating…" : "Generate Ideas"}
+          </button>
+        </div>
       </div>
 
       {/* Auth notice */}
