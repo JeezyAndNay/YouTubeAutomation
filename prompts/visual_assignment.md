@@ -38,7 +38,7 @@ Before assigning any visual types, scan every scene's `narration_text` for the c
 {
   "visual_type": "pinned_video",
   "prompt_seed": null,
-  "asset_path": "/Users/jneal/Desktop/Youtube/Ruins_Untold/Channel Images/Ruins_Untold_Intro.mp4",
+  "asset_path": "/Users/jneal/n8n_projects/assets/Ruins_Untold_Intro.mp4",
   "include_clip_audio": true,
   "clip_audio_level_db": -3
 }

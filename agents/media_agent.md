@@ -61,7 +61,7 @@ Transcribe the completed voiceover MP3 with word-level timestamps, divide it int
 ### Pinned Scene Rule
 Any scene whose `narration_text` contains "Ruins Untold" (the channel intro) is overridden:
 - `visual_type`: `pinned_video`
-- `asset_path`: `/Users/jneal/Desktop/Youtube/Ruins_Untold/Channel Images/Ruins_Untold_Intro.mp4`
+- `asset_path`: `/Users/jneal/n8n_projects/assets/Ruins_Untold_Intro.mp4`
 - `prompt_seed`: `null`
 - `include_clip_audio`: `true`, `clip_audio_level_db`: `-3`
 

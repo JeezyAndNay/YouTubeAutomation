@@ -32,7 +32,7 @@ Certain scenes have hardcoded assets that bypass visual type assignment and prom
 **Override behavior:**
 - `visual_type`: `"pinned_video"`
 - `prompt_seed`: `null` — do not generate a prompt for this scene
-- `asset_path`: `"/Users/jneal/Desktop/Youtube/Ruins_Untold/Channel Images/Ruins_Untold_Intro.mp4"` — set this value directly, do not leave null
+- `asset_path`: `"/Users/jneal/n8n_projects/assets/Ruins_Untold_Intro.mp4"` — set this value directly, do not leave null
 - `include_clip_audio`: `true`
 - `clip_audio_level_db`: `-3` (relative to the clip's normalized level — the clip's own audio plays at -3 dB, not the narration level)
 - `narration_audio`: the voiceover narration for this scene still plays normally underneath at its existing level

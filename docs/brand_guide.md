@@ -274,7 +274,7 @@ Rule: **Never flat. Never even. Never studio.** Every light source has a directi
 
 ### Intro Video
 
-Asset: `/Users/jneal/Desktop/Youtube/Ruins_Untold/Channel Images/Ruins_Untold_Intro.mp4`
+Asset: `/Users/jneal/n8n_projects/assets/Ruins_Untold_Intro.mp4`
 
 - Audio: intro clip plays at -3 dB; narration continues simultaneously underneath
 - Fires during the Channel Hook segment of every video
@@ -339,8 +339,8 @@ Volume: -20 dB relative to narration. Fade in over 3 seconds at start, fade out 
 
 | Asset | Path |
 |---|---|
-| Intro video | `/Users/jneal/Desktop/Youtube/Ruins_Untold/Channel Images/Ruins_Untold_Intro.mp4` |
-| Channel images | `/Users/jneal/Desktop/Youtube/Ruins_Untold/Channel Images/` |
+| Intro video | `/Users/jneal/n8n_projects/assets/Ruins_Untold_Intro.mp4` |
+| Channel assets | `/Users/jneal/n8n_projects/assets/` |
 | Brand guide source | `/Users/jneal/RuinsUntoldAutomationProject/Context/Brand Guide/` |
 | System prompts | `/Users/jneal/n8n_projects/ruins_untold_system_prompts/` |
 
