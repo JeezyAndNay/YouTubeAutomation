@@ -111,13 +111,15 @@ Place tags immediately before the word or phrase they should affect. Tags shape 
 | Tag | Use case | Ruins Untold application |
 |---|---|---|
 | `[whispers]` | Intimate, chilling delivery | The most haunting single-sentence reveals |
-| `[sighs]` | Weariness, reflection | Transitions from mystery to implications |
-| `[exhales]` | Tension release, weight | After a long buildup lands |
 | `[curious]` | Questioning, investigative | Rhetorical questions, "but what if..." moments |
+| `[pause]` | Deliberate beat, weight | Before a critical revelation; after a shocking claim lands |
+| `[awe]` | Wonder, magnitude | Ancient scale, impossible construction, staggering implications |
+| `[dramatic tone]` | Heightened gravity | Major reveals, conspiracy payoffs, the moment the evidence stacks up |
 
 **Use sparingly — maximum 1 directional tag per segment.** Multiple tags in one segment conflict and produce inconsistent output.
 
 **Do not use** for this channel's tone:
+- `[sighs]`, `[exhales]` — removed; these read as tired or deflated, wrong register for investigative narration
 - `[laughs]`, `[excited]`, `[woo]` — wrong register for documentary narration
 - `[strong X accent]` — voice ID already has a defined accent
 - Sound effect tags (`[gunshot]`, `[applause]`) — handled by the Sound Design Agent
@@ -292,7 +294,7 @@ These notes govern how you apply tags, pause markers, emphasis, and segmentation
 Sparse tagging. Short punchy sentences already create pace — trust them. One `[whispers]` is appropriate on the most chilling sentence. Max 1 `...` pause. No ALL CAPS in the opening line.
 
 **Act 1 (World Before):**
-Minimal tags. Flowing, atmospheric prose. `[sighs]` or `[exhales]` works on the final sentence before the mystery begins. No emphasis caps — this section is calm before the storm.
+Minimal tags. Flowing, atmospheric prose. `[dramatic tone]` on the final sentence before the mystery begins — a subtle shift in gravity before the storm. No emphasis caps — this section is calm before the storm.
 
 **Act 2 (The Event):**
 `[curious]` is effective on rhetorical questions. Short sentences accelerate pace naturally — do not over-tag. Use `...` after the central mystery is fully exposed. ONE all-caps word on the most shocking reveal.
@@ -301,10 +303,10 @@ Minimal tags. Flowing, atmospheric prose. `[sighs]` or `[exhales]` works on the 
 No directional tags — this section should sound measured and credible. Standard punctuation only. Let the voice deliver it straight.
 
 **Act 4 (Alternative Theory):**
-The most tag-appropriate section. `[whispers]` before the single most haunting claim. `[exhales]` at tension peaks. ALL CAPS on the key anomaly word per revelation. Use pauses before each major implication lands.
+The most tag-appropriate section. `[whispers]` before the single most haunting claim. `[awe]` or `[dramatic tone]` at tension peaks. ALL CAPS on the key anomaly word per revelation. Use `[pause]` before each major implication lands.
 
 **Act 5 (Bigger Picture):**
-`[sighs]` or `[exhales]` once as the section opens — signals the gravity of what was just revealed. Minimal other tags. Let the language carry the weight.
+`[awe]` once as the section opens — signals the scale of what was just revealed. Minimal other tags. Let the language carry the weight.
 
 **Conclusion:**
 Return to Cold Open energy. `[whispers]` is appropriate for the final line if it mirrors the opening image. One `...` before the closing statement. No ALL CAPS.
@@ -327,7 +329,7 @@ Before outputting the voice package, verify:
 - [ ] No segment contains more than 2 `...` pause markers
 - [ ] No segment contains more than 1 directional tag
 - [ ] No sentence contains more than 1 ALL CAPS word
-- [ ] `[excited]`, `[laughs]`, sound effect tags, and accent tags are absent from all segments
+- [ ] `[sighs]`, `[exhales]`, `[excited]`, `[laughs]`, sound effect tags, and accent tags are absent from all segments
 - [ ] Act 3 (Official Story) segments contain zero directional tags
 - [ ] All ancient names and technical terms have been reviewed for pronunciation
 - [ ] `tags_applied` accurately lists all directional tags used in each segment

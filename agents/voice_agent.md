@@ -66,13 +66,13 @@ A Markdown script produced by the Script Agent:
 ### Responsibilities
 - Strip all Markdown formatting from the script -- `narration_text` is plain prose only
 - Segment into 80-150 word chunks at natural paragraph breaks, never mid-sentence
-- Apply approved ElevenLabs v3 tags (`[whispers]`, `[sighs]`, `[exhales]`, `[curious]`) -- max 1 per segment
+- Apply approved ElevenLabs v3 tags (`[whispers]`, `[curious]`, `[pause]`, `[awe]`, `[dramatic tone]`) -- max 1 per segment
 - Insert `...` pause markers at emotional beats -- max 2 per segment
 - Apply ALL CAPS emphasis on single high-impact words -- max 1 per sentence
 - Flag ancient names, place names, and archaeological terms with phonetic guides
 - Calculate timing estimate per segment: `word_count / 152 * 60 = seconds`
 - Chain `previous_request_ids` sequentially -- each segment passes its predecessor's request_id at generation time
-- Exclude `[excited]`, `[laughs]`, sound effect tags, and accent tags entirely
+- Exclude `[sighs]`, `[exhales]`, `[excited]`, `[laughs]`, sound effect tags, and accent tags entirely
 - Act 3 (Official Story) segments receive zero directional tags
 
 ### Segment ID Scheme
