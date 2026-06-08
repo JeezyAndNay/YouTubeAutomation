@@ -385,32 +385,34 @@ export default function IdeasClient() {
                             >
                               Promote
                             </button>
-                            {confirmDeleteRow === idea.rowNumber ? (
-                              <span className="flex items-center gap-1">
-                                <span className="text-weathered-stone text-xs">Delete?</span>
+                            {idea.status !== "Complete" && (
+                              confirmDeleteRow === idea.rowNumber ? (
+                                <span className="flex items-center gap-1">
+                                  <span className="text-weathered-stone text-xs">Delete?</span>
+                                  <button
+                                    onClick={() => deleteMutation.mutate(idea.rowNumber)}
+                                    disabled={deleteMutation.isPending}
+                                    className="text-xs bg-deep-crimson/20 border border-deep-crimson/50 text-deep-crimson px-2 py-1 rounded hover:bg-deep-crimson/40 disabled:opacity-30 transition-colors"
+                                  >
+                                    {deleteMutation.isPending ? "…" : "Yes"}
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmDeleteRow(null)}
+                                    disabled={deleteMutation.isPending}
+                                    className="text-xs text-weathered-stone hover:text-bone-white px-2 py-1 transition-colors"
+                                  >
+                                    No
+                                  </button>
+                                </span>
+                              ) : (
                                 <button
-                                  onClick={() => deleteMutation.mutate(idea.rowNumber)}
-                                  disabled={deleteMutation.isPending}
-                                  className="text-xs bg-deep-crimson/20 border border-deep-crimson/50 text-deep-crimson px-2 py-1 rounded hover:bg-deep-crimson/40 disabled:opacity-30 transition-colors"
+                                  onClick={() => setConfirmDeleteRow(idea.rowNumber)}
+                                  className="text-xs text-weathered-stone/50 hover:text-deep-crimson px-2 py-1 rounded transition-colors"
+                                  title="Delete idea"
                                 >
-                                  {deleteMutation.isPending ? "…" : "Yes"}
+                                  ✕
                                 </button>
-                                <button
-                                  onClick={() => setConfirmDeleteRow(null)}
-                                  disabled={deleteMutation.isPending}
-                                  className="text-xs text-weathered-stone hover:text-bone-white px-2 py-1 transition-colors"
-                                >
-                                  No
-                                </button>
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => setConfirmDeleteRow(idea.rowNumber)}
-                                className="text-xs text-weathered-stone/50 hover:text-deep-crimson px-2 py-1 rounded transition-colors"
-                                title="Delete idea"
-                              >
-                                ✕
-                              </button>
+                              )
                             )}
                           </div>
                         </td>
