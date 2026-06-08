@@ -36,7 +36,7 @@ Use `transcript.total_duration_seconds` as the authoritative episode duration. D
 
 **Semantic coherence:** If the narration shifts topics within a window, split at the semantic boundary even if it creates a scene as short as 4 seconds.
 
-**Coverage mandate:** Scenes must cover ALL audio from `0` to `transcript.total_duration_seconds`. The last scene's `audio_out` must equal `transcript.total_duration_seconds` exactly. Never stop early. Never consolidate content because the episode "seems finished."
+**Coverage mandate:** Scenes must cover ALL audio from `0` to `transcript.total_duration_seconds`. The last scene's `visual_out` must equal `transcript.total_duration_seconds` exactly. Never stop early. Never consolidate content because the episode "seems finished."
 
 ---
 
@@ -53,8 +53,9 @@ Return a single valid JSON object. No text outside the JSON block.
     {
       "scene_id": "scene_001",
       "sequence": 1,
-      "audio_in": number,
-      "audio_out": number,
+      "visual_in": number,
+      "visual_out": number,
+      "duration_seconds": number,
       "narration_text": "string — exact transcript text for this scene"
     }
   ]
@@ -62,3 +63,5 @@ Return a single valid JSON object. No text outside the JSON block.
 ```
 
 `scene_id` format: `scene_` + zero-padded 3-digit sequence number (e.g., `scene_001`, `scene_042`).
+
+`duration_seconds` must equal `visual_out - visual_in`, rounded to 3 decimal places. Do not omit it — the render pipeline uses this field directly.
