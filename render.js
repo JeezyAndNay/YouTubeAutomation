@@ -104,6 +104,29 @@ function resolveAsset(scene, projectDir) {
   return null;
 }
 
+// Pre-render completeness gate: walk every scene and confirm resolveAsset() can find
+// a real source file for it. Phase 2 can silently drop a scene from its generation
+// queue (Cahokia scene_186 — video_scene_186.mp4 was never produced), and without this
+// check the render just plows ahead for 1-2 hours and quietly fills the hole with a
+// black screen, recording it only as `assets_missing: N` in render_complete.json — a
+// file nobody reads until after the render finishes. This surfaces it loudly, up front,
+// before any encoding work starts.
+function checkAssetCompleteness(scenes, projectDir) {
+  const missing = [];
+  scenes.forEach((scene, i) => {
+    const sceneId = scene.scene_id || `scene_${String(i).padStart(3, '0')}`;
+    if (!resolveAsset(scene, projectDir)) {
+      missing.push({
+        sceneId,
+        sequence:   scene.sequence,
+        visualType: scene.visual_type || 'image',
+        narration:  (scene.narration_text || '').slice(0, 70),
+      });
+    }
+  });
+  return missing;
+}
+
 // ── Scene Clip Creation ───────────────────────────────────────────────────────
 function createImageClip(imagePath, duration, outputPath) {
   // Avoid zoompan (causes sub-pixel jitter). Instead: pre-scale to zoom headroom,
@@ -133,7 +156,7 @@ function createImageClip(imagePath, duration, outputPath) {
     `"${outputPath}"`,
   ].join(' ');
 
-  return run(cmd, false).ok;
+  return run(cmd, false);
 }
 
 // Build a chain of atempo filters for values outside the [0.5, 2.0] range.
@@ -176,7 +199,7 @@ function createVideoClip(videoPath, duration, outputPath, includeAudio, audioLev
     `"${outputPath}"`,
   ].join(' ');
 
-  return run(cmd, false).ok;
+  return run(cmd, false);
 }
 
 function createBlackClip(duration, outputPath) {
@@ -197,14 +220,21 @@ function createSceneClip(scene, outputPath, projectDir) {
   const asset = resolveAsset(scene, projectDir);
 
   if (asset) {
-    let ok;
+    let result;
     const isPinned = (scene.visual_type === 'pinned_video' || scene.visual_type === 'pinned_image');
     if (asset.type === 'image') {
-      ok = createImageClip(asset.path, duration, outputPath);
+      result = createImageClip(asset.path, duration, outputPath);
     } else {
-      ok = createVideoClip(asset.path, duration, outputPath, includeAudio, audioLevelDb, isPinned);
+      result = createVideoClip(asset.path, duration, outputPath, includeAudio, audioLevelDb, isPinned);
     }
-    if (ok) return { ok: true, assetUsed: asset.path };
+    if (result.ok) return { ok: true, assetUsed: asset.path };
+
+    // Asset existed and resolved fine, but ffmpeg failed to encode it — surface the
+    // reason before silently falling back to black. (Cahokia scene_013 fell back to
+    // BLACK with zero trace of why; this is the fix for that blind spot.)
+    const reason = (result.stderr || '').trim().split('\n').filter(Boolean).slice(-6).join('\n    ');
+    log(`  [WARN] ${scene.scene_id || '?'}: ffmpeg failed to encode ${path.basename(asset.path)} — falling back to BLACK`);
+    if (reason) log(`    ffmpeg error (last lines):\n    ${reason}`);
   }
 
   // Fallback: black screen
@@ -332,8 +362,9 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
     ? fs.readdirSync(musicDir).filter(f => f.endsWith('.mp3')).sort().map(f => path.join(musicDir, f))
     : [];
 
-  for (let ci = 0; ci < (timeline.music_cues || []).length; ci++) {
-    const cue = timeline.music_cues[ci];
+  const musicCueList = timeline.music_cues || [];
+  for (let ci = 0; ci < musicCueList.length; ci++) {
+    const cue = musicCueList[ci];
     const musicPath = musicFiles.length
       ? (musicFiles[ci] || musicFiles[ci % musicFiles.length])
       : null;
@@ -349,9 +380,35 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
     const delayMs  = Math.round(start * 1000);
     const label    = `[mu${inputIdx}]`;
 
+    // Outro cues: take the TAIL of the generated track instead of the head.
+    //
+    // Generated tracks (Suno) run several minutes; cue durations are usually a small
+    // slice of that (Cahokia: a 44s outro cue carved from a 7.5min / 452s track). The
+    // existing `atrim=end=<cue_dur>` always grabs the first N seconds — for every cue
+    // that's a freshly-building intro with nowhere natural to land in N seconds, so it
+    // just stops mid-phrase. The volume afade-out smooths the *level* but can't fix the
+    // *phrasing* — it reads as "cut off," and the outro is the one the viewer always
+    // notices because it's the last thing they hear.
+    //
+    // The tail of the track is far more likely to already contain the track's own
+    // musical resolution or natural fade-out (that's how songs end), so grabbing the
+    // last N seconds instead gives us something that actually resolves rather than
+    // something we have to fade-cut mid-idea. Cheap, no re-generation needed.
+    const isOutro = (cue.act === 'outro' || /outro/i.test(cue.cue_id || '') ||
+                     ci === musicCueList.length - 1);
+    let trimFilter;
+    if (isOutro) {
+      const srcDur    = getDuration(musicPath);
+      const tailStart = (srcDur > dur) ? (srcDur - dur) : 0;
+      trimFilter = `atrim=start=${tailStart.toFixed(3)}:end=${srcDur.toFixed(3)}`;
+      log(`  [MUSIC] ${cue.cue_id || `cue_${ci}`} (outro): using tail ${tailStart.toFixed(1)}–${srcDur.toFixed(1)}s of ${path.basename(musicPath)} (${srcDur.toFixed(1)}s total) instead of the head — more likely to land on a natural resolution`);
+    } else {
+      trimFilter = `atrim=end=${dur.toFixed(3)}`;
+    }
+
     inputs.push(`-i "${musicPath}"`);
     filterParts.push(
-      `[${inputIdx}:a]atrim=end=${dur.toFixed(3)},asetpts=PTS-STARTPTS,` +
+      `[${inputIdx}:a]${trimFilter},asetpts=PTS-STARTPTS,` +
       `afade=t=in:st=0:d=${fadeIn.toFixed(2)},` +
       `afade=t=out:st=${Math.max(dur - fadeOut, 0).toFixed(2)}:d=${fadeOut.toFixed(2)},` +
       `volume=${amp},adelay=${delayMs}|${delayMs}${label}`
@@ -477,6 +534,30 @@ function main() {
         typeof sc.audio_out === 'number' && typeof sc.audio_in === 'number')
       sc.duration_seconds = sc.audio_out - sc.audio_in;
   });
+
+  // ── Pre-render completeness gate ─────────────────────────────────────────
+  // Fail loud and fast (before ~1-2 hours of encoding) if any scene has no
+  // resolvable source asset. Pass --allow-missing-assets to proceed anyway and
+  // let those scenes fall back to black — useful if you're knowingly patching
+  // a gap later, or just want the run to not block on it.
+  const missingAssets = checkAssetCompleteness(scenes, projectDir);
+  if (missingAssets.length > 0) {
+    console.error(`\n[GATE] ${missingAssets.length} of ${scenes.length} scene(s) have NO resolvable source asset — these would silently render as BLACK SCREENS:`);
+    for (const m of missingAssets) {
+      const trunc = m.narration.length === 70 ? '…' : '';
+      console.error(`  - ${m.sceneId} (seq ${m.sequence}, ${m.visualType}): "${m.narration}${trunc}"`);
+    }
+    console.error(`\nThis is exactly what happened with Cahokia scene_186 — Phase 2 dropped it from`);
+    console.error(`its generation queue and the render quietly filled the hole with black, two`);
+    console.error(`hours before anyone noticed. Check the Phase 2 generation queue / video & image`);
+    console.error(`folders for the scene(s) above, or add an asset_path override in media_timeline.json.`);
+    console.error(`\nTo render anyway with black-screen placeholders for these scenes, re-run with`);
+    console.error(`--allow-missing-assets.\n`);
+    if (!process.argv.includes('--allow-missing-assets')) {
+      process.exit(1);
+    }
+    console.error(`[GATE] --allow-missing-assets set — proceeding with ${missingAssets.length} black-screen placeholder(s).\n`);
+  }
 
   // Derive clip durations from visual_in timestamps so each scene appears at exactly
   // the right moment in the assembled video after xfade dissolves.

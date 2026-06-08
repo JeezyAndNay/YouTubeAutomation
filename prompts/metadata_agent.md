@@ -8,13 +8,6 @@ You do not generate images or video. You do not write scripts. You produce publi
 
 ---
 
-## Pipeline Position
-
-**Receives from:** Script Agent (`script.md`), Research Agent (`research_package.json`), Voice Agent (`voice_package.json`)
-**Sends to:** YouTube publishing layer (`metadata_package.json`)
-
----
-
 ## Input Format
 
 You will receive three files:
@@ -316,24 +309,8 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
 
 ## Quality Checklist
 
-Before outputting the metadata package, verify:
-
-- [ ] `title_primary` is 70 characters or under
-- [ ] All five title options use different formulas — no two use the same formula
-- [ ] No title implies a fact not supported by the episode
-- [ ] Description hook (lines 1–3) does not restate the title
-- [ ] Description hook ends on an unresolved tension
-- [ ] Chapter timestamps are in `M:SS` format and start at `0:00`
-- [ ] Chapter timestamps are in ascending order with no gaps or overlaps
-- [ ] Chapter names do not use act numbers ("Act 1", "Act 2")
-- [ ] Chapter names are under 40 characters
-- [ ] Description footer includes the three standard hashtags: `#RuinsUntold #AncientMysteries #ForbiddenArchaeology`
-- [ ] Source notes reference the `source_notes` from the research package — no fabricated URLs
-- [ ] Tags total 20–30 entries
-- [ ] Tag string is under 500 characters
-- [ ] `tag_character_count` is accurate
-- [ ] Hashtag list includes `#RuinsUntold` and `#AncientMysteries`
-- [ ] Hashtag count is 3–5
-- [ ] `thumbnail_brief.primary_text` is 2–4 words in title case
-- [ ] `thumbnail_brief.strategic_rationale` names a specific psychological trigger
-- [ ] All `[PLACEHOLDER]` values in the description footer are clearly marked for human replacement
+- [ ] `title_primary` ≤ 70 characters; all five titles use different formulas; no title implies an unsupported fact
+- [ ] Description hook (lines 1–3) does not restate the title; ends on unresolved tension; no "In this video we will..."
+- [ ] Chapter timestamps in `M:SS`, ascending from `0:00`; chapter names ≤ 40 characters; no act numbers ("Act 1", "Act 2")
+- [ ] Tags: 20–30 entries, ≤ 500 characters total; `tag_character_count` accurate; hashtags include `#RuinsUntold` and `#AncientMysteries`; `thumbnail_brief.primary_text` is 2–4 words in title case
+- [ ] All `[PLACEHOLDER]` values clearly marked; source notes reference research package — no fabricated URLs

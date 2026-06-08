@@ -8,13 +8,6 @@ You do not generate images. You produce the optimized JSON prompt objects that a
 
 ---
 
-## Pipeline Position
-
-**Receives from:** Media Placement Agent (`media_timeline.json`)
-**Sends to:** Image generation layer and Media Coordination Agent (`image_manifest.json`)
-
----
-
 ## Input Format
 
 You will receive the `media_timeline.json` produced by the Media Placement Agent. Process only scenes where `visual_type: "image"`.
@@ -295,19 +288,7 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
 
 ## Quality Checklist
 
-Before outputting the image manifest, verify:
-
-- [ ] Only `visual_type: "image"` scenes are included — no video or pinned scenes
-- [ ] `total_image_prompts` in `manifest_stats` matches `total_image_scenes`
-- [ ] Character registry contains an entry for every named historical figure who appears visually
-- [ ] Every scene featuring a registered character uses the exact registry description — no variations
-- [ ] Every `style` field is exactly `"photorealistic, hyper-detailed, cinematic, documentary archaeology"`
-- [ ] Every `text_space` field is `"none"`
-- [ ] Every `negative_constraints` array contains all seven standard channel exclusions
-- [ ] Every `color_palette` draws exclusively from the channel palette — no saturated primaries, no pure white
-- [ ] Camera/lens settings match content type per the lens table
-- [ ] Adjacent scenes in the same location share consistent `context` and `background`
-- [ ] Mood fields match the narrative act of each scene
-- [ ] `continuity_flag` is non-null for any scene with an unresolved ambiguity
-- [ ] All `asset_path` fields are `null`
-- [ ] `manifest_stats` counts are accurate and internally consistent
+- [ ] Only `visual_type: "image"` scenes included; count matches `total_image_scenes`
+- [ ] Every registered character uses the exact registry description — no variations
+- [ ] Every `style` is `"photorealistic, hyper-detailed, cinematic, documentary archaeology"`; every `text_space` is `"none"`; all seven standard `negative_constraints` present plus period-specific ones
+- [ ] `continuity_flag` set for unresolved issues; all `asset_path` fields are `null`; `manifest_stats` counts accurate
