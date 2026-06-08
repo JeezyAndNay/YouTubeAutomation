@@ -349,13 +349,34 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
   const filterParts = [];
   let inputIdx = 1;
 
-  // Narration pause: delay the voiceover so music can establish before narrator begins
+  // Narration pause + tail-pad: delay the voiceover so music can establish before the
+  // narrator begins, AND pad it with silence out to `totalDuration` (the assembled video's
+  // length, which now includes [TAIL-PAD]'s extra seconds at the end).
+  //
+  // Why the apad is load-bearing, not cosmetic: `amix` below uses `duration=first`, which
+  // makes the MIXED OUTPUT'S length exactly equal to this first input's length — full stop.
+  // It ignores how long any other input runs, and critically, the `-t totalDuration` cap
+  // a few lines down can only ever TRIM the output, never extend it. Without the apad here,
+  // the raw delayed voiceover (1.5s silence + its own runtime) is shorter than
+  // `totalDuration` by however much [TAIL-PAD] just added — so `amix` truncates the whole
+  // mix back down to the narration's natural end, and the final `-c:a copy -shortest` mux
+  // then chops the VIDEO back down to match. That's exactly what neutered the very first
+  // version of the [TAIL-PAD] fix: video_raw grew to the padded length as intended, but the
+  // final output still landed within ~40ms of the narration's true end — because the audio
+  // mix silently threw the padding away before `-shortest` ever got involved.
+  //
+  // `apad=whole_dur=<totalDuration>` pads this stream with silence up to that exact length,
+  // so `amix=duration=first` naturally produces a mix that runs the full assembled-video
+  // duration — buffer included — with no reliance on the trim-only `-t` cap downstream.
+  const totalDurStr = totalDuration.toFixed(3);
   let voLabel = '[0:a]';
   if (NARRATION_PAUSE_SECONDS > 0) {
     const pauseMs = Math.round(NARRATION_PAUSE_SECONDS * 1000);
-    filterParts.push(`[0:a]adelay=${pauseMs}|${pauseMs}[vox]`);
-    voLabel = '[vox]';
+    filterParts.push(`[0:a]adelay=${pauseMs}|${pauseMs},apad=whole_dur=${totalDurStr}[vox]`);
+  } else {
+    filterParts.push(`[0:a]apad=whole_dur=${totalDurStr}[vox]`);
   }
+  voLabel = '[vox]';
   const mixLabels = [voLabel];
 
   // Music cues ---------------------------------------------------------------
@@ -488,9 +509,13 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
   const inputsStr = inputs.join(' ');
 
   if (mixLabels.length === 1 && filterParts.length === 0) {
-    // Voiceover only — no music, SFX, clip audio, or narration pause filter
+    // Dead path under the current config (the [vox] apad filter above is always pushed,
+    // so filterParts is never empty) — kept only as defensive coverage if that ever
+    // changes. Mirrors the apad-to-totalDuration fix above for the same reason: a bare
+    // `-t totalDuration` here can only TRIM, never extend, so without padding this would
+    // reproduce the exact truncation bug [TAIL-PAD]/apad were added to fix.
     return run(
-      `ffmpeg -y -i "${voPath}" -t ${totalDuration.toFixed(3)} -c:a aac -b:a 192k "${outputPath}"`,
+      `ffmpeg -y -i "${voPath}" -af "apad=whole_dur=${totalDuration.toFixed(3)}" -t ${totalDuration.toFixed(3)} -c:a aac -b:a 192k "${outputPath}"`,
       false
     ).ok;
   }
