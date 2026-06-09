@@ -172,7 +172,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst fs   = require('fs');\nconst vars = $('Parse Media Timeline').first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/video_agent.md', 'utf-8');\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst prompt = sys + '\\n\\n---\\n\\nYour input (media_timeline.json):\\n\\n' + JSON.stringify(timeline, null, 2);\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, model: 'claude-haiku-4-5-20251001' }) } }];\n"
+        "jsCode": "// Passthrough \u2014 chunk prompts are built in Build Video Chunk Prompt\nreturn [{ json: $input.first().json }];"
       },
       "id": "0590165e-5eee-4113-a3a5-5ea4bd17a43d",
       "name": "Build Video Agent Prompt",
@@ -205,7 +205,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Video Agent Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Video Agent error: ' + inp.error);\n\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet manifest;\ntry { manifest = JSON.parse(raw); }\ncatch(e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse video_manifest.json. Raw: ' + raw.substring(0,300));\n  manifest = JSON.parse(raw.substring(s, en + 1));\n}\n\n// \u2500\u2500 Verification gate (added 2026-06-08 \u2014 Cahokia scene_186 incident) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// The Video Agent self-reports total_video_scenes / manifest_stats.total_video_prompts,\n// but a single-shot Haiku pass generating 77 detailed Veo prompts in one go can silently\n// drop an entry mid-generation while still echoing back the count it RECORDED AT STEP 1\n// (the input scene count) rather than what it actually emitted. That's exactly what\n// happened on Cahokia: scene_186 vanished from video_prompts while the manifest still\n// claimed 77/77 \u2014 a self-contradiction nothing downstream ever checked. Don't trust the\n// agent's self-report; recompute the truth from media_timeline.json and fail loudly\n// BEFORE a single dollar gets spent on Kie.ai generation or a multi-hour render runs\n// for two hours around a hole nobody knew was there.\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst expectedIds = new Set(\n  (timeline.scenes || [])\n    .filter(sc => sc.visual_type === 'video')\n    .map(sc => sc.scene_id)\n);\nconst actualIds = new Set((manifest.video_prompts || []).map(p => p.scene_id));\n\nconst missingIds = [...expectedIds].filter(id => !actualIds.has(id));\nconst extraIds   = [...actualIds].filter(id => !expectedIds.has(id));\n\nif (missingIds.length > 0 || extraIds.length > 0) {\n  const lines = [];\n  lines.push('Video manifest verification FAILED \u2014 agent output does not match media_timeline.json.');\n  lines.push(`  Expected ${expectedIds.size} video-type scene(s) from the timeline; manifest contains ${actualIds.size} prompt(s).`);\n  if (missingIds.length) lines.push(`  MISSING from video_prompts (present in timeline, absent from manifest): ${missingIds.join(', ')}`);\n  if (extraIds.length)   lines.push(`  UNEXPECTED in video_prompts (not a visual_type:\"video\" scene in the timeline): ${extraIds.join(', ')}`);\n  lines.push(`  Manifest self-reported total_video_scenes=${manifest.total_video_scenes}, manifest_stats.total_video_prompts=${manifest.manifest_stats && manifest.manifest_stats.total_video_prompts} \u2014 DO NOT trust these numbers, they are the agent's own (incorrect) self-count.`);\n  lines.push('  Re-run the Video Agent step before continuing. Do not proceed to video generation with this manifest \u2014 it will silently render as a black screen 1-2 hours from now.');\n  throw new Error(lines.join('\\n'));\n}\n\n// Recompute the self-reported counts from the verified array instead of trusting the\n// agent's arithmetic \u2014 keeps the file internally consistent even if the agent's count\n// drifts again in the future, without masking any actual missing/extra scenes (those\n// would have already thrown above).\nmanifest.total_video_scenes = actualIds.size;\nif (manifest.manifest_stats) manifest.manifest_stats.total_video_prompts = actualIds.size;\n\nfs.writeFileSync(vars.videoManifestPath, JSON.stringify(manifest, null, 2), 'utf-8');\nconsole.log(`video_manifest.json saved & verified: ${actualIds.size}/${expectedIds.size} video prompts match media_timeline.json scene-for-scene`);\nreturn [{ json: { ...vars, videoManifest: manifest } }];\n"
+        "jsCode": "const fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Video Chunk Prompt').first().json;\n\nif (inp.exitCode !== undefined && inp.exitCode !== 0)\n  throw new Error('Video Agent error (chunk ' + (vars.chunkIndex + 1) + '/' + vars.totalChunks + '): ' + inp.error);\n\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\n\nlet manifest;\ntry { manifest = JSON.parse(raw); }\ncatch(e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1)\n    throw new Error('Cannot parse chunk video manifest. Raw: ' + raw.substring(0, 300));\n  manifest = JSON.parse(raw.substring(s, en + 1));\n}\n\nconst prompts = manifest.video_prompts || [];\nif (prompts.length < 1)\n  throw new Error('Chunk ' + (vars.chunkIndex + 1) + ' returned 0 video prompts. Output: ' + (inp.output || '').substring(0, 200));\n\n// Per-chunk verification: every scene in chunkScenes must appear in the prompts\nconst expectedIds = new Set((vars.chunkScenes || []).map(s => s.scene_id));\nconst actualIds   = new Set(prompts.map(p => p.scene_id));\nconst missingIds  = [...expectedIds].filter(id => !actualIds.has(id));\nif (missingIds.length > 0)\n  throw new Error('Chunk ' + (vars.chunkIndex + 1) + '/' + vars.totalChunks +\n    ' missing scene(s): ' + missingIds.join(', ') +\n    ' \u2014 re-run this chunk before merging.');\n\nfs.writeFileSync(vars.videoManifestChunkPath, JSON.stringify(manifest, null, 2), 'utf-8');\nconsole.log('Video chunk ' + (vars.chunkIndex + 1) + '/' + vars.totalChunks +\n  ': ' + prompts.length + ' prompts saved \u2192 ' + vars.videoManifestChunkPath);\n\nreturn [{ json: { ...vars } }];"
       },
       "id": "7b5b11ec-4892-43c5-86e7-08625857569e",
       "name": "Parse Video Manifest",
@@ -1722,7 +1722,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst inp  = $input.first().json;\nconst vars = $('Build Video Agent Prompt').first().json;\n\nconst projectDir = vars.projectDir || vars.project_dir || '';\nconst raw = (inp.output || '').trim();\n\nif (projectDir && raw) {\n  const scriptsDir = path.join(projectDir, 'scripts');\n  try { fs.mkdirSync(scriptsDir, { recursive: true }); } catch {}\n  fs.writeFileSync(\n    path.join(scriptsDir, 'video_manifest_raw.txt'),\n    raw,\n    'utf-8'\n  );\n}\n\n// Pass through unchanged\nreturn $input.all();\n"
+        "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst inp  = $input.first().json;\nconst vars = $('Build Video Chunk Prompt').first().json;\n\nconst projectDir = vars.projectDir || '';\nconst chunkIndex = vars.chunkIndex !== undefined ? vars.chunkIndex : 0;\nconst raw = (inp.output || '').trim();\n\nif (projectDir && raw) {\n  const scriptsDir = path.join(projectDir, 'scripts');\n  try { fs.mkdirSync(scriptsDir, { recursive: true }); } catch {}\n  fs.writeFileSync(\n    path.join(scriptsDir, `video_manifest_raw_chunk_${chunkIndex}.txt`),\n    raw,\n    'utf-8'\n  );\n}\n\n// Pass through unchanged\nreturn $input.all();\n"
       },
       "id": "p2-save-raw-video-manifest",
       "name": "Save Raw Video Manifest",
@@ -1744,6 +1744,58 @@
       "position": [
         3296,
         624
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst vars = $input.first().json;\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst CHUNK_SIZE = 15;\n\nconst videoScenes = (timeline.scenes || []).filter(s => s.visual_type === 'video');\nif (videoScenes.length === 0)\n  throw new Error('No video scenes found in media timeline');\n\nconst totalChunks = Math.ceil(videoScenes.length / CHUNK_SIZE);\nconst chunks = [];\nfor (let i = 0; i < totalChunks; i++) {\n  chunks.push(videoScenes.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE));\n}\nconsole.log('Splitting ' + videoScenes.length + ' video scenes into ' + totalChunks +\n  ' chunks of up to ' + CHUNK_SIZE);\n\nreturn chunks.map((chunk, idx) => ({\n  json: {\n    ...vars,\n    chunkIndex:             idx,\n    totalChunks:            totalChunks,\n    chunkScenes:            chunk,\n    videoManifestChunkPath: vars.projectDir + '/scripts/video_manifest_chunk_' + idx + '.json',\n  }\n}));"
+      },
+      "id": "p2-prepare-video-chunks",
+      "name": "Prepare Video Chunks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "p2-split-video-chunks",
+      "name": "Split Video Chunks",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        944,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs  = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync(\n  '/Users/jneal/n8n_projects/ruins_untold_system_prompts/video_agent.md', 'utf-8');\n\nconst chunkInput = {\n  topic:        vars.topic || '',\n  chunk:        { index: vars.chunkIndex + 1, total: vars.totalChunks, scene_count: vars.chunkScenes.length },\n  video_scenes: vars.chunkScenes,\n};\n\nconst prompt =\n  sys +\n  '\\n\\n---\\n\\nGenerate Veo video prompts for chunk ' + (vars.chunkIndex + 1) +\n  ' of ' + vars.totalChunks + ' only.\\n\\nInput:\\n\\n' +\n  JSON.stringify(chunkInput, null, 2);\n\nreturn [{ json: {\n  ...vars,\n  claudeBody: JSON.stringify({\n    prompt,\n    model:      'claude-haiku-4-5-20251001',\n    max_tokens: 65536,\n    effort:     'low',\n  }),\n} }];"
+      },
+      "id": "p2-build-video-chunk-prompt",
+      "name": "Build Video Chunk Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs   = require('fs');\nconst vars = $input.first().json;\n\n// Merge all chunk files written by Parse Video Manifest\nlet allPrompts = [];\nlet i = 0;\nwhile (fs.existsSync(vars.projectDir + '/scripts/video_manifest_chunk_' + i + '.json')) {\n  const chunkPath = vars.projectDir + '/scripts/video_manifest_chunk_' + i + '.json';\n  const chunk     = JSON.parse(fs.readFileSync(chunkPath, 'utf-8'));\n  allPrompts      = allPrompts.concat(chunk.video_prompts || []);\n  i++;\n}\n\nif (allPrompts.length === 0)\n  throw new Error('No video prompts found across ' + i + ' chunk files');\n\n// \u2500\u2500 Full verification gate (moved here from single-shot Parse Video Manifest) \u2500\u2500\n// Same logic as before: compare merged output against media_timeline.json scene-for-scene.\nconst timeline    = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst expectedIds = new Set(\n  (timeline.scenes || []).filter(sc => sc.visual_type === 'video').map(sc => sc.scene_id)\n);\nconst actualIds  = new Set(allPrompts.map(p => p.scene_id));\nconst missingIds = [...expectedIds].filter(id => !actualIds.has(id));\nconst extraIds   = [...actualIds].filter(id => !expectedIds.has(id));\n\nif (missingIds.length > 0 || extraIds.length > 0) {\n  const lines = [\n    'Video manifest verification FAILED after chunk merge.',\n    `  Expected ${expectedIds.size} video scene(s); merged manifest has ${actualIds.size} prompt(s).`,\n  ];\n  if (missingIds.length) lines.push(`  MISSING: ${missingIds.join(', ')}`);\n  if (extraIds.length)   lines.push(`  UNEXPECTED: ${extraIds.join(', ')}`);\n  lines.push('  Re-run the affected chunk(s) before continuing.');\n  throw new Error(lines.join('\\n'));\n}\n\nconst merged = {\n  topic:             vars.topic || '',\n  total_video_scenes: actualIds.size,\n  video_prompts:     allPrompts,\n  manifest_stats:    { total_video_prompts: actualIds.size, chunks_merged: i },\n};\n\nfs.writeFileSync(vars.videoManifestPath, JSON.stringify(merged, null, 2), 'utf-8');\nconsole.log(`video_manifest.json merged & verified: ${actualIds.size}/${expectedIds.size} video prompts from ${i} chunk(s)`);\n\nreturn [{ json: { ...vars, videoManifest: merged } }];"
+      },
+      "id": "p2-merge-video-manifests",
+      "name": "Merge Video Manifests",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        752
       ]
     }
   ],
@@ -1862,7 +1914,7 @@
       "main": [
         [
           {
-            "node": "Call Video Agent",
+            "node": "Prepare Video Chunks",
             "type": "main",
             "index": 0
           }
@@ -1917,7 +1969,7 @@
       "main": [
         [
           {
-            "node": "Set Awaiting Approval",
+            "node": "Split Video Chunks",
             "type": "main",
             "index": 0
           }
@@ -2734,6 +2786,57 @@
         [
           {
             "node": "Split Image Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Video Chunks": {
+      "main": [
+        [
+          {
+            "node": "Split Video Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Video Chunks": {
+      "main": [
+        [
+          {
+            "node": "Merge Video Manifests",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Video Chunk Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Video Chunk Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Video Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Video Manifests": {
+      "main": [
+        [
+          {
+            "node": "Set Awaiting Approval",
             "type": "main",
             "index": 0
           }
