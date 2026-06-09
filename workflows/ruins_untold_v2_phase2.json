@@ -1732,6 +1732,19 @@
         704,
         656
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst { spawnSync } = require('child_process');\n\n// Upstream item still accessible via Store Image Result (before executeCommand clobbered $json)\nconst meta       = $('Store Image Result').item.json;\nconst filepath   = meta.filepath;\nconst filename   = meta.filename;\nconst projectDir = meta.projectDir || '';\n\n// Skip failed or missing files\nif (meta.failed || !filepath) return $input.all();\ntry { fs.accessSync(filepath); } catch { return $input.all(); }\n\n// Run ffmpeg to read image dimensions (fastest available tool; outputs to stderr)\nconst r = spawnSync('/usr/local/bin/ffmpeg', ['-i', filepath], {\n  encoding: 'utf8',\n  timeout:  10000,\n});\n\nconst output = (r.stderr || '') + (r.stdout || '');\n// Parse first WIDTHxHEIGHT from Stream line\nconst m = output.match(/(\\d{3,5})x(\\d{3,5})/);\nif (!m) return $input.all();  // Can't parse \u2014 pass through silently\n\nconst width  = parseInt(m[1], 10);\nconst height = parseInt(m[2], 10);\nif (!width || !height) return $input.all();\n\nconst ratio    = width / height;\nconst expected = 16 / 9;\nconst tolerance = 0.05;\n\nif (Math.abs(ratio - expected) > tolerance) {\n  // Write mismatch record to scripts/dimension_mismatches.json\n  const record = {\n    filename,\n    filepath,\n    width,\n    height,\n    ratio:     Math.round(ratio    * 10000) / 10000,\n    expected:  Math.round(expected * 10000) / 10000,\n    detectedAt: new Date().toISOString(),\n  };\n\n  if (projectDir) {\n    try { fs.mkdirSync(path.join(projectDir, 'scripts'), { recursive: true }); } catch {}\n    const mismatchFile = path.join(projectDir, 'scripts', 'dimension_mismatches.json');\n    let existing = [];\n    try { existing = JSON.parse(fs.readFileSync(mismatchFile, 'utf-8')); } catch {}\n    existing.push(record);\n    fs.writeFileSync(mismatchFile, JSON.stringify(existing, null, 2), 'utf-8');\n  }\n\n  console.error(`DIMENSION MISMATCH: ${filename} is ${width}x${height} ` +\n                `(ratio ${ratio.toFixed(4)}, expected 1.7778)`);\n}\n\n// Always continue the loop \u2014 never halt the batch for a dimension issue\nreturn $input.all();"
+      },
+      "id": "p2-check-image-dimensions",
+      "name": "Check Image Dimensions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3296,
+        624
+      ]
     }
   ],
   "connections": {
@@ -2028,7 +2041,7 @@
       "main": [
         [
           {
-            "node": "Split Image Prompts",
+            "node": "Check Image Dimensions",
             "type": "main",
             "index": 0
           }
@@ -2710,6 +2723,17 @@
         [
           {
             "node": "Parse Video Manifest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Image Dimensions": {
+      "main": [
+        [
+          {
+            "node": "Split Image Prompts",
             "type": "main",
             "index": 0
           }
