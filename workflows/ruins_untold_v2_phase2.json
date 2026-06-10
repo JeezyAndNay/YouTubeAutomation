@@ -1681,7 +1681,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const poll = $input.first().json;\nconst meta = $('Prepare Video Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\nconst data = poll.data || {};\n\nconst key     = 'vid_retries_' + meta.filename;\nconst retries = (sd[key] || 0) + 1;\n\nconsole.log(\n  `[Retry] \"${meta.filename}\" errored \u2014 ` +\n  `code: ${data.errorCode}, msg: ${data.errorMessage || 'n/a'} \u2014 ` +\n  `attempt ${retries}/3`\n);\n\nif (retries <= 3) {\n  sd[key] = retries;\n  return [\n    [{ json: { ...meta, _retryCount: retries } }],\n    []\n  ];\n} else {\n  delete sd[key];\n  console.log(`[Retry] \"${meta.filename}\" permanently failed after 3 retries \u2014 marking failed.`);\n  return [\n    [],\n    [{\n      json: {\n        ...meta,\n        assetUrl:           '',\n        failed:             true,\n        maxRetriesExceeded: true,\n        filepath:           meta.assetDir + '/' + meta.filename + '.mp4'\n      }\n    }]\n  ];\n}"
+        "jsCode": "const poll = $input.first().json;\nconst meta = $('Prepare Video Request').item.json;\nconst sd   = $getWorkflowStaticData('global');\nconst data = poll.data || {};\n\nconst key     = 'vid_retries_' + meta.filename;\nconst retries = (sd[key] || 0) + 1;\n\nconsole.log(\n  `[Retry] \"${meta.filename}\" errored \u2014 ` +\n  `code: ${data.errorCode}, msg: ${data.errorMessage || 'n/a'} \u2014 ` +\n  `attempt ${retries}/3`\n);\n\nif (retries <= 3) {\n  sd[key] = retries;\n  return [{ json: { ...meta, _retryCount: retries, _willRetry: true } }];\n} else {\n  delete sd[key];\n  console.log(`[Retry] \"${meta.filename}\" permanently failed after 3 retries \u2014 marking failed.`);\n  return [{\n    json: {\n      ...meta,\n      assetUrl:           '',\n      failed:             true,\n      maxRetriesExceeded: true,\n      filepath:           meta.assetDir + '/' + meta.filename + '.mp4',\n      _willRetry: false\n    }\n  }];\n}"
       },
       "id": "p2-handle-video-error",
       "name": "Handle Video Error",
@@ -1820,6 +1820,39 @@
       "position": [
         -2380,
         1360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-retry-video",
+              "leftValue": "={{ $json._willRetry }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "p2-retry-video-decision",
+      "name": "Retry Video?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2680,
+        1392
       ]
     }
   ],
@@ -2765,24 +2798,6 @@
         ]
       ]
     },
-    "Handle Video Error": {
-      "main": [
-        [
-          {
-            "node": "Submit Video to Kie.ai",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Store Video Result",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Phase 2 Summary": {
       "main": [
         [
@@ -2872,6 +2887,35 @@
         [
           {
             "node": "Write Error Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Video Error": {
+      "main": [
+        [
+          {
+            "node": "Retry Video?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Video?": {
+      "main": [
+        [
+          {
+            "node": "Submit Video to Kie.ai",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Store Video Result",
             "type": "main",
             "index": 0
           }
