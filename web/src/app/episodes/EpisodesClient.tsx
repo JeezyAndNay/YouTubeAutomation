@@ -16,9 +16,10 @@ const STATUS_LABELS: Record<EpisodeStatus, string> = {
   done:                    "Done",
   error:                   "Error",
   rejected:                "Rejected",
+  paused_until:            "Paused",
 };
 
-const FILTERS: Filter[] = ["all", "idle", "running", "awaiting_review", "awaiting_media_approval", "ready_for_phase3", "done", "error", "rejected"];
+const FILTERS: Filter[] = ["all", "idle", "running", "awaiting_review", "awaiting_media_approval", "ready_for_phase3", "done", "error", "rejected", "paused_until"];
 
 export default function EpisodesClient({ episodes }: { episodes: Episode[] }) {
   const [filter, setFilter] = useState<Filter>("all");

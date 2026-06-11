@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, approveMediaPrompts, setYoutubeUrl, markEpisodeDone } from "@/app/actions/episodes";
-import type { Episode, EpisodeOutputs, FileGroup, FailedAsset } from "@/lib/episodes";
+import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, approveMediaPrompts, setYoutubeUrl, markEpisodeDone, resumeFromPause } from "@/app/actions/episodes";
+import type { Episode, EpisodeOutputs, FileGroup, FailedAsset, PausedInfo } from "@/lib/episodes";
 
 // ── Artifact definitions ─────────────────────────────────────────────────────
 
@@ -206,6 +206,49 @@ function MediaApprovalBanner({
   );
 }
 
+// ── Paused (Claude usage limit) banner ───────────────────────────────────────
+
+function PausedBanner({
+  pausedInfo,
+  onResume,
+  isPending,
+  error,
+}: {
+  pausedInfo: PausedInfo;
+  onResume: () => void;
+  isPending: boolean;
+  error: string | null;
+}) {
+  const resumeDate = pausedInfo.retryAfter ? new Date(pausedInfo.retryAfter) : null;
+  const resumeLabel =
+    resumeDate && !isNaN(resumeDate.getTime())
+      ? resumeDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+      : "an unknown time";
+
+  return (
+    <section className="mb-6">
+      <div className="bg-amber-torchlight/10 border border-amber-torchlight/30 rounded-lg p-4">
+        <p className="text-amber-torchlight text-[10px] font-medium uppercase tracking-widest mb-2">
+          Paused — Claude Usage Limit
+        </p>
+        <p className="text-bone-white/70 text-[11px] mb-3 leading-relaxed">
+          Phase {pausedInfo.phase || "?"} hit Claude&apos;s usage limit and paused.
+          Resumes around <span className="text-amber-torchlight">{resumeLabel}</span>,
+          or click below to retry now.
+        </p>
+        <button
+          onClick={onResume}
+          disabled={isPending}
+          className="w-full bg-amber-torchlight text-charcoal font-semibold text-xs py-2 rounded hover:bg-portal-gold disabled:opacity-40 transition-colors"
+        >
+          {isPending ? "Resuming..." : "Resume Now"}
+        </button>
+        {error && <p className="text-deep-crimson text-[10px] mt-2">{error}</p>}
+      </div>
+    </section>
+  );
+}
+
 // ── Failed assets banner ──────────────────────────────────────────────────────
 
 function FailedAssetsBanner({ failedAssets }: { failedAssets: FailedAsset[] }) {
@@ -336,9 +379,10 @@ type Props = {
   outputs: EpisodeOutputs;
   fileGroups: FileGroup[];
   failedAssets: FailedAsset[];
+  pausedInfo: PausedInfo | null;
 };
 
-export default function ArtifactPanel({ episode, outputs, fileGroups, failedAssets }: Props) {
+export default function ArtifactPanel({ episode, outputs, fileGroups, failedAssets, pausedInfo }: Props) {
   const { slug, status, phase, youtubeUrl } = episode;
   const router = useRouter();
 
@@ -446,11 +490,12 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
   // Determine available actions
   const isRunning = status === "running";
   const isAwaitingMediaApproval = status === "awaiting_media_approval";
-  const canPhase1    = phase === null && !isRunning && !isAwaitingMediaApproval;
-  const canPhase2    = phase === 1    && !isRunning && !isAwaitingMediaApproval;
-  const canPhase3    = phase === 2    && !isRunning && !isAwaitingMediaApproval;
-  const canMarkDone  = phase === 3    && !isRunning && !isAwaitingMediaApproval && status !== "done" && status !== "rejected";
-  const canReject    = !isRunning && !isAwaitingMediaApproval && status !== "done" && status !== "rejected";
+  const isPaused = status === "paused_until";
+  const canPhase1    = phase === null && !isRunning && !isAwaitingMediaApproval && !isPaused;
+  const canPhase2    = phase === 1    && !isRunning && !isAwaitingMediaApproval && !isPaused;
+  const canPhase3    = phase === 2    && !isRunning && !isAwaitingMediaApproval && !isPaused;
+  const canMarkDone  = phase === 3    && !isRunning && !isAwaitingMediaApproval && !isPaused && status !== "done" && status !== "rejected";
+  const canReject    = !isRunning && !isAwaitingMediaApproval && !isPaused && status !== "done" && status !== "rejected";
   const hasActions   = canPhase1 || canPhase2 || canPhase3 || canMarkDone || canReject;
 
   // Whether the selected artifact is editable in media review mode
@@ -463,6 +508,16 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
     <div className="flex flex-1 min-h-0">
       {/* ── Left column ─────────────────────────────────────────────────────── */}
       <div className="w-64 shrink-0 border-r border-weathered-stone/15 overflow-y-auto p-6 space-y-8">
+        {/* Paused banner — Claude usage limit hit, manual resume */}
+        {isPaused && pausedInfo && (
+          <PausedBanner
+            pausedInfo={pausedInfo}
+            onResume={() => runAction(() => resumeFromPause(slug))}
+            isPending={isPending}
+            error={actionError}
+          />
+        )}
+
         {/* Failed assets banner — shown regardless of status */}
         {failedAssets.length > 0 && <FailedAssetsBanner failedAssets={failedAssets} />}
 

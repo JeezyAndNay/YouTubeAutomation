@@ -4,7 +4,7 @@ import path from "path";
 const PROJECTS_DIR = "/Users/jneal/n8n_projects";
 
 export type EpisodePhase = 1 | 2 | 3;
-export type EpisodeStatus = "idle" | "running" | "awaiting_review" | "awaiting_media_approval" | "ready_for_phase3" | "done" | "error" | "rejected";
+export type EpisodeStatus = "idle" | "running" | "awaiting_review" | "awaiting_media_approval" | "ready_for_phase3" | "done" | "error" | "rejected" | "paused_until";
 
 export type Episode = {
   slug: string;
@@ -117,6 +117,31 @@ export function getPhase2FailedAssets(slug: string): FailedAsset[] {
     return Array.isArray(raw.failedAssets) ? raw.failedAssets : [];
   } catch {
     return [];
+  }
+}
+
+export type PausedInfo = {
+  retryAfter: string | null;
+  phase: number;
+  pausedAt: string;
+};
+
+/**
+ * Read `.paused_until`, written by the Phase 1/2/3 "Write Error Status" nodes
+ * when a Claude Bridge call fails with `error === "usage_limit"`. Returns null
+ * if the episode isn't paused (file absent or unparseable).
+ */
+export function getPausedInfo(slug: string): PausedInfo | null {
+  const pausedPath = path.join(episodeDir(slug), ".paused_until");
+  try {
+    const raw = JSON.parse(fs.readFileSync(pausedPath, "utf-8"));
+    return {
+      retryAfter: typeof raw.retryAfter === "string" ? raw.retryAfter : null,
+      phase: typeof raw.phase === "number" ? raw.phase : 0,
+      pausedAt: typeof raw.pausedAt === "string" ? raw.pausedAt : "",
+    };
+  } catch {
+    return null;
   }
 }
 

@@ -1,4 +1,4 @@
-type Status = "idle" | "running" | "awaiting_review" | "awaiting_media_approval" | "ready_for_phase3" | "done" | "error" | "rejected";
+type Status = "idle" | "running" | "awaiting_review" | "awaiting_media_approval" | "ready_for_phase3" | "done" | "error" | "rejected" | "paused_until";
 
 const styles: Record<Status, string> = {
   idle:                    "text-weathered-stone bg-deep-teal",
@@ -9,6 +9,7 @@ const styles: Record<Status, string> = {
   done:                    "text-portal-gold    bg-portal-gold/15",
   error:                   "text-bone-white     bg-deep-crimson/70",
   rejected:                "text-bone-white     bg-deep-crimson/50",
+  paused_until:            "text-amber-torchlight bg-amber-torchlight/20",
 };
 
 const labels: Record<Status, string> = {
@@ -20,6 +21,7 @@ const labels: Record<Status, string> = {
   done:                    "Done",
   error:                   "Error",
   rejected:                "Rejected",
+  paused_until:            "Paused",
 };
 
 export default function StatusPill({ status }: { status: string }) {

@@ -93,6 +93,40 @@ export async function startPhase1ForEpisode(slug: string): Promise<{ error?: str
   return {};
 }
 
+/**
+ * Resume an episode that was paused by the Phase 1/2/3 "Write Error Status" node
+ * after a Claude Bridge `usage_limit` error. Reads `.paused_until` to determine
+ * which phase was running, clears the file, and re-triggers that phase's existing
+ * Start action — the same webhook a manual "Start Phase N" click would use.
+ */
+export async function resumeFromPause(slug: string): Promise<{ error?: string }> {
+  const fs = await import("fs");
+  const path = await import("path");
+  const dir = `/Users/jneal/n8n_projects/${slug}`;
+
+  let phase: number;
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(dir, ".paused_until"), "utf-8"));
+    phase = typeof raw.phase === "number" ? raw.phase : 0;
+  } catch {
+    return { error: "No .paused_until file found — was this episode actually paused?" };
+  }
+
+  try { fs.unlinkSync(path.join(dir, ".paused_until")); } catch { /* non-fatal */ }
+
+  switch (phase) {
+    case 1:
+      return startPhase1ForEpisode(slug);
+    case 2:
+      return startPhase2(slug);
+    case 3:
+      return startPhase3(slug);
+    default:
+      setEpisodeStatus(slug, "error");
+      return { error: `Unknown paused phase: ${phase}` };
+  }
+}
+
 export async function rejectEpisode(slug: string): Promise<{ error?: string }> {
   setEpisodeStatus(slug, "rejected");
   revalidatePath(`/episodes/${slug}`);

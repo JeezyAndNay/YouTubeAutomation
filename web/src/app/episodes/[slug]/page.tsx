@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getEpisode, getEpisodeOutputs, getEpisodeFiles, getPhase2FailedAssets } from "@/lib/episodes";
+import { getEpisode, getEpisodeOutputs, getEpisodeFiles, getPhase2FailedAssets, getPausedInfo } from "@/lib/episodes";
 import StatusPill from "@/components/StatusPill";
 import ArtifactPanel from "./ArtifactPanel";
 
@@ -18,6 +18,7 @@ export default async function EpisodeDetailPage({
   const outputs = getEpisodeOutputs(slug);
   const fileGroups = getEpisodeFiles(slug);
   const failedAssets = getPhase2FailedAssets(slug);
+  const pausedInfo = getPausedInfo(slug);
 
   return (
     <div className="flex flex-col h-full">
@@ -55,6 +56,7 @@ export default async function EpisodeDetailPage({
         outputs={outputs}
         fileGroups={fileGroups}
         failedAssets={failedAssets}
+        pausedInfo={pausedInfo}
       />
     </div>
   );

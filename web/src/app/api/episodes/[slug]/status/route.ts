@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 
 const VALID_STATUSES: EpisodeStatus[] = [
-  "idle", "running", "awaiting_review", "awaiting_media_approval", "ready_for_phase3", "done", "error", "rejected",
+  "idle", "running", "awaiting_review", "awaiting_media_approval", "ready_for_phase3", "done", "error", "rejected", "paused_until",
 ];
 
 export async function PATCH(
