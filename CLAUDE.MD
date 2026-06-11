@@ -19,6 +19,7 @@ Source-of-truth for the **Ruins Untold** YouTube automation pipeline. It contain
 - **`agents/`** — agent definitions: purpose, I/O contracts, rules (reference docs)
 - **`prompts/`** — full system prompts deployed to n8n (these are what agents actually receive)
 - **`workflows/`** — n8n workflow JSON exports (`ruins_untold_v2_phase1.json` is current)
+- **`infra/`** — host-side infrastructure scripts (currently `claude-bridge/`)
 - **`docs/`** — architecture and component documentation
 
 > The `agents/` files describe intent. The `prompts/` files are the actual deployed artifacts. When editing an agent's behavior, update both.
@@ -30,7 +31,7 @@ Source-of-truth for the **Ruins Untold** YouTube automation pipeline. It contain
 | Component | Location | Details |
 |---|---|---|
 | n8n | `localhost:5678` | Docker · `n8n-custom:latest` (n8n + FFmpeg) |
-| Claude Bridge | `http://host.docker.internal:3333/generate` | Python server at `/Users/jneal/n8n_projects/ClaudeBridge/claude-bridge.py` |
+| Claude Bridge | `http://host.docker.internal:3333/generate` | Python server, deployed at `/Users/jneal/n8n_projects/ClaudeBridge/claude-bridge.py`, source-tracked in `infra/claude-bridge/` |
 | Deployed prompts | `/Users/jneal/n8n_projects/ruins_untold_system_prompts/` | Copied from `prompts/` here |
 | Episode output | `/Users/jneal/n8n_projects/{slug}_{yyyymmddhhmi}/` | Written by n8n at runtime |
 
@@ -38,6 +39,9 @@ Source-of-truth for the **Ruins Untold** YouTube automation pipeline. It contain
 ```bash
 cp prompts/<agent>.md /Users/jneal/n8n_projects/ruins_untold_system_prompts/<agent>.md
 ```
+
+**After editing `infra/claude-bridge/claude-bridge.py`**, copy it to the deployed
+location and restart the bridge — see `infra/claude-bridge/README.md`.
 
 ---
 
@@ -52,6 +56,11 @@ POST http://host.docker.internal:3333/generate
 
 // Response
 { "output": "...", "exitCode": 0, "error": "" }
+
+// Response — Claude Code usage limit hit (Phase 1/2/3 Parse/Save nodes throw
+// USAGE_LIMIT_PAUSE|<retryAfter> and "Write Error Status" pauses the episode
+// instead of failing it — see infra/claude-bridge/README.md)
+{ "output": "", "exitCode": 1, "error": "usage_limit", "retryAfter": "2026-06-11T18:00:00+00:00", "rawError": "..." }
 ```
 
 Bridge modes (set by env var):

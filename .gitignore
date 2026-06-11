@@ -4,6 +4,10 @@
 # macOS
 .DS_Store
 
+# Python
+__pycache__/
+*.pyc
+
 # Local episode output
 *.mp3
 *.mp4

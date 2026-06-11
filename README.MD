@@ -213,7 +213,7 @@ Generates the full YouTube publishing package.
 | Component | Location |
 |---|---|
 | n8n | `localhost:5678` · Docker · `n8n-custom:latest` |
-| Claude Bridge | `localhost:3333` · `/Users/jneal/n8n_projects/ClaudeBridge/claude-bridge.py` |
+| Claude Bridge | `localhost:3333` · deployed at `/Users/jneal/n8n_projects/ClaudeBridge/claude-bridge.py`, source-tracked in `infra/claude-bridge/` |
 | Web UI | `localhost:3000` · `web/` directory |
 | System prompts | `/Users/jneal/n8n_projects/ruins_untold_system_prompts/` |
 | Episode output | `/Users/jneal/n8n_projects/{slug}_{yyyymmddhhmi}/` |
@@ -236,9 +236,13 @@ POST http://host.docker.internal:3333/generate
 { "prompt": "<system prompt + user input combined>" }
 
 → { "output": "...", "exitCode": 0, "error": "" }
+→ { "output": "", "exitCode": 1, "error": "usage_limit", "retryAfter": "<ISO8601 UTC>" }  // Claude Code usage limit hit
 ```
 
 Bridge subprocess timeout: **1800s**. n8n HTTP nodes must use **1500000ms** timeout.
+
+Source-tracked at `infra/claude-bridge/` — after editing, copy to the deployed path and
+restart (see `infra/claude-bridge/README.md`).
 
 ### n8n Docker volumes
 
