@@ -374,11 +374,10 @@
             {
               "id": "check-next-template",
               "leftValue": "={{ $json['NEXT TEMPLATE NUMBER'] }}",
-              "rightValue": "",
+              "rightValue": 0,
               "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
+                "type": "number",
+                "operation": "gt"
               }
             }
           ],
@@ -503,11 +502,10 @@
             {
               "id": "check-next-template",
               "leftValue": "={{ $json['NEXT TEMPLATE NUMBER'] }}",
-              "rightValue": "",
+              "rightValue": 0,
               "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
+                "type": "number",
+                "operation": "gt"
               }
             }
           ],
