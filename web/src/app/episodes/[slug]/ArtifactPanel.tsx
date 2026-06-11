@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, approveMediaPrompts, setYoutubeUrl, markEpisodeDone } from "@/app/actions/episodes";
-import type { Episode, EpisodeOutputs, FileGroup } from "@/lib/episodes";
+import type { Episode, EpisodeOutputs, FileGroup, FailedAsset } from "@/lib/episodes";
 
 // ── Artifact definitions ─────────────────────────────────────────────────────
 
@@ -206,6 +206,33 @@ function MediaApprovalBanner({
   );
 }
 
+// ── Failed assets banner ──────────────────────────────────────────────────────
+
+function FailedAssetsBanner({ failedAssets }: { failedAssets: FailedAsset[] }) {
+  return (
+    <section className="mb-6">
+      <div className="bg-deep-crimson/10 border border-deep-crimson/30 rounded-lg p-4">
+        <p className="text-deep-crimson text-[10px] font-medium uppercase tracking-widest mb-2">
+          {failedAssets.length} Asset{failedAssets.length === 1 ? "" : "s"} Failed in Phase 2
+        </p>
+        <p className="text-bone-white/70 text-[11px] mb-3 leading-relaxed">
+          Kie.ai returned no usable result for these — they were skipped. Generate them
+          manually before rendering, or Phase 3&apos;s pre-render gate will block on them.
+        </p>
+        <div className="space-y-2">
+          {failedAssets.map((a, i) => (
+            <div key={i} className="text-[11px]">
+              <span className="font-mono text-deep-crimson/80 uppercase">{a.type}</span>
+              <span className="font-mono text-bone-white/70"> · {a.filename}</span>
+              <p className="text-weathered-stone/50 text-[10px] mt-0.5">{a.reason}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── Phase completion banner ───────────────────────────────────────────────────
 
 function CompletionBanner({
@@ -308,9 +335,10 @@ type Props = {
   episode: Episode;
   outputs: EpisodeOutputs;
   fileGroups: FileGroup[];
+  failedAssets: FailedAsset[];
 };
 
-export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
+export default function ArtifactPanel({ episode, outputs, fileGroups, failedAssets }: Props) {
   const { slug, status, phase, youtubeUrl } = episode;
   const router = useRouter();
 
@@ -435,6 +463,9 @@ export default function ArtifactPanel({ episode, outputs, fileGroups }: Props) {
     <div className="flex flex-1 min-h-0">
       {/* ── Left column ─────────────────────────────────────────────────────── */}
       <div className="w-64 shrink-0 border-r border-weathered-stone/15 overflow-y-auto p-6 space-y-8">
+        {/* Failed assets banner — shown regardless of status */}
+        {failedAssets.length > 0 && <FailedAssetsBanner failedAssets={failedAssets} />}
+
         {/* Media approval banner */}
         {isAwaitingMediaApproval && (
           <MediaApprovalBanner

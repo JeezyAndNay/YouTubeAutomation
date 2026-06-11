@@ -103,6 +103,23 @@ export function getEpisodeOutputs(slug: string): EpisodeOutputs {
   };
 }
 
+export type FailedAsset = {
+  type: "image" | "video";
+  sceneId?: string;
+  filename: string;
+  reason: string;
+};
+
+export function getPhase2FailedAssets(slug: string): FailedAsset[] {
+  const summaryPath = path.join(episodeDir(slug), "scripts", "phase2_summary.json");
+  try {
+    const raw = JSON.parse(fs.readFileSync(summaryPath, "utf-8"));
+    return Array.isArray(raw.failedAssets) ? raw.failedAssets : [];
+  } catch {
+    return [];
+  }
+}
+
 export type FileGroup = { dir: string; files: { name: string; size: number; ext: string }[] };
 
 export function getEpisodeFiles(slug: string): FileGroup[] {
