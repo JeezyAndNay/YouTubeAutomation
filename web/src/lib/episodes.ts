@@ -145,6 +145,49 @@ export function getPausedInfo(slug: string): PausedInfo | null {
   }
 }
 
+export type ThumbnailPrompt = {
+  generation: number;
+  template: number;
+  episodeTitle: string;
+  generatedAt: string;
+  thumbnailJson: unknown;
+  textOverlay: string;
+  kieCommand: string;
+};
+
+/**
+ * Scan `scripts/thumbnail_prompt_*.json` for previously generated thumbnail prompts
+ * (written by the "Generate Thumbnail" action on the episode page). Sorted by
+ * generation number ascending.
+ */
+export function getThumbnailPrompts(slug: string): ThumbnailPrompt[] {
+  const dir = path.join(episodeDir(slug), "scripts");
+  if (!fs.existsSync(dir)) return [];
+
+  return fs
+    .readdirSync(dir)
+    .map((f) => f.match(/^thumbnail_prompt_(\d+)\.json$/))
+    .filter((m): m is RegExpMatchArray => m !== null)
+    .map((m) => {
+      try {
+        const raw = JSON.parse(fs.readFileSync(path.join(dir, m[0]), "utf-8"));
+        return {
+          generation: typeof raw.generation === "number" ? raw.generation : parseInt(m[1], 10),
+          template: typeof raw.template === "number" ? raw.template : 0,
+          episodeTitle: raw.episode_title ?? "",
+          generatedAt: raw.generated_at ?? "",
+          thumbnailJson: raw.thumbnail_json ?? null,
+          textOverlay: raw.text_overlay ?? "",
+          kieCommand: raw.kie_command ?? "",
+        };
+      } catch {
+        return null;
+      }
+    })
+    .filter((x): x is ThumbnailPrompt => x !== null)
+    .sort((a, b) => a.generation - b.generation);
+}
+
 export type FileGroup = { dir: string; files: { name: string; size: number; ext: string }[] };
 
 export function getEpisodeFiles(slug: string): FileGroup[] {

@@ -224,3 +224,128 @@ export async function setYoutubeUrl(slug: string, url: string): Promise<{ error?
   revalidatePath("/episodes");
   return {};
 }
+
+const THUMBNAIL_TEMPLATE_NAMES: Record<number, string> = {
+  1: "Revelation Shot",
+  2: "Explorer Face",
+  3: "Split Reveal",
+  4: "Mystery Object",
+  5: "Location Atmosphere",
+};
+
+const THUMBNAIL_AGENT_PROMPT_PATH =
+  "/Users/jneal/n8n_projects/ruins_untold_system_prompts/thumbnail_agent.md";
+
+/**
+ * Generate a Nano Banana 2 thumbnail prompt via the Claude Bridge — the Web UI
+ * equivalent of the `ru-thumbnail` skill / Phase 3's old "Build Thumbnail Prompt" ->
+ * "Call Claude Thumbnail" -> "Save Thumbnail Prompt" node chain. Writes
+ * `scripts/thumbnail_prompt_<N>.json` (N = next unused generation number) and returns
+ * any error for display.
+ */
+export async function generateThumbnailPrompt(
+  slug: string,
+  template: number,
+  titleOverride?: string
+): Promise<{ error?: string }> {
+  if (!Number.isInteger(template) || template < 1 || template > 5) {
+    return { error: "Template must be between 1 and 5" };
+  }
+
+  const fs = await import("fs");
+  const path = await import("path");
+  const { callClaudeBridge } = await import("@/lib/claude-bridge");
+  const dir = `/Users/jneal/n8n_projects/${slug}`;
+  const scriptsDir = path.join(dir, "scripts");
+
+  let topic: string;
+  try {
+    topic = fs.readFileSync(path.join(dir, ".topic"), "utf-8").trim();
+    if (!topic) throw new Error("empty");
+  } catch {
+    topic = slug.replace(/_\d{12}$/, "").replace(/_/g, " ");
+  }
+  const episodeTitle = (titleOverride ?? "").trim() || topic;
+
+  let systemPrompt: string;
+  try {
+    systemPrompt = fs.readFileSync(THUMBNAIL_AGENT_PROMPT_PATH, "utf-8");
+  } catch (e) {
+    return { error: `Could not read thumbnail agent prompt: ${String(e)}` };
+  }
+
+  const fullPrompt =
+    systemPrompt +
+    "\n\n---\n\nTemplate: " +
+    template +
+    " — " +
+    (THUMBNAIL_TEMPLATE_NAMES[template] ?? "Unknown") +
+    "\nEpisode title: " +
+    episodeTitle;
+
+  let resp;
+  try {
+    resp = await callClaudeBridge(fullPrompt);
+  } catch (e) {
+    return { error: `Failed to reach Claude bridge: ${String(e)}` };
+  }
+
+  if (resp.exitCode !== 0) {
+    if (resp.error === "usage_limit") {
+      const ra = resp.retryAfter
+        ? new Date(resp.retryAfter).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+        : "later";
+      return { error: `Claude usage limit reached. Try again around ${ra}.` };
+    }
+    return { error: `Thumbnail agent error: ${resp.error || "unknown error"}` };
+  }
+
+  const raw = resp.output || "";
+  const jsonMatch = raw.match(/```json\n([\s\S]*?)\n```/);
+  let thumbnailJson: unknown = null;
+  if (jsonMatch) {
+    try {
+      thumbnailJson = JSON.parse(jsonMatch[1]);
+    } catch {
+      // leave null — caught below
+    }
+  }
+  if (!thumbnailJson) {
+    return { error: "Could not parse a JSON thumbnail prompt from Claude's response" };
+  }
+
+  const textMatch = raw.match(/>\s*Text overlay suggestion:\s*(.+)/);
+  const genMatch = raw.match(/>\s*To generate:\s*(.+)/);
+
+  fs.mkdirSync(scriptsDir, { recursive: true });
+  const existingGenerations = fs
+    .readdirSync(scriptsDir)
+    .map((f) => f.match(/^thumbnail_prompt_(\d+)\.json$/))
+    .filter((m): m is RegExpMatchArray => m !== null)
+    .map((m) => parseInt(m[1], 10));
+  const generation = existingGenerations.length ? Math.max(...existingGenerations) + 1 : 1;
+
+  const pkg = {
+    episode_title: episodeTitle,
+    template,
+    generation,
+    generated_at: new Date().toISOString(),
+    thumbnail_json: thumbnailJson,
+    text_overlay: textMatch ? textMatch[1].trim() : "",
+    kie_command: genMatch ? genMatch[1].trim() : "",
+    raw_output: raw,
+  };
+
+  try {
+    fs.writeFileSync(
+      path.join(scriptsDir, `thumbnail_prompt_${generation}.json`),
+      JSON.stringify(pkg, null, 2),
+      "utf-8"
+    );
+  } catch (e) {
+    return { error: `Failed to write thumbnail_prompt_${generation}.json: ${String(e)}` };
+  }
+
+  revalidatePath(`/episodes/${slug}`);
+  return {};
+}

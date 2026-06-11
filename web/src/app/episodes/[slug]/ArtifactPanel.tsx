@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, approveMediaPrompts, setYoutubeUrl, markEpisodeDone, resumeFromPause } from "@/app/actions/episodes";
-import type { Episode, EpisodeOutputs, FileGroup, FailedAsset, PausedInfo } from "@/lib/episodes";
+import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, approveMediaPrompts, setYoutubeUrl, markEpisodeDone, resumeFromPause, generateThumbnailPrompt } from "@/app/actions/episodes";
+import type { Episode, EpisodeOutputs, FileGroup, FailedAsset, PausedInfo, ThumbnailPrompt } from "@/lib/episodes";
 
 // ── Artifact definitions ─────────────────────────────────────────────────────
 
@@ -26,6 +26,16 @@ const ARTIFACTS: ArtifactDef[] = [
   { key: "videos",    label: "Video Manifest",   path: "scripts/video_manifest.json",   type: "json",     phase: 2 },
   { key: "voiceover", label: "Voiceover (MP3)",  path: "audio/voiceover_final.mp3",     type: "audio",    phase: 2 },
   { key: "metadata",  label: "Metadata",         path: "scripts/metadata_package.json", type: "json",     phase: 3 },
+];
+
+// ── Thumbnail templates (mirrors the ru-thumbnail skill / thumbnail_agent.md) ───────
+
+const THUMBNAIL_TEMPLATES: { num: number; name: string; desc: string }[] = [
+  { num: 1, name: "Revelation Shot",     desc: "Single artifact/object — dramatic vault lighting" },
+  { num: 2, name: "Explorer Face",       desc: "Host face + location — reaction drives the click" },
+  { num: 3, name: "Split Reveal",        desc: "Official story vs. suppressed truth, side by side" },
+  { num: 4, name: "Mystery Object",      desc: "Single artifact on pure black — max impact small" },
+  { num: 5, name: "Location Atmosphere", desc: "Full-bleed environment — cinematic, no face" },
 ];
 
 // ── JSON syntax highlighter ──────────────────────────────────────────────────
@@ -139,6 +149,82 @@ function fmt(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+// ── Copy-to-clipboard button ─────────────────────────────────────────────────
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard?.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+      className="text-[10px] uppercase tracking-widest text-weathered-stone/60 hover:text-portal-gold border border-weathered-stone/20 hover:border-portal-gold/40 px-2 py-0.5 rounded transition-colors shrink-0"
+    >
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
+}
+
+// ── Thumbnail prompt detail view ─────────────────────────────────────────────
+
+function ThumbnailDetailView({ thumb }: { thumb: ThumbnailPrompt }) {
+  const templateName = THUMBNAIL_TEMPLATES.find((t) => t.num === thumb.template)?.name ?? "Unknown";
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-8 pt-8 pb-4 shrink-0">
+        <p className="text-[10px] font-medium uppercase tracking-widest text-weathered-stone">
+          Thumbnail · Generation {thumb.generation} · Template {thumb.template} ({templateName})
+        </p>
+      </div>
+      <div className="flex-1 min-h-0 px-8 pb-8 overflow-y-auto space-y-6">
+        {thumb.textOverlay && (
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[10px] uppercase tracking-widest text-weathered-stone/50">
+                Text Overlay
+              </p>
+              <CopyButton text={thumb.textOverlay} />
+            </div>
+            <p className="text-portal-gold font-display text-lg tracking-wide">
+              {thumb.textOverlay}
+            </p>
+          </div>
+        )}
+
+        {thumb.kieCommand && (
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[10px] uppercase tracking-widest text-weathered-stone/50">
+                Generate Command
+              </p>
+              <CopyButton text={thumb.kieCommand} />
+            </div>
+            <p className="text-xs font-mono text-bone-white/70 break-all">{thumb.kieCommand}</p>
+          </div>
+        )}
+
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-[10px] uppercase tracking-widest text-weathered-stone/50">
+              Nano Banana 2 JSON Prompt
+            </p>
+            {thumb.thumbnailJson != null && (
+              <CopyButton text={JSON.stringify(thumb.thumbnailJson, null, 2)} />
+            )}
+          </div>
+          {thumb.thumbnailJson != null ? (
+            <JsonView raw={JSON.stringify(thumb.thumbnailJson)} />
+          ) : (
+            <p className="text-weathered-stone/40 text-xs">No JSON prompt parsed.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── Main component ───────────────────────────────────────────────────────────
@@ -380,9 +466,10 @@ type Props = {
   fileGroups: FileGroup[];
   failedAssets: FailedAsset[];
   pausedInfo: PausedInfo | null;
+  thumbnails: ThumbnailPrompt[];
 };
 
-export default function ArtifactPanel({ episode, outputs, fileGroups, failedAssets, pausedInfo }: Props) {
+export default function ArtifactPanel({ episode, outputs, fileGroups, failedAssets, pausedInfo, thumbnails }: Props) {
   const { slug, status, phase, youtubeUrl } = episode;
   const router = useRouter();
 
@@ -392,6 +479,13 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // Thumbnail generator state
+  const [selectedThumb, setSelectedThumb] = useState<number | null>(null);
+  const [thumbTemplate, setThumbTemplate] = useState(1);
+  const [thumbTitleOverride, setThumbTitleOverride] = useState("");
+  const [thumbError, setThumbError] = useState<string | null>(null);
+  const [isGeneratingThumb, startThumbTransition] = useTransition();
 
   // Edit state for media approval
   const [editMode, setEditMode] = useState(false);
@@ -417,6 +511,7 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
 
   // Fetch artifact content when selection changes
   const selected = ARTIFACTS.find((a) => a.key === selectedKey) ?? null;
+  const selectedThumbData = thumbnails.find((t) => t.generation === selectedThumb) ?? null;
 
   useEffect(() => {
     if (!selected || selected.type === "audio") {
@@ -463,7 +558,29 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
   // Switch artifact — commit any in-progress edit first
   function selectArtifact(key: keyof EpisodeOutputs) {
     commitEdit();
+    setSelectedThumb(null);
     setSelectedKey(key);
+  }
+
+  // Switch to a generated thumbnail prompt
+  function selectThumb(generation: number) {
+    commitEdit();
+    setSelectedKey(null);
+    setSelectedThumb(generation);
+  }
+
+  // Generate a new thumbnail prompt via the Claude Bridge
+  function handleGenerateThumbnail() {
+    setThumbError(null);
+    startThumbTransition(async () => {
+      const result = await generateThumbnailPrompt(slug, thumbTemplate, thumbTitleOverride);
+      if (result?.error) {
+        setThumbError(result.error);
+        return;
+      }
+      setThumbTitleOverride("");
+      router.refresh();
+    });
   }
 
   // Enter edit mode for the current JSON artifact
@@ -579,6 +696,68 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
           </div>
         </section>
 
+        {/* Thumbnails */}
+        <section>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-weathered-stone mb-3">
+            Thumbnails
+          </p>
+          {thumbnails.length > 0 && (
+            <div className="space-y-0.5 mb-3">
+              {thumbnails.map((t) => {
+                const active = selectedThumb === t.generation;
+                return (
+                  <button
+                    key={t.generation}
+                    onClick={() => selectThumb(t.generation)}
+                    className={[
+                      "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-xs transition-colors",
+                      active
+                        ? "bg-portal-gold/15 text-portal-gold"
+                        : "text-bone-white hover:bg-deep-teal/60 hover:text-portal-gold cursor-pointer",
+                    ].join(" ")}
+                  >
+                    <span className={`text-[10px] leading-none ${active ? "text-portal-gold" : "text-portal-gold/70"}`}>
+                      ✓
+                    </span>
+                    Gen {t.generation} · Template {t.template}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <select
+              value={thumbTemplate}
+              onChange={(e) => setThumbTemplate(parseInt(e.target.value, 10))}
+              className="w-full bg-charcoal border border-weathered-stone/25 rounded px-2 py-1 text-[11px] text-bone-white outline-none focus:border-portal-gold"
+            >
+              {THUMBNAIL_TEMPLATES.map((tpl) => (
+                <option key={tpl.num} value={tpl.num}>
+                  {tpl.num}. {tpl.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-weathered-stone/40 text-[10px] leading-snug">
+              {THUMBNAIL_TEMPLATES.find((t) => t.num === thumbTemplate)?.desc}
+            </p>
+            <input
+              type="text"
+              value={thumbTitleOverride}
+              onChange={(e) => setThumbTitleOverride(e.target.value)}
+              placeholder={episode.topic}
+              className="w-full bg-charcoal border border-weathered-stone/25 rounded px-2 py-1 text-[11px] text-bone-white placeholder-weathered-stone/40 outline-none focus:border-portal-gold"
+            />
+            <button
+              onClick={handleGenerateThumbnail}
+              disabled={isGeneratingThumb}
+              className="w-full bg-portal-gold text-charcoal font-semibold text-xs py-2 rounded hover:bg-amber-torchlight disabled:opacity-40 transition-colors"
+            >
+              {isGeneratingThumb ? "Generating..." : "Generate Thumbnail"}
+            </button>
+            {thumbError && <p className="text-deep-crimson text-[10px]">{thumbError}</p>}
+          </div>
+        </section>
+
         {/* Actions */}
         {(hasActions || isRunning) && (
           <section>
@@ -676,7 +855,9 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
 
       {/* ── Right column: preview / edit ─────────────────────────────────────── */}
       <div className="flex-1 min-w-0 overflow-y-auto bg-abyss">
-        {!selected ? (
+        {selectedThumbData ? (
+          <ThumbnailDetailView thumb={selectedThumbData} />
+        ) : !selected ? (
           <div className="h-full flex items-center justify-center">
             <p className="text-weathered-stone/40 text-sm">Select an artifact to preview</p>
           </div>
