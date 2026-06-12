@@ -195,10 +195,9 @@ def run_whisper(audio_path: str, output_base: str) -> dict:
 
 
 NO_TOOLS_PREAMBLE = (
-    "RUNTIME CONSTRAINT: You are operating in a subprocess with no filesystem access. "
-    "Do NOT invoke any tools, tool calls, or file operations. "
-    "Do NOT write files, create directories, run commands, or perform web searches. "
-    "Produce only what your instructions ask for — plain text or JSON as specified — with no tool calls and no file I/O.\n\n"
+    "For this task, respond with the requested output directly — no tool calls, "
+    "file writes, commands, or web searches needed. This is a single-shot text "
+    "generation request; just return the text/JSON described below.\n\n"
 )
 
 def call_cli(system: str, prompt: str, model: str, max_tokens: int = MAX_TOKENS, effort: str = "medium") -> tuple[str, int, str, str | None]:
