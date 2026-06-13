@@ -74,7 +74,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const fs   = require('fs');\nconst vars = $input.first().json;\n\nfs.mkdirSync(vars.renderDir, { recursive: true });\n\nconst imagesDir = vars.projectDir + '/images';\nconst videosDir = vars.projectDir + '/videos';\nconst musicDir  = vars.projectDir + '/music';\nconst sfxDir    = vars.projectDir + '/sfx';\n\nconst imageCount = fs.existsSync(imagesDir) ? fs.readdirSync(imagesDir).filter(f => /\\.(png|jpg)$/i.test(f)).length : 0;\nconst videoCount = fs.existsSync(videosDir) ? fs.readdirSync(videosDir).filter(f => f.endsWith('.mp4')).length  : 0;\nconst musicCount = fs.existsSync(musicDir)  ? fs.readdirSync(musicDir).filter(f => f.endsWith('.mp3')).length  : 0;\nconst sfxCount   = fs.existsSync(sfxDir)    ? fs.readdirSync(sfxDir).filter(f => f.endsWith('.mp3')).length    : 0;\nconst hasVoiceover = fs.existsSync(vars.projectDir + '/audio/voiceover_final.mp3');\n\nif (!hasVoiceover)\n  throw new Error('voiceover_final.mp3 not found. Run Phase 1 first.');\n\nconst timeline    = JSON.parse(fs.readFileSync(vars.timelinePath, 'utf-8'));\nconst totalScenes  = timeline.scenes.length;\nconst imageScenes  = timeline.scenes.filter(s => s.visual_type === 'image').length;\nconst videoScenes  = timeline.scenes.filter(s => s.visual_type === 'video').length;\nconst pinnedScenes = timeline.scenes.filter(s => s.visual_type && s.visual_type.startsWith('pinned')).length;\nconst totalDuration = timeline.total_duration_seconds || 0;\n\nconsole.log(`Asset inventory:\\n  Images:    ${imageCount} / ${imageScenes} scenes\\n  Videos:    ${videoCount} / ${videoScenes} scenes\\n  Pinned:    ${pinnedScenes} (channel intro etc)\\n  Music:     ${musicCount} cue files\\n  SFX:       ${sfxCount} cue files\\n  Voiceover: YES\\n  Duration:  ${(totalDuration/60).toFixed(1)} min (${totalScenes} scenes)`);\n\nreturn [{ json: { ...vars, imageCount, videoCount, musicCount, sfxCount, totalScenes, totalDuration } }];\n"
+        "jsCode": "const fs   = require('fs');\nconst vars = $input.first().json;\n\nfs.mkdirSync(vars.renderDir, { recursive: true });\n\nconst imagesDir = vars.projectDir + '/images';\nconst videosDir = vars.projectDir + '/videos';\nconst musicDir  = vars.projectDir + '/music';\nconst sfxDir    = vars.projectDir + '/sfx';\n\nconst imageCount = fs.existsSync(imagesDir) ? fs.readdirSync(imagesDir).filter(f => /\\.(png|jpg)$/i.test(f)).length : 0;\nconst videoCount = fs.existsSync(videosDir) ? fs.readdirSync(videosDir).filter(f => f.endsWith('.mp4')).length  : 0;\nconst musicCount = fs.existsSync(musicDir)  ? fs.readdirSync(musicDir).filter(f => f.endsWith('.mp3')).length  : 0;\nconst sfxCount   = fs.existsSync(sfxDir)    ? fs.readdirSync(sfxDir).filter(f => f.endsWith('.mp3')).length    : 0;\nconst hasVoiceover = fs.existsSync(vars.projectDir + '/audio/voiceover_final.mp3');\n\nif (!hasVoiceover)\n  throw new Error('voiceover_final.mp3 not found. Run Phase 1 first.');\n\nconst timeline    = JSON.parse(fs.readFileSync(vars.timelinePath, 'utf-8'));\nconst totalScenes  = timeline.scenes.length;\nconst imageScenes  = timeline.scenes.filter(s => s.visual_type === 'image').length;\nconst videoScenes  = timeline.scenes.filter(s => s.visual_type === 'video').length;\nconst pinnedScenes = timeline.scenes.filter(s => s.visual_type && s.visual_type.startsWith('pinned')).length;\nconst totalDuration = timeline.total_duration_seconds || 0;\nconst musicCues    = (timeline.music_cues || []).length;\nconst sfxCues      = (timeline.sfx_cues   || []).length;\n\nconsole.log(`Asset inventory:\\n  Images:    ${imageCount} / ${imageScenes} scenes\\n  Videos:    ${videoCount} / ${videoScenes} scenes\\n  Pinned:    ${pinnedScenes} (channel intro etc)\\n  Music:     ${musicCount} / ${musicCues} cue files\\n  SFX:       ${sfxCount} / ${sfxCues} cue files\\n  Voiceover: YES\\n  Duration:  ${(totalDuration/60).toFixed(1)} min (${totalScenes} scenes)`);\n\n// Gate: don't launch a render until every expected asset actually exists on disk.\n// Previously this node only *computed* counts and never compared them against what\n// the timeline expects, so Launch Render fired even while Phase 2 was still\n// generating images/video/music/sfx (a known failure mode while Phase 2's\n// token-exhaustion bug is unresolved) \u2014 producing a render that exits early on\n// \"missing assets,\" which Check Render then misreported as a crash.\nconst missingAssets = [];\nif (imageCount < imageScenes) missingAssets.push(`images (${imageCount}/${imageScenes})`);\nif (videoCount < videoScenes) missingAssets.push(`videos (${videoCount}/${videoScenes})`);\nif (musicCount < musicCues)   missingAssets.push(`music (${musicCount}/${musicCues})`);\nif (sfxCount   < sfxCues)     missingAssets.push(`sfx (${sfxCount}/${sfxCues})`);\n\nconst assetsComplete = missingAssets.length === 0;\nif (!assetsComplete) console.error(`[Phase 3] Assets not ready for \"${vars.slug}\" \u2014 missing: ${missingAssets.join(', ')}`);\n\nreturn [{ json: { ...vars, imageCount, videoCount, musicCount, sfxCount, totalScenes, totalDuration, assetsComplete, missingAssets } }];"
       },
       "id": "p3-005-validate-assets",
       "name": "Validate Assets",
@@ -116,7 +116,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const fs   = require('fs');\nconst vars = (() => { try { return $('Load Project').first().json; } catch (_) {} return $('Load from Webhook').first().json; })();\nconst sd   = $getWorkflowStaticData('global');\n\nsd.renderCheckAttempts = (sd.renderCheckAttempts || 0) + 1;\nconst MAX_ATTEMPTS = 180;\n\nconst isComplete = fs.existsSync(vars.renderCompletePath);\n\n// Detect a crashed render process: PID file exists but the process is no longer running\n// and no render_complete.json was written. Skip the check on the very first poll \u2014\n// the process may not have forked yet.\nlet processAlive = true;\ntry {\n  const pidRaw = fs.readFileSync(vars.renderPidPath, 'utf-8').trim();\n  const pid = parseInt(pidRaw, 10);\n  if (!isNaN(pid)) process.kill(pid, 0);   // throws ESRCH if the process is gone\n} catch (e) {\n  processAlive = false;\n}\nconst crashed = !isComplete && !processAlive && sd.renderCheckAttempts > 1;\n\nlet progress = '';\nif (fs.existsSync(vars.renderLogPath)) {\n  try {\n    const logContent = fs.readFileSync(vars.renderLogPath, 'utf-8');\n    const lines = logContent.trim().split('\\n').filter(Boolean);\n    progress = lines.slice(-2).join(' | ');\n  } catch(e) {}\n}\n\nconsole.log(`Render check ${sd.renderCheckAttempts}/${MAX_ATTEMPTS}: complete=${isComplete} alive=${processAlive}`);\nif (progress) console.log(`Log: ${progress}`);\nif (crashed) console.error(`[Phase 3] Render process for \"${vars.slug}\" appears to have crashed \u2014 PID no longer running and no render_complete.json. Last log: ${progress || '(empty)'}`);\n\nif (!isComplete && !crashed && sd.renderCheckAttempts >= MAX_ATTEMPTS)\n  throw new Error(`Render timeout (${MAX_ATTEMPTS} checks). Check log: ${vars.renderLogPath}`);\n\nreturn [{ json: { ...vars, isComplete, crashed, renderAttempts: sd.renderCheckAttempts, progress } }];\n"
+        "jsCode": "const fs   = require('fs');\nconst vars = (() => { try { return $('Load Project').first().json; } catch (_) {} return $('Load from Webhook').first().json; })();\nconst sd   = $getWorkflowStaticData('global');\n\n// Scope the attempt counter per-episode. A global counter meant every execution\n// after the very first one ever run would see renderCheckAttempts > 1 on its\n// first poll, breaking the \"skip crash-check on first poll\" safeguard below and\n// causing false-positive crash detection on healthy, actively-running renders.\nconst attemptsKey = `renderCheckAttempts__${vars.slug}`;\nsd[attemptsKey] = (sd[attemptsKey] || 0) + 1;\nconst renderCheckAttempts = sd[attemptsKey];\nconst MAX_ATTEMPTS = 180;\n\nconst isComplete = fs.existsSync(vars.renderCompletePath);\n\n// Detect a crashed render process: PID file exists but the process is no longer running\n// and no render_complete.json was written. Skip the check on the very first poll \u2014\n// the process may not have forked yet.\nlet processAlive = true;\ntry {\n  const pidRaw = fs.readFileSync(vars.renderPidPath, 'utf-8').trim();\n  const pid = parseInt(pidRaw, 10);\n  if (!isNaN(pid)) process.kill(pid, 0);   // throws ESRCH if the process is gone\n} catch (e) {\n  processAlive = false;\n}\nconst crashed = !isComplete && !processAlive && renderCheckAttempts > 1;\n\nlet progress = '';\nif (fs.existsSync(vars.renderLogPath)) {\n  try {\n    const logContent = fs.readFileSync(vars.renderLogPath, 'utf-8');\n    const lines = logContent.trim().split('\\n').filter(Boolean);\n    progress = lines.slice(-2).join(' | ');\n  } catch(e) {}\n}\n\nconsole.log(`Render check ${renderCheckAttempts}/${MAX_ATTEMPTS}: complete=${isComplete} alive=${processAlive}`);\nif (progress) console.log(`Log: ${progress}`);\nif (crashed) console.error(`[Phase 3] Render process for \"${vars.slug}\" appears to have crashed \u2014 PID no longer running and no render_complete.json. Last log: ${progress || '(empty)'}`);\n\nif (!isComplete && !crashed && renderCheckAttempts >= MAX_ATTEMPTS)\n  throw new Error(`Render timeout (${MAX_ATTEMPTS} checks). Check log: ${vars.renderLogPath}`);\n\n// Clean up the per-episode counter once this render run is finished (complete or\n// crashed) so workflow static data doesn't accumulate entries across episodes.\nif (isComplete || crashed) delete sd[attemptsKey];\n\nreturn [{ json: { ...vars, isComplete, crashed, renderAttempts: renderCheckAttempts, progress } }];"
       },
       "id": "p3-008-check-render",
       "name": "Check Render",
@@ -579,6 +579,52 @@
         -3372,
         1528
       ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-assets-ready",
+              "leftValue": "={{ $json.assetsComplete }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "p3-005b-assets-ready",
+      "name": "Assets Ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2520,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const vars = $input.first().json;\nconst missing = vars.missingAssets || [];\n\nconsole.error(`[Phase 3] Stopped before launching render for \"${vars.slug}\" \u2014 missing assets: ${missing.join(', ')}. This usually means Phase 2 hasn't finished yet (known token-exhaustion issue requires a manual nudge). Re-run Phase 3 for this episode once Phase 2 completes.`);\n\nreturn [{ json: { ...vars, phase3Status: 'assets_not_ready', missingAssets: missing } }];"
+      },
+      "id": "p3-005c-assets-not-ready",
+      "name": "Handle Assets Not Ready",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2400,
+        1200
+      ]
     }
   ],
   "connections": {
@@ -630,14 +676,7 @@
       "main": [
         [
           {
-            "node": "Launch Render",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Handle Phase 3 Error",
+            "node": "Assets Ready?",
             "type": "main",
             "index": 0
           }
@@ -806,6 +845,24 @@
         [
           {
             "node": "Write Error Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assets Ready?": {
+      "main": [
+        [
+          {
+            "node": "Launch Render",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Assets Not Ready",
             "type": "main",
             "index": 0
           }
