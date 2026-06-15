@@ -38,6 +38,10 @@ const THUMBNAIL_TEMPLATES: { num: number; name: string; desc: string }[] = [
   { num: 5, name: "Location Atmosphere", desc: "Full-bleed environment — cinematic, no face" },
 ];
 
+// ── Previewable image extensions (rendered in the right pane on click) ──────
+
+const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg"]);
+
 // ── JSON syntax highlighter ──────────────────────────────────────────────────
 
 function JsonView({ raw }: { raw: string }) {
@@ -474,6 +478,7 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
   const router = useRouter();
 
   const [selectedKey, setSelectedKey] = useState<keyof EpisodeOutputs | null>(null);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -559,6 +564,7 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
   function selectArtifact(key: keyof EpisodeOutputs) {
     commitEdit();
     setSelectedThumb(null);
+    setSelectedFile(null);
     setSelectedKey(key);
   }
 
@@ -566,7 +572,16 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
   function selectThumb(generation: number) {
     commitEdit();
     setSelectedKey(null);
+    setSelectedFile(null);
     setSelectedThumb(generation);
+  }
+
+  // Switch to a previewable file from the Files list (e.g. a thumbnail image)
+  function selectFile(relPath: string) {
+    commitEdit();
+    setSelectedKey(null);
+    setSelectedThumb(null);
+    setSelectedFile(relPath);
   }
 
   // Generate a new thumbnail prompt via the Claude Bridge
@@ -837,14 +852,42 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
                     {group.dir}/
                   </p>
                   <div className="space-y-0.5">
-                    {group.files.map((file) => (
-                      <div key={file.name} className="flex justify-between gap-2 text-[11px]">
-                        <span className="font-mono text-bone-white/70 truncate">{file.name}</span>
-                        <span className="text-weathered-stone/50 tabular-nums shrink-0">
-                          {fmt(file.size)}
-                        </span>
-                      </div>
-                    ))}
+                    {group.files.map((file) => {
+                      const relPath = `${group.dir}/${file.name}`;
+                      const isImage = IMAGE_EXTENSIONS.has(file.ext);
+                      const active = selectedFile === relPath;
+
+                      if (!isImage) {
+                        return (
+                          <div key={file.name} className="flex justify-between gap-2 text-[11px] px-1 py-0.5 -mx-1">
+                            <span className="font-mono text-bone-white/70 truncate">{file.name}</span>
+                            <span className="text-weathered-stone/50 tabular-nums shrink-0">
+                              {fmt(file.size)}
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={file.name}
+                          onClick={() => selectFile(relPath)}
+                          className={[
+                            "w-full flex justify-between gap-2 text-[11px] px-1 py-0.5 -mx-1 rounded text-left transition-colors",
+                            active
+                              ? "bg-portal-gold/15 text-portal-gold"
+                              : "hover:bg-deep-teal/60 hover:text-portal-gold cursor-pointer",
+                          ].join(" ")}
+                        >
+                          <span className={`font-mono truncate ${active ? "text-portal-gold" : "text-bone-white/70"}`}>
+                            {file.name}
+                          </span>
+                          <span className="text-weathered-stone/50 tabular-nums shrink-0">
+                            {fmt(file.size)}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -857,6 +900,18 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
       <div className="flex-1 min-w-0 overflow-y-auto bg-abyss">
         {selectedThumbData ? (
           <ThumbnailDetailView thumb={selectedThumbData} />
+        ) : selectedFile ? (
+          <div className="p-8">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-weathered-stone mb-4">
+              {selectedFile}
+            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/episodes/${slug}/artifact?path=${encodeURIComponent(selectedFile)}`}
+              alt={selectedFile}
+              className="max-w-full rounded border border-weathered-stone/15"
+            />
+          </div>
         ) : !selected ? (
           <div className="h-full flex items-center justify-center">
             <p className="text-weathered-stone/40 text-sm">Select an artifact to preview</p>

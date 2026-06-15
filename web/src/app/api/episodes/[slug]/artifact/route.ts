@@ -36,6 +36,22 @@ export async function GET(
     });
   }
 
+  const IMAGE_CONTENT_TYPES: Record<string, string> = {
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    webp: "image/webp",
+    svg: "image/svg+xml",
+  };
+
+  if (ext in IMAGE_CONTENT_TYPES) {
+    const data = fs.readFileSync(abs);
+    return new NextResponse(data, {
+      headers: { "Content-Type": IMAGE_CONTENT_TYPES[ext] },
+    });
+  }
+
   const content = fs.readFileSync(abs, "utf-8");
   return new NextResponse(content, {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
