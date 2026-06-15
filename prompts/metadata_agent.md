@@ -176,7 +176,7 @@ The Ruins Untold covers ancient mysteries, forbidden archaeology, and the histor
 
 New episodes every [CADENCE — e.g., "week" or "two weeks"].
 
-Subscribe to keep digging: [CHANNEL_LINK_PLACEHOLDER]
+Subscribe to keep digging: https://www.youtube.com/@RuinsUntold?sub_confirmation=1
 
 --- Sources and Further Reading ---
 [List 3-5 source types from research_package.json source_notes. Do not fabricate specific URLs. Use descriptive references:]
