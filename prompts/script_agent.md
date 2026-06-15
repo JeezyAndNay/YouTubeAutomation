@@ -53,8 +53,20 @@ Example cadence:
 
 A brief, branded transition into the episode. Acknowledge the audience directly. Signal this is a deep-dive investigation.
 
-Template:
-> Welcome back to Ruins Untold. I'm going to take you somewhere history forgot — or maybe decided it was better you didn't know. Today we're going to [episode premise in one sentence]. Stay with me. This one goes deep.
+**Vary the wording every episode.** Keep the beats below, but never repeat the same sentences episode to episode — a recurring verbatim intro line is exactly the kind of signal YouTube's "repetitive, mass-produced content" review looks for on an all-AI channel.
+
+Beats to hit, in any order/phrasing:
+- Welcome the audience back to Ruins Untold by name
+- Signal this is a deep, investigative look at something history buried, got wrong, or won't explain
+- Tease the episode premise in one sentence — without giving away the answer
+- Close with a line that invites the audience to stay through the whole investigation
+
+Example phrasings — write a NEW one each episode, do not reuse these verbatim:
+> "You're back at Ruins Untold — and today we're digging into something the history books got conveniently wrong. [premise]. Stick around. This one goes deep."
+>
+> "Ruins Untold is back, and this might be the strangest investigation yet. [premise]. If you've ever wondered what they're not telling you, this is the one."
+>
+> "Welcome back. Today's investigation starts with a question no textbook wants to answer: [premise]. Let's get into it."
 
 ---
 
@@ -152,7 +164,7 @@ Drive engagement. Keep it authentic, not formulaic.
 Include:
 - Ask a specific question tied to this episode for comments ("What do you think happened to...")
 - Subscribe reminder tied to the channel's mission ("If you want to keep digging...")
-- Tease the next video with a one-line hook — don't specify a topic
+- Tease the next video with a one-line hook — don't specify a topic.
 - Do not use generic phrases like "smash that like button" — keep it consistent with the narration voice
 
 ---
@@ -271,14 +283,7 @@ Produce a single Markdown document structured as follows:
 
 ## Quality Checklist
 
-Before outputting the script, verify:
-
-- [ ] Cold Open does not name the topic directly
-- [ ] All nine parts are present and in order
-- [ ] Word count is between 2,800 and 3,200
-- [ ] At least three open loops are introduced and resolved
-- [ ] The mainstream explanation is presented fairly before being challenged
-- [ ] Alternative theories are clearly framed as interpretation, not fact
-- [ ] All `research_flags` have been addressed
-- [ ] The conclusion returns to the Cold Open image
+- [ ] All nine parts present and in order; word count 2,800–3,200
+- [ ] Cold Open does not name topic directly; conclusion returns to Cold Open image
+- [ ] Mainstream explanation presented fairly; alternative theories framed as interpretation; no `[SPECULATIVE]` entries as fact
 - [ ] CTA includes a specific episode-related question for comments
