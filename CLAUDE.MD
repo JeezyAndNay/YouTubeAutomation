@@ -16,13 +16,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Source-of-truth for the **Ruins Untold** YouTube automation pipeline. It contains:
 
-- **`agents/`** — agent definitions: purpose, I/O contracts, rules (reference docs)
-- **`prompts/`** — full system prompts deployed to n8n (these are what agents actually receive)
+- **`agents/`** — early design notes from the initial buildout; **not maintained**, historical reference only (see `agents/README.md`)
+- **`prompts/`** — full system prompts deployed to n8n; **source of truth** for agent behavior (these are what agents actually receive)
 - **`workflows/`** — n8n workflow JSON exports (`ruins_untold_v2_phase1.json` is current)
 - **`infra/`** — host-side infrastructure scripts (currently `claude-bridge/`)
 - **`docs/`** — architecture and component documentation
 
-> The `agents/` files describe intent. The `prompts/` files are the actual deployed artifacts. When editing an agent's behavior, update both.
+> `prompts/` is the sole source of truth for agent behavior. Edit it directly (and redeploy per
+> below) when changing an agent. Do not cross-reference or update `agents/` — it has drifted
+> significantly since the initial commit and is kept only as a historical snapshot of early
+> per-agent design notes.
 
 ---
 
