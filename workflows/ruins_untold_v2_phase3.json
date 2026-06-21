@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-09T00:23:51.920Z",
+  "updatedAt": "2026-06-15T13:44:59.939Z",
   "createdAt": "2026-06-01T20:22:42.958Z",
   "id": "rU-phase3-v2-2026",
   "name": "Ruins Untold v2 \u2014 Phase 3: Video Render",
@@ -256,8 +256,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2480,
-        1232
+        -784,
+        880
       ]
     },
     {
@@ -500,44 +500,35 @@
       ]
     },
     {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ruins-untold/phase3",
+        "options": {}
+      },
       "id": "p3-webhook-trigger",
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
         -3600,
-        1100
+        1104
       ],
-      "webhookId": "ruins-untold-phase3-webui",
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "ruins-untold/phase3",
-        "responseMode": "onReceived",
-        "options": {}
-      }
+      "webhookId": "ruins-untold-phase3-webui"
     },
     {
+      "parameters": {
+        "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst slug = ($json.body && $json.body.slug) ? $json.body.slug : $json.slug;\nif (!slug) throw new Error('No slug in webhook body \u2014 expected { slug: \"episode_slug\" }');\nconst projectDir = '/Users/jneal/n8n_projects/' + slug;\nif (!fs.existsSync(projectDir)) throw new Error('Project not found: ' + projectDir);\nconst timelinePath = path.join(projectDir, 'scripts', 'media_timeline.json');\nconst timeline     = JSON.parse(fs.readFileSync(timelinePath, 'utf-8'));\nconst topic        = timeline.topic || slug;\nconst renderDir    = path.join(projectDir, 'renders');\n\n// Write execution -> projectDir mapping for error trigger\nconst execMapDir = '/Users/jneal/n8n_projects/.exec_map';\nfs.mkdirSync(execMapDir, { recursive: true });\nfs.writeFileSync(path.join(execMapDir, $execution.id), projectDir, 'utf-8');\n\nreturn [{ json: {\n  slug, projectDir, topic, timelinePath, renderDir,\n  renderScript:       '/Users/jneal/n8n_projects/render.js',\n  renderLogPath:      path.join(renderDir, 'render.log'),\n  renderPidPath:      path.join(renderDir, 'render.pid'),\n  renderCompletePath: path.join(renderDir, 'render_complete.json'),\n  finalVideoPath:     path.join(renderDir, 'final_video.mp4'),\n  thumbnailPath:      path.join(renderDir, 'thumbnail.jpg'),\n  summaryPath:        path.join(renderDir, 'phase3_complete.json'),\n} }];"
+      },
       "id": "p3-load-from-webhook",
       "name": "Load from Webhook",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -3020,
-        1100
-      ],
-      "parameters": {
-        "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst slug = ($json.body && $json.body.slug) ? $json.body.slug : $json.slug;\nif (!slug) throw new Error('No slug in webhook body \u2014 expected { slug: \"episode_slug\" }');\nconst projectDir = '/Users/jneal/n8n_projects/' + slug;\nif (!fs.existsSync(projectDir)) throw new Error('Project not found: ' + projectDir);\nconst timelinePath = path.join(projectDir, 'scripts', 'media_timeline.json');\nconst timeline     = JSON.parse(fs.readFileSync(timelinePath, 'utf-8'));\nconst topic        = timeline.topic || slug;\nconst renderDir    = path.join(projectDir, 'renders');\n\n// Write execution -> projectDir mapping for error trigger\nconst execMapDir = '/Users/jneal/n8n_projects/.exec_map';\nfs.mkdirSync(execMapDir, { recursive: true });\nfs.writeFileSync(path.join(execMapDir, $execution.id), projectDir, 'utf-8');\n\nreturn [{ json: {\n  slug, projectDir, topic, timelinePath, renderDir,\n  renderScript:       '/Users/jneal/n8n_projects/render.js',\n  renderLogPath:      path.join(renderDir, 'render.log'),\n  renderPidPath:      path.join(renderDir, 'render.pid'),\n  renderCompletePath: path.join(renderDir, 'render_complete.json'),\n  finalVideoPath:     path.join(renderDir, 'final_video.mp4'),\n  thumbnailPath:      path.join(renderDir, 'thumbnail.jpg'),\n  summaryPath:        path.join(renderDir, 'phase3_complete.json'),\n} }];"
-      }
+        -3024,
+        1104
+      ]
     },
     {
-      "id": "060c9653-40a7-4f6e-a8f1-57e8fe3a770f",
-      "name": "Notify Web UI: Phase 3 Complete",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [
-        2720,
-        1232
-      ],
       "parameters": {
         "method": "PATCH",
         "url": "=http://host.docker.internal:3000/api/episodes/{{ $json.project }}/status",
@@ -554,7 +545,15 @@
         "specifyBody": "json",
         "jsonBody": "{\"status\": \"done\"}",
         "options": {}
-      }
+      },
+      "id": "060c9653-40a7-4f6e-a8f1-57e8fe3a770f",
+      "name": "Notify Web UI: Phase 3 Complete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -544,
+        880
+      ]
     },
     {
       "parameters": {},
@@ -564,7 +563,7 @@
       "typeVersion": 1,
       "position": [
         -3600,
-        1528
+        1536
       ]
     },
     {
@@ -576,8 +575,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -3372,
-        1528
+        -3376,
+        1536
       ]
     },
     {
@@ -609,7 +608,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -2520,
+        -2528,
         1040
       ]
     },
@@ -874,7 +873,11 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "staticData": null,
+  "staticData": {
+    "global": {
+      "renderCheckAttempts": 0
+    }
+  },
   "meta": null,
   "pinData": {},
   "triggerCount": 1,

@@ -18,13 +18,34 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Credentials ──────────────────────────────────────────────────────────────
+// Priority:
+//   1. GOOGLE_CREDENTIALS_PATH env var → JSON file
+//   2. JSON file at the default Downloads path
+//   3. GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET already in .env.local
+
 const CREDS_PATH =
   process.env.GOOGLE_CREDENTIALS_PATH ??
   "/Users/jneal/Downloads/client_secret_899803211250-sdcqjves3ji4s6b1gdh6kh9s02s44lg7.apps.googleusercontent.com.json";
 
-const { installed } = JSON.parse(readFileSync(CREDS_PATH, "utf-8"));
-const CLIENT_ID     = installed.client_id;
-const CLIENT_SECRET = installed.client_secret;
+let CLIENT_ID, CLIENT_SECRET;
+try {
+  const { installed } = JSON.parse(readFileSync(CREDS_PATH, "utf-8"));
+  CLIENT_ID     = installed.client_id;
+  CLIENT_SECRET = installed.client_secret;
+  console.log("✓ Loaded credentials from JSON file");
+} catch {
+  // JSON file missing — pull from .env.local instead
+  const envPath = resolve(__dirname, "../.env.local");
+  const envText = readFileSync(envPath, "utf-8");
+  const get = (key) => envText.match(new RegExp(`^${key}=(.+)$`, "m"))?.[1]?.trim();
+  CLIENT_ID     = get("GOOGLE_CLIENT_ID");
+  CLIENT_SECRET = get("GOOGLE_CLIENT_SECRET");
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    console.error("ERROR: No credentials file found and GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET not set in .env.local");
+    process.exit(1);
+  }
+  console.log("✓ Loaded credentials from .env.local (JSON file not found — that's OK)");
+}
 const REDIRECT_PORT = 3001;
 const REDIRECT_URI  = `http://localhost:${REDIRECT_PORT}`;
 
