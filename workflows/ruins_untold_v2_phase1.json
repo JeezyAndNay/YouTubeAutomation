@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-09T00:02:43.292Z",
+  "updatedAt": "2026-06-21T14:40:12.505Z",
   "createdAt": "2026-06-03T09:47:18.435Z",
   "id": "YNCvi72wqNsGyXtH",
   "name": "Ruins Untold v2 \u2014 Production Pipeline",
@@ -15,7 +15,7 @@
       "typeVersion": 1,
       "position": [
         -48,
-        -160
+        -240
       ]
     },
     {
@@ -38,7 +38,7 @@
       "typeVersion": 4,
       "position": [
         176,
-        -160
+        -240
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -57,7 +57,7 @@
       "typeVersion": 2,
       "position": [
         384,
-        -160
+        -240
       ]
     },
     {
@@ -84,7 +84,7 @@
       "typeVersion": 1,
       "position": [
         592,
-        -160
+        -240
       ],
       "webhookId": "22ba042a-581c-4c64-aee6-1554cce19cec"
     },
@@ -98,7 +98,7 @@
       "typeVersion": 2,
       "position": [
         832,
-        -160
+        -240
       ]
     },
     {
@@ -255,16 +255,16 @@
       "typeVersion": 4,
       "position": [
         1056,
-        -160
+        -240
       ],
+      "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "5KlwkkXYEjhrIznj",
           "name": "Google Sheets account"
         }
       },
-      "continueOnFail": true,
-      "alwaysOutputData": true
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -276,7 +276,7 @@
       "typeVersion": 2,
       "position": [
         1280,
-        -160
+        -240
       ]
     },
     {
@@ -354,8 +354,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        144,
-        592
+        864,
+        368
       ]
     },
     {
@@ -367,8 +367,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        416,
-        592
+        1168,
+        368
       ]
     },
     {
@@ -380,8 +380,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        656,
-        592
+        48,
+        608
       ]
     },
     {
@@ -400,8 +400,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        144,
-        816
+        272,
+        608
       ]
     },
     {
@@ -413,8 +413,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        416,
-        816
+        528,
+        608
       ]
     },
     {
@@ -426,8 +426,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1008,
-        384
+        1840,
+        304
       ]
     },
     {
@@ -439,8 +439,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        1232,
-        384
+        2128,
+        304
       ]
     },
     {
@@ -452,8 +452,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1472,
-        400
+        2576,
+        352
       ]
     },
     {
@@ -473,8 +473,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1664,
-        400
+        2752,
+        352
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -492,8 +492,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1872,
-        400
+        2960,
+        352
       ]
     },
     {
@@ -506,8 +506,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        2096,
-        400
+        3232,
+        352
       ],
       "webhookId": "b2b5907f-3d3c-4265-9244-344f88963cc8"
     },
@@ -534,8 +534,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2336,
-        400
+        3440,
+        352
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -573,8 +573,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1248,
-        912
+        1888,
+        784
       ]
     },
     {
@@ -586,8 +586,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1728,
-        896
+        2832,
+        576
       ]
     },
     {
@@ -606,8 +606,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1968,
-        896
+        3056,
+        576
       ]
     },
     {
@@ -620,8 +620,8 @@
       "type": "n8n-nodes-base.writeBinaryFile",
       "typeVersion": 1,
       "position": [
-        2320,
-        896
+        3328,
+        576
       ]
     },
     {
@@ -633,8 +633,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1488,
-        224
+        3712,
+        192
       ]
     },
     {
@@ -656,8 +656,8 @@
     {
       "parameters": {
         "content": "## Agent Pattern\nEach agent = **Build Prompt** (Code) \u2192 **Call Claude** (HTTP) \u2192 **Parse + Save** (Code)\n\nNo `fetch` or `async` in Code nodes \u2014 HTTP calls are httpRequest nodes.",
-        "height": 980,
-        "width": 984,
+        "height": 644,
+        "width": 1640,
         "color": "#4E3B3C"
       },
       "id": "ace72299-124b-4289-a398-056fab8a34b0",
@@ -678,8 +678,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
-        816
+        944,
+        608
       ]
     },
     {
@@ -691,8 +691,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2560,
-        400
+        3680,
+        352
       ],
       "continueOnFail": true,
       "onError": "continueErrorOutput"
@@ -727,8 +727,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1232,
-        688
+        1696,
+        576
       ]
     },
     {
@@ -740,8 +740,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1504,
-        672
+        1712,
+        928
       ]
     },
     {
@@ -754,8 +754,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        1744,
-        672
+        1888,
+        928
       ],
       "webhookId": "ba6bd84a-a012-4a5a-b17b-ad7f85a974f1"
     },
@@ -788,8 +788,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2064,
-        672
+        2208,
+        832
       ]
     },
     {
@@ -821,8 +821,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2336,
-        688
+        2608,
+        800
       ]
     },
     {
@@ -834,20 +834,20 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2576,
-        704
+        3712,
+        736
       ]
     },
     {
       "parameters": {
         "content": "## Voiceover Recording\nSend Enhanced Script to Kie.ai",
         "height": 976,
-        "width": 2032,
+        "width": 2336,
         "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        880,
+        1520,
         176
       ],
       "typeVersion": 1,
@@ -855,34 +855,33 @@
       "name": "Sticky Note"
     },
     {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ruins-untold/phase1",
+        "options": {}
+      },
       "id": "2b509c15-7152-4515-b6a2-c4eb7d8c0249",
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -268,
-        40
+        -16,
+        0
       ],
-      "webhookId": "5268010f-8d13-4dab-a2d2-a704e729c99d",
-      "parameters": {
-        "path": "ruins-untold/phase1",
-        "httpMethod": "POST",
-        "responseMode": "onReceived",
-        "options": {}
-      }
+      "webhookId": "5268010f-8d13-4dab-a2d2-a704e729c99d"
     },
     {
+      "parameters": {
+        "jsCode": "\nconst body = $input.first().json.body || $input.first().json;\nconst topic = (body.topic || '').trim();\nif (!topic) throw new Error('Webhook payload must include { \"topic\": \"...\" }');\n\n// Use pre-created slug/projectDir if provided (promoted from Ideas page), else generate\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = body.slug || (topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/, '').substring(0, 45) + '_' + ts);\nconst projectDir = body.projectDir || ('/Users/jneal/n8n_projects/' + slug);\n\n// Ensure directories exist (idempotent if already created by web app)\nconst fs   = require('fs');\nconst path = require('path');\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(projectDir, { recursive: true });\nfor (const d of dirs) { fs.mkdirSync(path.join(projectDir, d), { recursive: true }); }\n\n// Write full topic so the web UI can display it without slug truncation\nfs.writeFileSync(path.join(projectDir, '.topic'), topic, 'utf-8');\n\n\n// Write execution -> projectDir mapping for error trigger\nconst execMapDir = '/Users/jneal/n8n_projects/.exec_map';\nfs.mkdirSync(execMapDir, { recursive: true });\nfs.writeFileSync(require('path').join(execMapDir, $execution.id), projectDir, 'utf-8');\nreturn [{ json: {\n  topic,\n  audience: 'curious history fans, conspiracy-adjacent adults 25-45',\n  runtime:  20,\n  slug,\n  projectDir,\n  row_number: body.rowNumber || null\n} }];\n"
+      },
       "id": "f6701a7b-5d74-4ddb-a2bf-96f6aa17f5da",
       "name": "Webhook Topic Setup",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -8,
-        40
-      ],
-      "parameters": {
-        "jsCode": "\nconst body = $input.first().json.body || $input.first().json;\nconst topic = (body.topic || '').trim();\nif (!topic) throw new Error('Webhook payload must include { \"topic\": \"...\" }');\n\n// Use pre-created slug/projectDir if provided (promoted from Ideas page), else generate\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = body.slug || (topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/, '').substring(0, 45) + '_' + ts);\nconst projectDir = body.projectDir || ('/Users/jneal/n8n_projects/' + slug);\n\n// Ensure directories exist (idempotent if already created by web app)\nconst fs   = require('fs');\nconst path = require('path');\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(projectDir, { recursive: true });\nfor (const d of dirs) { fs.mkdirSync(path.join(projectDir, d), { recursive: true }); }\n\n// Write full topic so the web UI can display it without slug truncation\nfs.writeFileSync(path.join(projectDir, '.topic'), topic, 'utf-8');\n\n\n// Write execution -> projectDir mapping for error trigger\nconst execMapDir = '/Users/jneal/n8n_projects/.exec_map';\nfs.mkdirSync(execMapDir, { recursive: true });\nfs.writeFileSync(require('path').join(execMapDir, $execution.id), projectDir, 'utf-8');\nreturn [{ json: {\n  topic,\n  audience: 'curious history fans, conspiracy-adjacent adults 25-45',\n  runtime:  20,\n  slug,\n  projectDir,\n  row_number: body.rowNumber || null\n} }];\n"
-      }
+        736,
+        0
+      ]
     },
     {
       "parameters": {},
@@ -891,8 +890,8 @@
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
       "position": [
-        -400,
-        800
+        352,
+        976
       ]
     },
     {
@@ -904,71 +903,64 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -160,
-        800
+        544,
+        976
       ]
     },
     {
+      "parameters": {
+        "jsCode": "const meta = $('Prepare TTS Request').item.json;\nconst item = $input.item.json;\nconst segmentId = meta.segmentId || item.segmentId || 'unknown';\nconst sd = $getWorkflowStaticData('global');\n\n// Scope retry counter to this episode + segment to avoid cross-episode collisions\nconst slug = (meta.projectDir || '').split('/').pop() || 'noslug';\nconst retryKey = 'retryCount_' + slug + '_' + segmentId;\nconst MAX_RETRIES = 3;\nconst currentCount = sd[retryKey] || 0;\nconst errMsg = (item.error && item.error.message)\n  ? item.error.message\n  : String(item.error || 'Unknown Kie.ai error');\n\nif (currentCount < MAX_RETRIES) {\n  sd[retryKey] = currentCount + 1;\n  // Exponential backoff: attempt 1=10s, 2=30s, 3=90s\n  const backoffs = [10, 30, 90];\n  const backoffSeconds = backoffs[currentCount] !== undefined ? backoffs[currentCount] : 90;\n  console.log('[KIE AUTO-RETRY] Segment:', segmentId,\n    '| Attempt:', currentCount + 1, '/', MAX_RETRIES,\n    '| Backoff:', backoffSeconds + 's | Error:', errMsg);\n  return [{ json: {\n    ...meta,\n    kieTaskId:    item.kieTaskId,\n    autoRetry:    true,\n    retryAttempt: currentCount + 1,\n    backoffSeconds,\n    kieError:     errMsg,\n  } }];\n}\n\n// Max retries exceeded \u2014 clean up and escalate to manual\ndelete sd[retryKey];\nconsole.log('[KIE AUTO-RETRY] Segment:', segmentId,\n  '| Max retries (' + MAX_RETRIES + ') exceeded. Escalating to manual. Error:', errMsg);\nreturn [{ json: { ...item, autoRetry: false, kieError: errMsg } }];\n"
+      },
       "id": "e9a11b24-34d0-4447-9686-e5a02a28c4a7",
       "name": "Auto-Retry Check",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1232,
-        900
-      ],
-      "parameters": {
-        "jsCode": "const meta = $('Prepare TTS Request').item.json;\nconst item = $input.item.json;\nconst segmentId = meta.segmentId || item.segmentId || 'unknown';\nconst sd = $getWorkflowStaticData('global');\n\n// Scope retry counter to this episode + segment to avoid cross-episode collisions\nconst slug = (meta.projectDir || '').split('/').pop() || 'noslug';\nconst retryKey = 'retryCount_' + slug + '_' + segmentId;\nconst MAX_RETRIES = 3;\nconst currentCount = sd[retryKey] || 0;\nconst errMsg = (item.error && item.error.message)\n  ? item.error.message\n  : String(item.error || 'Unknown Kie.ai error');\n\nif (currentCount < MAX_RETRIES) {\n  sd[retryKey] = currentCount + 1;\n  // Exponential backoff: attempt 1=10s, 2=30s, 3=90s\n  const backoffs = [10, 30, 90];\n  const backoffSeconds = backoffs[currentCount] !== undefined ? backoffs[currentCount] : 90;\n  console.log('[KIE AUTO-RETRY] Segment:', segmentId,\n    '| Attempt:', currentCount + 1, '/', MAX_RETRIES,\n    '| Backoff:', backoffSeconds + 's | Error:', errMsg);\n  return [{ json: {\n    ...meta,\n    kieTaskId:    item.kieTaskId,\n    autoRetry:    true,\n    retryAttempt: currentCount + 1,\n    backoffSeconds,\n    kieError:     errMsg,\n  } }];\n}\n\n// Max retries exceeded \u2014 clean up and escalate to manual\ndelete sd[retryKey];\nconsole.log('[KIE AUTO-RETRY] Segment:', segmentId,\n  '| Max retries (' + MAX_RETRIES + ') exceeded. Escalating to manual. Error:', errMsg);\nreturn [{ json: { ...item, autoRetry: false, kieError: errMsg } }];\n"
-      }
+        1904,
+        560
+      ]
     },
     {
+      "parameters": {},
       "id": "af0ac03d-ff1a-40d9-b26d-1ccb61cfa425",
       "name": "Max Retries Exceeded?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        1504,
-        900
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": false,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 1
-          },
-          "conditions": [
-            {
-              "id": "cond-autoretry",
-              "leftValue": "={{ $json.autoRetry }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      }
+        2112,
+        560
+      ]
     },
     {
+      "parameters": {
+        "amount": "={{ $json.backoffSeconds }}",
+        "unit": "seconds"
+      },
       "id": "c0f97116-bae4-4544-b97f-f251d66b0afe",
       "name": "Wait Backoff",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        1744,
-        900
+        2272,
+        544
       ],
-      "parameters": {
-        "resume": "timeInterval",
-        "amount": "={{ $json.backoffSeconds }}",
-        "unit": "seconds"
-      },
       "webhookId": "bb0a7825-39de-4c40-a96f-932361c2f137"
+    },
+    {
+      "parameters": {
+        "content": "## Workflow Error\n",
+        "height": 320,
+        "width": 496,
+        "color": "#A80000"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        864
+      ],
+      "typeVersion": 1,
+      "id": "480ac859-d719-4503-8d39-1cb8ec2a578f",
+      "name": "Sticky Note1"
     }
   ],
   "connections": {
@@ -1462,16 +1454,17 @@
   "staticData": {
     "global": {
       "ruinsVoicePrevIds": [
-        "a4984c9ca93364ba012dc867e2783a1e",
-        "b57365da2cd5317ded88b8e2279a6f4c",
-        "a27fded57306313734c6b498ac765dee"
-      ]
+        "9824e6d35f1b378df6b2b6c8ad72d98b",
+        "cf082735f0e272f125ce79dc4b1f340f",
+        "a43fe50a487b5f0f5074169bf6f3fae9"
+      ],
+      "retryCount_paracas_skulls_the_dna_results_that_never_got_202606121322_act3_02": 1,
+      "retryCount_paracas_skulls_the_dna_results_that_never_got_202606121322_act3_04": 1,
+      "retryCount_paracas_skulls_the_dna_results_that_never_got_202606121322_act4_02": 1
     }
   },
   "meta": null,
   "pinData": {},
-  "versionId": "d5d9dca0-89a5-4ddf-b1e2-936982732e98",
-  "versionCounter": 116,
   "triggerCount": 1,
   "shared": [
     {
