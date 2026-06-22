@@ -494,13 +494,21 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
     const start   = sc.visual_in !== undefined ? sc.visual_in : (sc.audio_in || 0);
     const volDb   = sc.clip_audio_level_db !== undefined ? sc.clip_audio_level_db : 0;
     const amp     = Math.pow(10, volDb / 20).toFixed(5);
-    // Pinned-clip audio must stay locked to its own video clip, so it shifts by the full
-    // (NARRATION_PAUSE_SECONDS + JCUT_SECONDS) — the same offset the video timeline carries.
-    // It does NOT get the J-cut treatment; only the narrator rides early. Scene_001 itself
-    // can never have include_clip_audio (it's reserved for the pinned channel intro, never
-    // the cold open) so the t=0 guard is just defensive consistency with music/SFX above.
-    // See [LEAD-IN] in main().
-    const shiftedStart = start > 0.01 ? start + NARRATION_PAUSE_SECONDS + JCUT_SECONDS : start;
+    // Pinned-clip audio must start exactly when the clip's VIDEO starts playing — which is
+    // XFADE_DURATION before the scene becomes fully visible. FFmpeg xfade plays the incoming
+    // clip from frame 0 at the xfade START (not the end), so if we position the audio at the
+    // fully-visible time (as music/SFX do) the audio lands XFADE_DURATION seconds late.
+    //
+    // Exception: batch-first scenes (k % XFADE_BATCH_SIZE === 0, i.e. k=25,50,75...) are
+    // concat-joined between batches — no incoming xfade — so their audio needs no correction.
+    // k=0 (scene_001) can never have include_clip_audio, so the only real risk is k=25,50…
+    //
+    // The full shift is (NARRATION_PAUSE_SECONDS + JCUT_SECONDS) to match the video timeline,
+    // then we pull back by the xfade correction so audio and video frame 0 land together.
+    const kIndex      = (sc.sequence || 1) - 1;   // sc.sequence is 1-based
+    const isBatchFirst = kIndex % XFADE_BATCH_SIZE === 0;
+    const xfadeAdj    = isBatchFirst ? 0 : XFADE_DURATION;
+    const shiftedStart = Math.max(0, start + NARRATION_PAUSE_SECONDS + JCUT_SECONDS - xfadeAdj);
     const delayMs = Math.round(shiftedStart * 1000);
     const label   = `[ca${inputIdx}]`;
 
