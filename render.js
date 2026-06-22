@@ -23,7 +23,7 @@ const KEN_BURNS_ZOOM = 1.04;    // maximum zoom factor for images (1.0 = no zoom
 const ENCODE_PRESET = 'fast';   // libx264 preset
 const ENCODE_CRF = 22;          // quality: 18=high, 22=medium, 28=low
 const NARRATION_PAUSE_SECONDS = 1.5;  // silence before narration begins (musical lead-in / opening pause)
-const NARRATION_TAIL_SECONDS = 2.5;   // breathing room after narration ends (musical outro / no abrupt cut)
+const NARRATION_TAIL_SECONDS = 2.0;   // breathing room after narration ends (musical outro / no abrupt cut)
 const JCUT_SECONDS = 1.5;             // J-cut: narrator enters this many seconds BEFORE the video cuts to the
                                        // associated scene. The video timeline is shifted by
                                        // NARRATION_PAUSE_SECONDS + JCUT_SECONDS; the narration adelay is only
