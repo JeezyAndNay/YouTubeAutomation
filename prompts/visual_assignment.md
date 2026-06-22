@@ -17,8 +17,9 @@ You do not compute timing. You do not place music or SFX.
     {
       "scene_id": "string",
       "sequence": number,
-      "audio_in": number,
-      "audio_out": number,
+      "visual_in": number,
+      "visual_out": number,
+      "duration_seconds": number,
       "narration_text": "string"
     }
   ]
@@ -69,7 +70,7 @@ For each non-pinned scene, assign `visual_type` based on what the narration desc
 - Maps, diagrams, or structural layouts
 - Static establishing shots of locations
 - Abstract or conceptual subjects (a date, a number, an idea)
-- Any scene with `audio_out - audio_in` under 5 seconds — always image
+- Any scene with `duration_seconds` under 5 seconds — always image
 
 ---
 
@@ -82,7 +83,7 @@ If image:video ratio exceeds 3:1, upgrade image scenes to video until the ratio 
 **Upgrade priority (convert these first):**
 1. Location establishing shots: ruins, landscapes, interiors — motion adds atmosphere
 2. Atmospheric scenes: narration implies wind, light, decay, distance
-3. Long image scenes: `audio_out - audio_in` is 8–10 seconds (static image causes viewer fatigue)
+3. Long image scenes: `duration_seconds` is 8–10 seconds (static image causes viewer fatigue)
 
 **Never downgrade** a video scene to an image to fix ratio.
 
@@ -129,8 +130,9 @@ Return a single valid JSON object. No text outside the JSON block.
     {
       "scene_id": "string",
       "sequence": number,
-      "audio_in": number,
-      "audio_out": number,
+      "visual_in": number,
+      "visual_out": number,
+      "duration_seconds": number,
       "narration_text": "string",
       "visual_type": "image | video | pinned_video",
       "prompt_seed": "string or null"
