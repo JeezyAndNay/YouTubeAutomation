@@ -22,8 +22,13 @@ const XFADE_BATCH_SIZE = 25;    // max clips per xfade pass (single FFmpeg comma
 const KEN_BURNS_ZOOM = 1.04;    // maximum zoom factor for images (1.0 = no zoom)
 const ENCODE_PRESET = 'fast';   // libx264 preset
 const ENCODE_CRF = 22;          // quality: 18=high, 22=medium, 28=low
-const NARRATION_PAUSE_SECONDS = 1.5;  // silence before narration begins (musical lead-in)
+const NARRATION_PAUSE_SECONDS = 1.5;  // silence before narration begins (musical lead-in / opening pause)
 const NARRATION_TAIL_SECONDS = 2.5;   // breathing room after narration ends (musical outro / no abrupt cut)
+const JCUT_SECONDS = 1.5;             // J-cut: narrator enters this many seconds BEFORE the video cuts to the
+                                       // associated scene. The video timeline is shifted by
+                                       // NARRATION_PAUSE_SECONDS + JCUT_SECONDS; the narration adelay is only
+                                       // NARRATION_PAUSE_SECONDS — so the narrator always rides 1.5s early.
+                                       // Set to 0 to disable J-cuts and return to straight cuts.
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 const EXEC_OPTS = { shell: '/bin/sh', maxBuffer: 200 * 1024 * 1024 };
@@ -402,9 +407,10 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
     // Cues anchored at t=0 (e.g. music_intro) are meant to bridge the lead-in INTO the
     // narration — they should keep playing from frame one, not start LEAD_IN seconds late
     // and leave the pause silent. Everything else is tied to a specific narrative beat
-    // that itself now lands LEAD_IN seconds later in the assembled video, so it shifts
-    // by the same amount to stay aligned. See [LEAD-IN] in main().
-    const shiftedStart = start > 0.01 ? start + NARRATION_PAUSE_SECONDS : start;
+    // that itself now lands (NARRATION_PAUSE_SECONDS + JCUT_SECONDS) later in the assembled
+    // video, so it shifts by the same amount to stay aligned with the video. Music does NOT
+    // get the J-cut — only the narrator rides early. See [LEAD-IN] in main().
+    const shiftedStart = start > 0.01 ? start + NARRATION_PAUSE_SECONDS + JCUT_SECONDS : start;
     const delayMs  = Math.round(shiftedStart * 1000);
     const label    = `[mu${inputIdx}]`;
 
@@ -461,8 +467,10 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
     const start   = cue.start !== undefined ? cue.start : (cue.start_time || 0);
     const volDb   = cue.volume_db  !== undefined ? cue.volume_db : -28;
     const amp     = Math.pow(10, volDb / 20).toFixed(5);
-    // Same lead-in alignment rule as music cues — see comment there and [LEAD-IN] in main().
-    const shiftedStart = start > 0.01 ? start + NARRATION_PAUSE_SECONDS : start;
+    // Same video-alignment rule as music cues — shifts by the full (pause + J-cut) offset so
+    // SFX land on the correct video frame, not 1.5s early with the narrator.
+    // See comment above and [LEAD-IN] in main().
+    const shiftedStart = start > 0.01 ? start + NARRATION_PAUSE_SECONDS + JCUT_SECONDS : start;
     const delayMs = Math.round(shiftedStart * 1000);
     const label   = `[sx${inputIdx}]`;
 
@@ -486,13 +494,13 @@ function mixAudio(timeline, projectDir, outputPath, totalDuration) {
     const start   = sc.visual_in !== undefined ? sc.visual_in : (sc.audio_in || 0);
     const volDb   = sc.clip_audio_level_db !== undefined ? sc.clip_audio_level_db : 0;
     const amp     = Math.pow(10, volDb / 20).toFixed(5);
-    // Pinned-clip audio plays alongside its own scene's visual, which now lands LEAD_IN
-    // seconds later in the assembled video (every clip after the extended opener does) —
-    // so its audio shifts by the same amount to stay locked to that visual. Scene_001
-    // itself can never have include_clip_audio (it's reserved for the pinned channel
-    // intro, never the cold open) so the t=0 guard is just defensive consistency with the
-    // music/SFX rule above. See [LEAD-IN] in main().
-    const shiftedStart = start > 0.01 ? start + NARRATION_PAUSE_SECONDS : start;
+    // Pinned-clip audio must stay locked to its own video clip, so it shifts by the full
+    // (NARRATION_PAUSE_SECONDS + JCUT_SECONDS) — the same offset the video timeline carries.
+    // It does NOT get the J-cut treatment; only the narrator rides early. Scene_001 itself
+    // can never have include_clip_audio (it's reserved for the pinned channel intro, never
+    // the cold open) so the t=0 guard is just defensive consistency with music/SFX above.
+    // See [LEAD-IN] in main().
+    const shiftedStart = start > 0.01 ? start + NARRATION_PAUSE_SECONDS + JCUT_SECONDS : start;
     const delayMs = Math.round(shiftedStart * 1000);
     const label   = `[ca${inputIdx}]`;
 
@@ -719,18 +727,28 @@ function main() {
     }
   }
 
-  // [LEAD-IN] Narration pause: extend the OPENING clip by NARRATION_PAUSE_SECONDS so the
-  // visual (and any music/ambient cues that start at t=0) establish on screen before the
-  // narrator's voice enters — mirroring the adelay() applied to the narration track in
-  // mixAudio(). Applied as a single fixed addition, LAST — after duration computation,
-  // drift correction, AND the pinned-clip fixup — so it (a) isn't diluted by proportional
-  // scaling and (b) can't be silently overwritten if the opening scene is ever a pinned
-  // clip. Every clip after the first now lands exactly NARRATION_PAUSE_SECONDS later in
-  // the assembled timeline, matching where mixAudio() places its (now-shifted) narration,
-  // music, SFX, and pinned-clip audio — keeping video and audio locked in sync end to end.
-  if (NARRATION_PAUSE_SECONDS > 0 && scenes.length > 0) {
-    scenes[0].duration_seconds += NARRATION_PAUSE_SECONDS;
-    console.log(`[LEAD-IN] Extending opening clip (${scenes[0].scene_id}) by ${NARRATION_PAUSE_SECONDS}s — narration enters at ${NARRATION_PAUSE_SECONDS}s, video/music establish first`);
+  // [LEAD-IN] Opening pause + J-cut offset: extend the OPENING clip by
+  // (NARRATION_PAUSE_SECONDS + JCUT_SECONDS) to accomplish two things at once:
+  //
+  //   1. OPENING PAUSE (NARRATION_PAUSE_SECONDS = 1.5s): music and the first visual
+  //      establish on screen before the narrator's voice enters — mirroring the
+  //      adelay(NARRATION_PAUSE_SECONDS) applied to the narration track in mixAudio().
+  //
+  //   2. J-CUT OFFSET (JCUT_SECONDS = 1.5s): the video timeline is shifted an EXTRA
+  //      1.5s relative to the narration. Because mixAudio() only delays the narrator by
+  //      NARRATION_PAUSE_SECONDS (not the full 3s), the narrator always arrives 1.5s
+  //      BEFORE the video cuts to the scene it describes — a J-cut at every transition.
+  //      Music, SFX, and pinned-clip audio shift by the full (pause + J-cut) amount so
+  //      they stay locked to the video frame, not the narration. Only the narrator rides
+  //      early — which is exactly what a J-cut means.
+  //
+  // Applied as a single fixed addition, LAST — after duration computation, drift
+  // correction, AND the pinned-clip fixup — so it (a) isn't diluted by proportional
+  // scaling and (b) can't be silently overwritten if the opening scene is ever pinned.
+  const leadInSeconds = NARRATION_PAUSE_SECONDS + JCUT_SECONDS;
+  if (leadInSeconds > 0 && scenes.length > 0) {
+    scenes[0].duration_seconds += leadInSeconds;
+    console.log(`[LEAD-IN] Extending opening clip (${scenes[0].scene_id}) by ${leadInSeconds}s — narration enters at ${NARRATION_PAUSE_SECONDS}s, J-cut offset ${JCUT_SECONDS}s (narrator leads video by ${JCUT_SECONDS}s at every scene transition)`);
   }
 
   // [TAIL-PAD] Mirror of [LEAD-IN]: extend the CLOSING clip by NARRATION_TAIL_SECONDS so
