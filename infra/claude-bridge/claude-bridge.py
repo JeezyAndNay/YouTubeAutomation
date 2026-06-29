@@ -51,7 +51,7 @@ MAX_TOKENS = 16384
 #   "Claude AI usage limit reached|1749924000"
 # Some CLI versions instead print a human-readable message and exit 0.
 USAGE_LIMIT_PIPE_RE = re.compile(r"Claude AI usage limit reached\|(\d+)")
-USAGE_LIMIT_TEXT_RE = re.compile(r"usage limit reached", re.IGNORECASE)
+USAGE_LIMIT_TEXT_RE = re.compile(r"usage limit reached|spend limit", re.IGNORECASE)
 
 
 def parse_usage_limit(text: str) -> str | None:
