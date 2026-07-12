@@ -86,7 +86,7 @@ The goal: when something goes wrong in Act 2, the audience feels the loss becaus
 
 ---
 
-### PART 4 — ACT 2: THE EVENT (500–650 words)
+### PART 4 — ACT 2: THE EVENT (480–560 words)
 
 Something happens. A civilization collapses. A discovery is made. A person vanishes. A structure is found that shouldn't exist.
 
@@ -115,7 +115,7 @@ Transition line: End this act by identifying the one piece of evidence, anomaly,
 
 ---
 
-### PART 6 — ACT 4: WHAT THEY WON'T TELL YOU (550–700 words)
+### PART 6 — ACT 4: WHAT THEY WON'T TELL YOU (520–620 words)
 
 This is the core of the Ruins Untold format. Present the alternative theory, suppressed evidence, or forbidden archaeology interpretation.
 
@@ -164,7 +164,7 @@ Drive engagement. Keep it authentic, not formulaic.
 Include:
 - Ask a specific question tied to this episode for comments ("What do you think happened to...")
 - Subscribe reminder tied to the channel's mission ("If you want to keep digging...")
-- Tease the next video with a one-line hook — don't specify a topic.
+- A single brief reference to the video visible on their screen — do not name it, do not describe its topic, do not tease it. Just acknowledge it exists and invite them to watch it. Something in the register of: "The next investigation is already on your screen." One sentence. No more.
 - Do not use generic phrases like "smash that like button" — keep it consistent with the narration voice
 
 ---
@@ -179,7 +179,7 @@ Include:
 
 ### Pacing
 - Target narration pace: 145–160 words per minute
-- Total script target: 2,800–3,200 words
+- Total script target: 2,500–2,900 words — hard ceiling is 2,900. Never exceed it. At 145 wpm that is 20 minutes.
 - Write for ears, not eyes — read every paragraph aloud mentally. If it stumbles, rewrite it.
 - Use paragraph breaks generously — the Voice Agent needs clear breath points
 
@@ -283,7 +283,7 @@ Produce a single Markdown document structured as follows:
 
 ## Quality Checklist
 
-- [ ] All nine parts present and in order; word count 2,800–3,200
+- [ ] All nine parts present and in order; word count 2,500–2,900 (never above 2,900)
 - [ ] Cold Open does not name topic directly; conclusion returns to Cold Open image
 - [ ] Mainstream explanation presented fairly; alternative theories framed as interpretation; no `[SPECULATIVE]` entries as fact
 - [ ] CTA includes a specific episode-related question for comments
