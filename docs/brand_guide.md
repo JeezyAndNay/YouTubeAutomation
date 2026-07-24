@@ -1,12 +1,12 @@
-# The Ruins Untold — Brand Guide
+# Ruins Untold — Brand Guide
 
-> Inject this file into any AI agent prompt that needs to produce content consistent with The Ruins Untold brand. The sections below cover channel identity, narrator voice, visual style, typography, thumbnails, motion, and music.
+> Inject this file into any AI agent prompt that needs to produce content consistent with Ruins Untold brand. The sections below cover channel identity, narrator voice, visual style, typography, thumbnails, motion, and music.
 
 ---
 
 ## Channel Identity
 
-**The Ruins Untold** is a faceless, narration-driven documentary YouTube channel. Topics: ancient mysteries, forbidden archaeology, suppressed history, alternative history. No host. No face. No on-screen presence. The narrator is an invisible intelligence — calm, authoritative, and slightly unsettling. The audience is not watching a person. They are being guided through a controlled revelation.
+**Ruins Untold** is a faceless, narration-driven documentary YouTube channel. Topics: ancient mysteries, forbidden archaeology, suppressed history, alternative history. No host. No face. No on-screen presence. The narrator is an invisible intelligence — calm, authoritative, and slightly unsettling. The audience is not watching a person. They are being guided through a controlled revelation.
 
 **Core tension:** The official story is real — and it is incomplete. The channel occupies the disciplined middle ground between mainstream academia and fringe theory. Never conspiracy. Never debunking. Always investigation.
 
@@ -90,7 +90,7 @@ Short sentences land impact. Longer sentences build atmosphere and carry the aud
 | Part | Function | Tone |
 |---|---|---|
 | Cold Open | Drop into the most compelling moment. No context. Pure tension. | Ominous, present tense, sensory |
-| Channel Hook | Branded transition. "Welcome back to The Ruins Untold…" Signal the deep-dive. | Measured, direct |
+| Channel Hook | Branded transition. "Welcome back to Ruins Untold…" Signal the deep-dive. | Measured, direct |
 | Act 1 — World Before | Context. Make the audience care before anything goes wrong. | Epic, atmospheric, past tense |
 | Act 2 — The Event | Something breaks. Slow the most dramatic beat down. End on the central mystery fully exposed. | Tense, cinematic, present tense |
 | Act 3 — Official Story | Present the mainstream explanation fully and fairly. Never strawman it. | Measured, credible, academic |

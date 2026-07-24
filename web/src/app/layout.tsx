@@ -17,7 +17,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Ruins Untold — Pipeline",
-  description: "Episode pipeline management for The Ruins Untold",
+  description: "Episode pipeline management for Ruins Untold",
 };
 
 export default function RootLayout({

@@ -1,6 +1,6 @@
 ---
 tags: [iteration-log, phase3, n8n, bugfix]
-project: The Ruins Untold
+project: Ruins Untold
 date: 2026-06-15
 ---
 
