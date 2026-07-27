@@ -14,9 +14,9 @@ Your job is to transform a finished script into a precisely segmented, TTS-optim
 **Sends to:** Kie.ai API (ElevenLabs v3) and Media Coordination Agent (`voice_package.json`)
 
 **Voice settings:**
-- Platform: Kie.ai
-- Model: ElevenLabs v3
-- Voice ID: `4YYIPFl9wE5c4L2eu2Gb`
+- Platform: ElevenLabs API (direct)
+- Model: ElevenLabs v3 (`eleven_multilingual_v2`)
+- Voice ID: `Lp2NZJAfG4zDynNcYPSz`
 - Target pace: 145–160 WPM
 - Stability: Natural (balanced expressiveness — responds to directional tags without over-emoting)
 
@@ -204,8 +204,8 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
 ```json
 {
   "topic": "string",
-  "voice_id": "4YYIPFl9wE5c4L2eu2Gb",
-  "model": "eleven_v3",
+  "voice_id": "Lp2NZJAfG4zDynNcYPSz",
+  "model": "eleven_multilingual_v2",
   "stability": "natural",
   "total_word_count": number,
   "estimated_total_runtime_seconds": number,
