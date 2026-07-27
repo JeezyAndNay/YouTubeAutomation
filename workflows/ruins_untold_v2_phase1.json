@@ -1,6 +1,6 @@
 [
   {
-    "updatedAt": "2026-07-27T13:59:21.777Z",
+    "updatedAt": "2026-07-27T14:32:37.154Z",
     "createdAt": "2026-06-03T09:47:18.435Z",
     "id": "YNCvi72wqNsGyXtH",
     "name": "Ruins Untold v2 \u2014 Production Pipeline",
@@ -563,7 +563,7 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst allItems = $input.all();\nconst first    = allItems[0].json;\n\n// Concatenate voice_optimized_text from every segment in sequence order\nconst fullScript = allItems\n  .map(it => it.json.chunkText)\n  .join('\\n\\n');\n\nconst slug      = first.projectDir.split('/').pop();\nconst ghPath    = `episodes/${slug}/script_el.txt`;\nconst rawUrl    = `https://raw.githubusercontent.com/JeezyAndNay/YouTubeAutomation/main/${ghPath}`;\nconst b64Script = Buffer.from(fullScript).toString('base64');\n\nconsole.log(`[PROJECTS] Script ready \u2014 ${allItems.length} segments, ${fullScript.length} chars`);\n\nreturn [{\n  json: {\n    projectDir:  first.projectDir,\n    voiceId:     first.voiceId,\n    slug,\n    fullScript,\n    b64Script,\n    githubPath:  ghPath,\n    rawUrl,\n    segmentCount: allItems.length\n  }\n}];\n"
+          "jsCode": "\nconst allItems = $input.all();\nconst first    = allItems[0].json;\n\n// Approved EL v3 behavior tags \u2014 keep these, strip everything else in brackets\n// (phonetic guides like [POO-mah POON-koo] would be read aloud literally by EL)\nconst ALLOWED_TAGS = new Set(['[whispers]', '[curious]', '[pause]', '[awe]', '[dramatic tone]']);\n\nfunction stripPhoneticsKeepTags(text) {\n  return text\n    .replace(/\\[[^\\]]+\\]/g, (match) => ALLOWED_TAGS.has(match) ? match : '')\n    .replace(/  +/g, ' ')   // collapse double-spaces left by stripped brackets\n    .trim();\n}\n\n// Concatenate voice_optimized_text from every segment, stripping phonetic brackets\nconst fullScript = allItems\n  .map(it => stripPhoneticsKeepTags(it.json.chunkText))\n  .join('\\n\\n');\n\n// Always use canonical voice ID \u2014 voice_package.json may carry a stale one\nconst voiceId   = 'Lp2NZJAfG4zDynNcYPSz';\nconst slug      = first.projectDir.split('/').pop();\nconst ghPath    = `episodes/${slug}/script_el.txt`;\nconst rawUrl    = `https://raw.githubusercontent.com/JeezyAndNay/YouTubeAutomation/main/${ghPath}`;\nconst b64Script = Buffer.from(fullScript).toString('base64');\n\nconsole.log(`[PROJECTS] Script ready \u2014 ${allItems.length} segments, ${fullScript.length} chars`);\n\nreturn [{\n  json: {\n    projectDir:   first.projectDir,\n    voiceId,\n    slug,\n    fullScript,\n    b64Script,\n    githubPath:   ghPath,\n    rawUrl,\n    segmentCount: allItems.length\n  }\n}];\n"
         },
         "id": "82b79b19-aee4-4fd9-8712-527904ddcdb1",
         "name": "Aggregate Script",
@@ -624,6 +624,10 @@
               {
                 "name": "from_url",
                 "value": "={{ $('Push Script to GitHub').item.json.rawUrl }}"
+              },
+              {
+                "name": "voice_settings",
+                "value": "{\"voice_id\": \"Lp2NZJAfG4zDynNcYPSz\", \"stability\": 0.35, \"similarity_boost\": 0.75, \"style\": 0.35, \"use_speaker_boost\": true}"
               }
             ]
           },
@@ -1153,9 +1157,9 @@
     },
     "meta": null,
     "pinData": {},
-    "versionId": "62c9cb8e-008c-4486-a80a-5ef0a6ef8778",
-    "activeVersionId": "62c9cb8e-008c-4486-a80a-5ef0a6ef8778",
-    "versionCounter": 291,
+    "versionId": "0430833a-2e75-4790-a1c0-a40a1cf8cb2c",
+    "activeVersionId": "0430833a-2e75-4790-a1c0-a40a1cf8cb2c",
+    "versionCounter": 303,
     "triggerCount": 1,
     "shared": [
       {
@@ -1178,9 +1182,9 @@
     ],
     "tags": [],
     "activeVersion": {
-      "updatedAt": "2026-07-27T13:59:21.782Z",
-      "createdAt": "2026-07-27T13:59:21.782Z",
-      "versionId": "62c9cb8e-008c-4486-a80a-5ef0a6ef8778",
+      "updatedAt": "2026-07-27T14:32:37.161Z",
+      "createdAt": "2026-07-27T14:32:37.161Z",
+      "versionId": "0430833a-2e75-4790-a1c0-a40a1cf8cb2c",
       "workflowId": "YNCvi72wqNsGyXtH",
       "nodes": [
         {
@@ -1738,7 +1742,7 @@
         },
         {
           "parameters": {
-            "jsCode": "\nconst allItems = $input.all();\nconst first    = allItems[0].json;\n\n// Concatenate voice_optimized_text from every segment in sequence order\nconst fullScript = allItems\n  .map(it => it.json.chunkText)\n  .join('\\n\\n');\n\nconst slug      = first.projectDir.split('/').pop();\nconst ghPath    = `episodes/${slug}/script_el.txt`;\nconst rawUrl    = `https://raw.githubusercontent.com/JeezyAndNay/YouTubeAutomation/main/${ghPath}`;\nconst b64Script = Buffer.from(fullScript).toString('base64');\n\nconsole.log(`[PROJECTS] Script ready \u2014 ${allItems.length} segments, ${fullScript.length} chars`);\n\nreturn [{\n  json: {\n    projectDir:  first.projectDir,\n    voiceId:     first.voiceId,\n    slug,\n    fullScript,\n    b64Script,\n    githubPath:  ghPath,\n    rawUrl,\n    segmentCount: allItems.length\n  }\n}];\n"
+            "jsCode": "\nconst allItems = $input.all();\nconst first    = allItems[0].json;\n\n// Approved EL v3 behavior tags \u2014 keep these, strip everything else in brackets\n// (phonetic guides like [POO-mah POON-koo] would be read aloud literally by EL)\nconst ALLOWED_TAGS = new Set(['[whispers]', '[curious]', '[pause]', '[awe]', '[dramatic tone]']);\n\nfunction stripPhoneticsKeepTags(text) {\n  return text\n    .replace(/\\[[^\\]]+\\]/g, (match) => ALLOWED_TAGS.has(match) ? match : '')\n    .replace(/  +/g, ' ')   // collapse double-spaces left by stripped brackets\n    .trim();\n}\n\n// Concatenate voice_optimized_text from every segment, stripping phonetic brackets\nconst fullScript = allItems\n  .map(it => stripPhoneticsKeepTags(it.json.chunkText))\n  .join('\\n\\n');\n\n// Always use canonical voice ID \u2014 voice_package.json may carry a stale one\nconst voiceId   = 'Lp2NZJAfG4zDynNcYPSz';\nconst slug      = first.projectDir.split('/').pop();\nconst ghPath    = `episodes/${slug}/script_el.txt`;\nconst rawUrl    = `https://raw.githubusercontent.com/JeezyAndNay/YouTubeAutomation/main/${ghPath}`;\nconst b64Script = Buffer.from(fullScript).toString('base64');\n\nconsole.log(`[PROJECTS] Script ready \u2014 ${allItems.length} segments, ${fullScript.length} chars`);\n\nreturn [{\n  json: {\n    projectDir:   first.projectDir,\n    voiceId,\n    slug,\n    fullScript,\n    b64Script,\n    githubPath:   ghPath,\n    rawUrl,\n    segmentCount: allItems.length\n  }\n}];\n"
           },
           "id": "82b79b19-aee4-4fd9-8712-527904ddcdb1",
           "name": "Aggregate Script",
@@ -1799,6 +1803,10 @@
                 {
                   "name": "from_url",
                   "value": "={{ $('Push Script to GitHub').item.json.rawUrl }}"
+                },
+                {
+                  "name": "voice_settings",
+                  "value": "{\"voice_id\": \"Lp2NZJAfG4zDynNcYPSz\", \"stability\": 0.35, \"similarity_boost\": 0.75, \"style\": 0.35, \"use_speaker_boost\": true}"
                 }
               ]
             },
@@ -2316,18 +2324,18 @@
       "autosaved": false,
       "workflowPublishHistory": [
         {
-          "createdAt": "2026-07-27T13:59:21.960Z",
-          "id": 196,
+          "createdAt": "2026-07-27T14:32:37.289Z",
+          "id": 212,
           "workflowId": "YNCvi72wqNsGyXtH",
-          "versionId": "62c9cb8e-008c-4486-a80a-5ef0a6ef8778",
+          "versionId": "0430833a-2e75-4790-a1c0-a40a1cf8cb2c",
           "event": "deactivated",
           "userId": "af2abf74-a4e9-4319-875f-87671c53e774"
         },
         {
-          "createdAt": "2026-07-27T13:59:22.006Z",
-          "id": 197,
+          "createdAt": "2026-07-27T14:32:37.334Z",
+          "id": 213,
           "workflowId": "YNCvi72wqNsGyXtH",
-          "versionId": "62c9cb8e-008c-4486-a80a-5ef0a6ef8778",
+          "versionId": "0430833a-2e75-4790-a1c0-a40a1cf8cb2c",
           "event": "activated",
           "userId": "af2abf74-a4e9-4319-875f-87671c53e774"
         }
