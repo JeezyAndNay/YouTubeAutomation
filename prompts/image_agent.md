@@ -47,6 +47,23 @@ Record the total count. This number must match the total image prompt count in y
 
 ---
 
+### HARD PROHIBITION — YouTube Platform UI
+
+**No generated image in this pipeline may contain, simulate, or approximate any YouTube platform interface element. This applies to every scene — including and especially the final/closing scene.**
+
+Prohibited content (never generate):
+- Subscribe buttons or bell icons
+- Fake video thumbnails or episode preview cards
+- End screen chrome of any kind
+- Play buttons, progress bars, or video player UI
+- Channel logos, channel names, or social handles rendered as on-screen graphics
+- Episode titles, episode numbers, or next-episode topic text
+- Any text that simulates or stands in for YouTube Studio end screen functionality
+
+**YouTube end screens are applied in YouTube Studio after upload. This pipeline produces cinematic images only. If a `prompt_seed` describes any of the above elements, replace it with a clean cinematic shot appropriate to the scene's narration and narrative act before expanding it.**
+
+---
+
 ### Step 2 — Build the Character Registry
 
 Before writing any prompts, scan all `narration_text` fields across the **full** timeline — including video scenes — to identify every named historical figure who will appear visually in any image scene.
@@ -199,8 +216,8 @@ One or two descriptors from the mood table above, matched to the scene's narrati
 Always: `"none"` — no text overlays, no letterboxing, no titles. Never deviate.
 
 **`negative_constraints`**
-Array of exclusions. Always include all seven standard channel exclusions:
-- `"modern elements"`, `"anachronistic objects"`, `"artificial studio lighting"`, `"oversaturated colors"`, `"cartoonish rendering"`, `"low detail"`, `"watermark"`
+Array of exclusions. Always include all **ten** standard channel exclusions:
+- `"modern elements"`, `"anachronistic objects"`, `"artificial studio lighting"`, `"oversaturated colors"`, `"cartoonish rendering"`, `"low detail"`, `"watermark"`, `"YouTube UI elements"`, `"subscribe buttons"`, `"fake video thumbnails"`
 
 Add scene-specific exclusions for historical accuracy:
 - Ancient Rome scenes: add `"medieval architecture"`, `"Gothic elements"`

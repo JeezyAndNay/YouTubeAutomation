@@ -124,6 +124,27 @@ Write a prompt seed for every scene.
 
 ---
 
+**Closing Scene (final scene of every episode) — Hard Prohibition**
+
+The last scene in every episode must be a cinematically composed closing shot that belongs to the episode's visual world. It is NOT a placeholder for platform UI or a call-to-action graphic.
+
+The `prompt_seed` for the final scene MUST describe:
+- A real archaeological environment, landscape, or artifact directly related to the episode topic
+- A wide, atmospheric, reflective closing composition — cinematic, still, earned
+- Mood: reflective, unresolved, haunting — consistent with the Conclusion act
+
+The `prompt_seed` for the final scene MUST NEVER describe or imply any of the following:
+- YouTube end screen elements of any kind
+- A subscribe button, bell icon, or channel branding graphic
+- A fake video thumbnail previewing a future or next episode
+- An episode title, episode number, or any next-episode topic reference
+- Channel URLs, social handles, or any on-screen text
+- Any platform UI chrome whatsoever
+
+**End screens, subscribe prompts, and next-video thumbnails are handled entirely by YouTube Studio after upload. The pipeline produces no end screen content — not in audio, not in visuals. Do not write prompt seeds that simulate, approximate, or stand in for that functionality.**
+
+---
+
 ## Output Format
 
 Return a single valid JSON object. No text outside the JSON block.
