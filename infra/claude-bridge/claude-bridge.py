@@ -200,7 +200,7 @@ NO_TOOLS_PREAMBLE = (
     "generation request; just return the text/JSON described below.\n\n"
 )
 
-def call_cli(system: str, prompt: str, model: str, max_tokens: int = MAX_TOKENS, effort: str = "medium") -> tuple[str, int, str, str | None]:
+def call_cli(system: str, prompt: str, model: str, max_tokens: int = MAX_TOKENS, effort: str = "medium", output_path: str = "") -> tuple[str, int, str, str | None]:
     """Fall back to claude CLI subprocess."""
     full_prompt = NO_TOOLS_PREAMBLE + prompt
     if system:
@@ -211,6 +211,35 @@ def call_cli(system: str, prompt: str, model: str, max_tokens: int = MAX_TOKENS,
 
     env = os.environ.copy()
     env["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] = "100000"
+
+    if output_path:
+        # Redirect stdout directly to file — avoids pipe-buffer truncation for
+        # large outputs (e.g. Media Placement Agent generating 100KB+ of JSON).
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as out_file:
+            result = subprocess.run(
+                cmd, stdout=out_file, stderr=subprocess.PIPE,
+                text=True, timeout=7200, env=env,
+            )
+        exit_code = result.returncode
+        error = result.stderr if exit_code != 0 else ""
+
+        # Check for usage-limit message in stderr (stdout went to file)
+        retry_after = parse_usage_limit(error)
+        if retry_after is not None:
+            print(f"[bridge] usage limit reached — retry after {retry_after}")
+            exit_code = 1
+            output = ""
+        elif exit_code != 0:
+            print(f"[bridge] claude exited {exit_code}: {error[:200]}")
+            output = ""
+        else:
+            file_size = os.path.getsize(output_path)
+            print(f"[bridge] Output saved to disk: {output_path} ({file_size} bytes)")
+            output = "__disk__:" + output_path
+
+        return output, exit_code, error, retry_after
+
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=7200, env=env)
 
     output = result.stdout
@@ -261,15 +290,17 @@ class ClaudeHandler(BaseHTTPRequestHandler):
 
             if ANTHROPIC_API_KEY:
                 output, exit_code, error, retry_after = call_api(system, prompt, model, max_tokens)
+                # API mode: handle output_path after the fact (API mode buffers in memory)
+                if output_path and output and exit_code == 0:
+                    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                    with open(output_path, "w") as f:
+                        f.write(output)
+                    print(f"[bridge] Output saved to disk: {output_path} ({len(output)} chars)")
+                    output = "__disk__:" + output_path
             else:
-                output, exit_code, error, retry_after = call_cli(system, prompt, model, max_tokens, effort)
-
-            if output_path and output and exit_code == 0:
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                with open(output_path, "w") as f:
-                    f.write(output)
-                print(f"[bridge] Output saved to disk: {output_path} ({len(output)} chars)")
-                output = "__disk__:" + output_path
+                # CLI mode: pass output_path so stdout is redirected directly to file,
+                # avoiding pipe-buffer truncation for large responses.
+                output, exit_code, error, retry_after = call_cli(system, prompt, model, max_tokens, effort, output_path)
 
             response_dict = {
                 "output": output,
