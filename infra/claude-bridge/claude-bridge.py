@@ -211,7 +211,7 @@ def call_cli(system: str, prompt: str, model: str, max_tokens: int = MAX_TOKENS,
 
     env = os.environ.copy()
     env["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] = "100000"
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600, env=env)
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=7200, env=env)
 
     output = result.stdout
     exit_code = result.returncode
