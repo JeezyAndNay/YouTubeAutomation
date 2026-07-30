@@ -201,6 +201,37 @@ Dark underground archaeology. Hidden ancient city structure beneath quiet grassl
 
 ---
 
+#### Real Photo Flagging
+
+After completing the visual type assignment and ratio enforcement pass, scan every `image` and `video` scene for subjects where a real Wikimedia Commons photograph would be stronger than AI-generated imagery.
+
+**Set `real_photo_preferred: true` and write a `wikimedia_search_query` when the scene shows:**
+
+| Scene type | Use real photo |
+|---|---|
+| Establishing shot of the actual site being discussed | Yes |
+| Close-up of a specific artifact (the real object is the argument) | Yes |
+| Researcher, excavator, or named scholar at the site | Yes |
+| Named historical figure with a known likeness | Yes |
+| Abstract concept (a process, a debate, an idea) | No |
+| Historical reconstruction (ancient city, transport, event) | No |
+| Data visualization (timeline, map, diagram) | No |
+| Emotional/cinematic moment (collapse, catastrophe, atmosphere) | No |
+
+**License constraint:** Only flag `real_photo_preferred: true` if the site or artifact is likely to have CC0, CC BY, or CC BY-SA coverage on Wikimedia Commons. CC BY-NC is not acceptable. Strong Wikimedia coverage exists for: Göbekli Tepe, Puma Punku/Tiwanaku, Olmec heads, Derinkuyu, Cappadocia fairy chimneys, Machu Picchu, Nazca Lines, Baalbek, Sacsayhuaman, Angkor Wat, Easter Island, most major museum artifacts. Private collections or niche unphotographed sites: set `real_photo_preferred: false`.
+
+**`wikimedia_search_query` guidelines:**
+- Specific over generic: `"Derinkuyu underground city millstone door"` not `"ancient door"`
+- Use proper site and artifact names as they appear on Wikimedia Commons
+- One query per scene — the Stock Sourcing node takes the top result
+- Vary queries between adjacent scenes covering the same site to avoid duplicate images being returned
+
+**Default:** `real_photo_preferred: false` — only set `true` when confident a specific, usable photo exists on Wikimedia Commons.
+
+**`prompt_seed` is still required** on all scenes including `real_photo_preferred: true` — it serves as the AI-generation fallback if the Wikimedia search fails or returns no usable result.
+
+---
+
 ### Step 5 — Place Music Cues
 
 Music runs underneath the entire episode at low volume, shifting mood at act transitions. It must never compete with narration.
@@ -312,7 +343,9 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
       "visual_out": number,
       "narration_text": "string",
       "visual_type": "image | video | pinned_video",
-      "prompt_seed": "string or null if pinned"
+      "prompt_seed": "string or null if pinned",
+      "real_photo_preferred": false,
+      "wikimedia_search_query": "string or null — required when real_photo_preferred is true"
     }
   ],
   "music_cues": [
@@ -396,3 +429,4 @@ Before outputting, verify all timing is internally consistent:
 - [ ] SFX field names are exactly `type` (not `sfx_type`), `start` (not `start_time`), `duration` (not `duration_seconds`); `end` field present on every cue
 - [ ] Ambient cue `duration` = full narrative span the layer plays (not 8 — that is the generated clip length, set by the SFX Agent downstream)
 - [ ] Transition cue `duration` ≤ 2.5 seconds
+- [ ] Every image/video scene scanned for real photo eligibility; `real_photo_preferred: true` set on all site shots, artifact close-ups, and named figure scenes with confirmed Wikimedia Commons coverage; `wikimedia_search_query` present on every flagged scene; `prompt_seed` present on all flagged scenes as fallback

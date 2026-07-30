@@ -101,7 +101,7 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/media_placement_agent.md', 'utf-8');\n\nconst slimPackage = {\n  topic:                          vars.voicePackage.topic,\n  estimated_total_runtime_seconds: vars.voicePackage.estimated_total_runtime_seconds,\n  segments: (vars.voicePackage.segments || []).map(s => ({\n    segment_id:                 s.segment_id,\n    act:                        s.act,\n    sequence:                   s.sequence,\n    word_count:                 s.word_count,\n    estimated_duration_seconds: s.estimated_duration_seconds,\n    narration_text:             s.narration_text\n  }))\n};\n\nconst authoritative_duration = vars.transcript\n  ? vars.transcript.total_duration_seconds\n  : vars.durationSeconds;\n\n// Filter transcript words to sentence-boundary words only (ending with . ? !)\n// The agent uses these to find precise scene cut points \u2014 it does not need every word.\nconst slimTranscript = vars.transcript ? {\n  total_duration_seconds: vars.transcript.total_duration_seconds,\n  words: (vars.transcript.words || []).filter(w => /[.?!]$/.test(w.word))\n} : null;\n\nconst input = {\n  voiceover_mp3_path:     vars.voiceFinalPath,\n  voice_package_path:     vars.voicePackagePath,\n  topic:                  vars.topic,\n  total_duration_seconds: authoritative_duration,\n  voice_package:          slimPackage,\n  transcript:             slimTranscript\n};\n\nconst prompt = 'Your input:\\n\\n' + JSON.stringify(input, null, 2);\n// Return slim vars \u2014 don't carry scriptText, voicePackage, or transcript through item data\nreturn [{ json: {\n  slug:              vars.slug,\n  topic:             vars.topic,\n  projectDir:        vars.projectDir,\n  voiceFinalPath:    vars.voiceFinalPath,\n  scriptPath:        vars.scriptPath,\n  researchPath:      vars.researchPath,\n  voicePackagePath:  vars.voicePackagePath,\n  mediaTimelinePath: vars.mediaTimelinePath,\n  imageManifestPath: vars.imageManifestPath,\n  videoManifestPath: vars.videoManifestPath,\n  metadataPath:      vars.metadataPath,\n  claudeBody: JSON.stringify({ system: sys, prompt, model: 'claude-sonnet-4-6', max_tokens: 32768, effort: 'medium', output_path: vars.mediaTimelinePath + '.tmp' })\n} }];\n"
+          "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/media_placement_agent.md', 'utf-8');\n\nconst slimPackage = {\n  topic:                          vars.voicePackage.topic,\n  estimated_total_runtime_seconds: vars.voicePackage.estimated_total_runtime_seconds,\n  segments: (vars.voicePackage.segments || []).map(s => ({\n    segment_id:                 s.segment_id,\n    act:                        s.act,\n    sequence:                   s.sequence,\n    word_count:                 s.word_count,\n    estimated_duration_seconds: s.estimated_duration_seconds,\n    narration_text:             s.narration_text\n  }))\n};\n\nconst authoritative_duration = vars.transcript\n  ? vars.transcript.total_duration_seconds\n  : vars.durationSeconds;\n\n// Filter transcript words to sentence-boundary words only (ending with . ? !)\n// The agent uses these to find precise scene cut points \u2014 it does not need every word.\nconst slimTranscript = vars.transcript ? {\n  total_duration_seconds: vars.transcript.total_duration_seconds,\n  words: (vars.transcript.words || []).filter(w => /[.?!]$/.test(w.word))\n} : null;\n\nconst input = {\n  voiceover_mp3_path:     vars.voiceFinalPath,\n  voice_package_path:     vars.voicePackagePath,\n  topic:                  vars.topic,\n  total_duration_seconds: authoritative_duration,\n  voice_package:          slimPackage,\n  transcript:             slimTranscript\n};\n\nconst prompt = 'Your input:\\n\\n' + JSON.stringify(input, null, 2);\n// Return slim vars \u2014 don't carry scriptText, voicePackage, or transcript through item data\nreturn [{ json: {\n  slug:              vars.slug,\n  topic:             vars.topic,\n  projectDir:        vars.projectDir,\n  voiceFinalPath:    vars.voiceFinalPath,\n  scriptPath:        vars.scriptPath,\n  researchPath:      vars.researchPath,\n  voicePackagePath:  vars.voicePackagePath,\n  mediaTimelinePath: vars.mediaTimelinePath,\n  imageManifestPath: vars.imageManifestPath,\n  videoManifestPath: vars.videoManifestPath,\n  metadataPath:      vars.metadataPath,\n  claudeBody: JSON.stringify({ system: sys, prompt, model: 'claude-sonnet-4-6', max_tokens: 32768, effort: 'low', output_path: vars.mediaTimelinePath + '.tmp' })\n} }];\n"
         },
         "id": "6a41a490-0f84-429c-931c-305e5688f505",
         "name": "Build Media Placement Prompt",
@@ -1145,7 +1145,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const fs = require('fs');\nconst vars = $input.first().json;\nconst timeline = JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst CHUNK_SIZE = 25;\nconst imageScenes = (timeline.scenes || []).filter(s => s.visual_type === 'image');\nif (imageScenes.length === 0)\n  throw new Error('No image scenes found in media timeline');\nconst totalChunks = Math.ceil(imageScenes.length / CHUNK_SIZE);\nconst chunks = [];\nfor (let i = 0; i < totalChunks; i++) {\n  chunks.push(imageScenes.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE));\n}\nconsole.log('Splitting ' + imageScenes.length + ' image scenes into ' + totalChunks + ' chunks of up to ' + CHUNK_SIZE);\nreturn chunks.map((chunk, idx) => ({\n  json: {\n    ...vars,\n    chunkIndex:             idx,\n    totalChunks:            totalChunks,\n    chunkScenes:            chunk,\n    imageManifestChunkPath: vars.projectDir + '/scripts/image_manifest_chunk_' + idx + '.json'\n  }\n}));"
+          "jsCode": "const fs = require('fs');\nconst vars = $input.first().json;\nconst timeline = JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst CHUNK_SIZE = 25;\nconst imageScenes = (timeline.scenes || []).filter(s => s.visual_type === 'image' && !s.asset_path);\nif (imageScenes.length === 0)\n  throw new Error('No image scenes found in media timeline');\nconst totalChunks = Math.ceil(imageScenes.length / CHUNK_SIZE);\nconst chunks = [];\nfor (let i = 0; i < totalChunks; i++) {\n  chunks.push(imageScenes.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE));\n}\nconsole.log('Splitting ' + imageScenes.length + ' image scenes into ' + totalChunks + ' chunks of up to ' + CHUNK_SIZE);\nreturn chunks.map((chunk, idx) => ({\n  json: {\n    ...vars,\n    chunkIndex:             idx,\n    totalChunks:            totalChunks,\n    chunkScenes:            chunk,\n    imageManifestChunkPath: vars.projectDir + '/scripts/image_manifest_chunk_' + idx + '.json'\n  }\n}));"
         },
         "id": "ebb930e6-b138-4994-9aeb-1abc2a246aed",
         "name": "Prepare Image Chunks",
@@ -1541,6 +1541,32 @@
         "typeVersion": 1,
         "id": "8067b8df-2f50-414a-a885-77d6bb646c5a",
         "name": "Sticky Note11"
+      },
+      {
+        "parameters": {
+          "jsCode": "const fs = require('fs');\nconst { execSync } = require('child_process');\nconst vars = $input.first().json;\n\nconst timeline = JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst stockDir = vars.projectDir + '/stocks/16x9';\nconst attrPath = vars.projectDir + '/scripts/stock_attribution.json';\n\nif (!fs.existsSync(stockDir)) fs.mkdirSync(stockDir, { recursive: true });\n\nconst stockScenes = (timeline.scenes || []).filter(\n  s => s.real_photo_preferred === true && !s.asset_path\n);\n\nconsole.log(`Stock Sourcing: ${stockScenes.length} scenes flagged for real photos`);\n\nconst attribution = [];\nlet sourced = 0, skipped = 0, failed = 0;\n\nfor (const scene of stockScenes) {\n  const query   = scene.wikimedia_search_query;\n  const sceneId = scene.scene_id;\n\n  if (!query) { console.log(`  ${sceneId}: no search query \u2014 skip`); skipped++; continue; }\n\n  // 1. Search Wikimedia Commons\n  const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search` +\n    `&srsearch=${encodeURIComponent(query)}&srnamespace=6&srlimit=5&format=json`;\n\n  let searchResult;\n  try {\n    searchResult = JSON.parse(execSync(`curl -sL -A \"RuinsUntold/2.0\" \"${searchUrl}\"`, { timeout: 10000 }).toString());\n  } catch(e) {\n    console.log(`  ${sceneId}: search failed \u2014 ${e.message}`);\n    failed++; continue;\n  }\n\n  const hits = (searchResult.query?.search || []);\n  if (!hits.length) {\n    console.log(`  ${sceneId}: no results for \"${query}\"`);\n    skipped++; continue;\n  }\n\n  // 2. Get imageinfo + thumburl at 1920px\n  const fileTitle = hits[0].title;\n  const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query` +\n    `&titles=${encodeURIComponent(fileTitle)}&prop=imageinfo&iiprop=url|thumburl|size|extmetadata` +\n    `&iiurlwidth=1920&format=json`;\n\n  let infoResult;\n  try {\n    infoResult = JSON.parse(execSync(`curl -sL -A \"RuinsUntold/2.0\" \"${infoUrl}\"`, { timeout: 10000 }).toString());\n  } catch(e) {\n    console.log(`  ${sceneId}: imageinfo failed \u2014 ${e.message}`);\n    failed++; continue;\n  }\n\n  const pages  = infoResult.query?.pages || {};\n  const page   = Object.values(pages)[0];\n  const info   = page?.imageinfo?.[0];\n  if (!info) {\n    console.log(`  ${sceneId}: no imageinfo for ${fileTitle}`);\n    skipped++; continue;\n  }\n\n  const thumbUrl = info.thumburl || info.url;\n  const width    = info.width  || 0;\n  const height   = info.height || 0;\n  const author   = info.extmetadata?.Artist?.value?.replace(/<[^>]+>/g, '') || 'Unknown';\n  const license  = info.extmetadata?.LicenseShortName?.value || 'Unknown';\n  const descUrl  = `https://commons.wikimedia.org/wiki/${encodeURIComponent(fileTitle)}`;\n\n  // Skip NC licenses \u2014 commercial conflict at monetization\n  if (license.includes('NC')) {\n    console.log(`  ${sceneId}: skipping ${fileTitle} \u2014 NC license (${license})`);\n    skipped++; continue;\n  }\n\n  // 3. Download via thumbnail API (avoids Wikimedia CDN bot protection on direct files)\n  const safeName  = fileTitle.replace('File:', '').replace(/[^a-zA-Z0-9._-]/g, '_');\n  const rawPath   = `${stockDir}/${sceneId}_raw_${safeName}`;\n  const finalPath = `${stockDir}/${sceneId}_${safeName.replace(/\\.(jpg|jpeg|png|tif|tiff)$/i, '.jpg')}`;\n\n  try {\n    execSync(`curl -sL -A \"RuinsUntold/2.0\" -o \"${rawPath}\" \"${thumbUrl}\"`, { timeout: 30000 });\n    const bytes = fs.statSync(rawPath).size;\n    if (bytes < 10000) throw new Error(`file too small (${bytes} bytes \u2014 likely HTML error page)`);\n  } catch(e) {\n    console.log(`  ${sceneId}: download failed \u2014 ${e.message}`);\n    if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath);\n    failed++; continue;\n  }\n\n  // 4. Convert to 16:9 1920x1080\n  // Landscape: center-crop to fill frame. Portrait: letterbox with black bars.\n  const isPortrait = height > width;\n  const vfFilter   = isPortrait\n    ? 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black'\n    : 'scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080';\n\n  try {\n    execSync(`/usr/local/bin/ffmpeg -y -i \"${rawPath}\" -vf \"${vfFilter}\" -q:v 2 \"${finalPath}\" 2>/dev/null`, { timeout: 30000 });\n    fs.unlinkSync(rawPath);\n  } catch(e) {\n    console.log(`  ${sceneId}: ffmpeg conversion failed \u2014 ${e.message}`);\n    failed++; continue;\n  }\n\n  // 5. Patch scene in timeline\n  scene.asset_path   = finalPath;\n  scene.stock_source = `${fileTitle} | ${author} | ${license} | ${descUrl}`;\n\n  attribution.push({\n    scene_id:        sceneId,\n    file:            finalPath.split('/').pop(),\n    wikimedia_title: fileTitle,\n    author,\n    license,\n    url:             descUrl,\n    search_query:    query,\n  });\n\n  console.log(`  ${sceneId}: \u2705 ${fileTitle} (${license})`);\n  sourced++;\n}\n\n// 6. Write updated timeline and attribution log\nfs.writeFileSync(vars.mediaTimelinePath, JSON.stringify(timeline, null, 2), 'utf-8');\nfs.writeFileSync(attrPath, JSON.stringify({ sourced_at: new Date().toISOString(), sources: attribution }, null, 2), 'utf-8');\n\nconsole.log(`\\nStock Sourcing complete: ${sourced} sourced, ${skipped} skipped, ${failed} failed`);\nreturn [{ json: { ...vars, timeline, stockSourcedCount: sourced, stockSkippedCount: skipped, stockFailedCount: failed } }];\n"
+        },
+        "id": "9a8a885a-03c5-4043-8cd2-f1944fc3b52f",
+        "name": "Stock Sourcing",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -400,
+          560
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const fs   = require('fs');\nconst vars = $input.first().json;\n\nconst attrPath = vars.projectDir + '/scripts/stock_attribution.json';\nif (!fs.existsSync(attrPath)) {\n  console.log('No stock_attribution.json \u2014 AI-only episode, skipping attribution block');\n  return [{ json: vars }];\n}\n\nconst attr    = JSON.parse(fs.readFileSync(attrPath, 'utf-8'));\nconst sources = attr.sources || [];\nif (sources.length === 0) {\n  console.log('No real photos sourced \u2014 skipping attribution block');\n  return [{ json: vars }];\n}\n\nconst lines = sources.map(s => `\u2014 ${s.author} (${s.license}) via Wikimedia Commons`);\nconst block = `\ud83d\udcf8 Some images in this episode are real photographs from Wikimedia Commons:\\n${lines.join('\\n')}`;\n\nconst mdPath = vars.projectDir + '/scripts/stock_attribution.md';\nfs.writeFileSync(mdPath, block, 'utf-8');\nconsole.log(`Attribution block written: ${sources.length} sources \u2192 ${mdPath}`);\nreturn [{ json: { ...vars, stockAttributionBlock: block, stockAttributionPath: mdPath } }];\n"
+        },
+        "id": "030fd4e3-4569-467e-ac93-d1902f0977e2",
+        "name": "Generate Attribution Block",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2160,
+          2240
+        ]
       }
     ],
     "connections": {
@@ -1636,7 +1662,7 @@
         "main": [
           [
             {
-              "node": "Build Image Agent Prompt",
+              "node": "Stock Sourcing",
               "type": "main",
               "index": 0
             }
@@ -2387,6 +2413,28 @@
           [
             {
               "node": "Save Music File",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Stock Sourcing": {
+        "main": [
+          [
+            {
+              "node": "Build Image Agent Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Phase 2 Summary": {
+        "main": [
+          [
+            {
+              "node": "Generate Attribution Block",
               "type": "main",
               "index": 0
             }
