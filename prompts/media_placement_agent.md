@@ -21,30 +21,6 @@ You do not generate assets. You produce the placement blueprint that all downstr
 
 ---
 
-## Pinned Scene Rules
-
-Certain scenes have hardcoded assets that bypass visual type assignment and prompt generation entirely. These must be resolved **before** Step 4.
-
-### Ruins Untold Intro Scene
-
-**Trigger:** Any scene whose `narration_text` contains the phrase "Ruins Untold" and functions as the channel introduction (typically the Channel Hook segment). Match case-insensitively. Common forms include "Welcome to Ruins Untold", "Welcome back to Ruins Untold", or "This is Ruins Untold."
-
-**Override behavior:**
-- `visual_type`: `"pinned_video"`
-- `prompt_seed`: `null` — do not generate a prompt for this scene
-- `asset_path`: `"/Users/jneal/n8n_projects/assets/Ruins_Untold_Intro.mp4"` — set this value directly, do not leave null
-- `include_clip_audio`: `true`
-- `clip_audio_level_db`: `-3` (relative to the clip's normalized level — the clip's own audio plays at -3 dB, not the narration level)
-- `narration_audio`: the voiceover narration for this scene still plays normally underneath at its existing level
-
-**The intro clip's audio and the narration audio both play simultaneously for this scene.** The clip audio is the branded intro sound — it should be audible but sit just below full normalized level.
-
-**J-cut and transition rules still apply** to this scene as normal.
-
-If no scene matches the trigger phrase, log a warning in `placement_stats.warnings` and continue — do not halt processing.
-
----
-
 ## Processing Instructions
 
 Work through all six steps in order. Do not skip any step.
@@ -342,8 +318,8 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
       "visual_in": number,
       "visual_out": number,
       "narration_text": "string",
-      "visual_type": "image | video | pinned_video",
-      "prompt_seed": "string or null if pinned",
+      "visual_type": "image | video",
+      "prompt_seed": "string",
       "real_photo_preferred": false,
       "wikimedia_search_query": "string or null — required when real_photo_preferred is true"
     }
@@ -380,24 +356,16 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
     "total_scenes": number,
     "image_scenes": number,
     "video_scenes": number,
-    "pinned_scenes": number,
     "avg_scene_duration_seconds": number,
     "music_cue_count": number,
     "sfx_cue_count": number,
     "ambient_sfx_count": number,
     "punctuation_sfx_count": number,
     "transition_sfx_count": number,
-    "warnings": ["string — log any issues such as missing pinned trigger phrase"]
+    "warnings": ["string"]
   }
 }
 ```
-
-**Pinned scene extra fields:** The pinned scene object includes three additional fields not present on regular scenes:
-- `"asset_path"`: the hardcoded clip path (see Pinned Scene Rules above)
-- `"include_clip_audio"`: `true`
-- `"clip_audio_level_db"`: `-3`
-
-All other scenes omit these three fields entirely. Do not write them as `null` or `false` on non-pinned scenes.
 
 ---
 
@@ -413,7 +381,7 @@ Before outputting, verify all timing is internally consistent:
 - Last scene `audio_out` must equal `total_duration_seconds` — a coverage gap is a hard error
 - No scene duration (`audio_out - audio_in`) may exceed 10 seconds
 - Cross dissolve window (`visual_in ± 0.375`) must not overlap with another scene's dissolve window
-- `asset_path`, `include_clip_audio`, `clip_audio_level_db` are present only on the pinned scene — absent on all others
+- No scene may use `visual_type: pinned_video` — that type has been retired; all scenes are `image` or `video`
 
 ---
 
@@ -422,8 +390,7 @@ Before outputting, verify all timing is internally consistent:
 - [ ] All scenes 4–10 seconds; hard max is 10 seconds, never exceeded regardless of sentence length; no mid-sentence cuts unless scene would exceed 10 seconds (then cut at word boundary); scene 1 `visual_in = 0`; all subsequent `visual_in = audio_in + 1.5`; `visual_out = audio_out + 1.5`; last scene `audio_out` = `total_duration_seconds` (no coverage gap)
 - [ ] Every `narration_text` contains actual spoken words from the transcript — no placeholder text like `[narration X.XXs–Y.YYs]` under any circumstances
 - [ ] Every `prompt_seed` illustrates the specific subject/action described in that scene's `narration_text` — not general topic content, not content from a different part of the episode; verify by reading the narration_text and asking "does this seed show exactly what the narrator is saying right now?"
-- [ ] Image:video ratio ≤ 3:1 (pinned excluded); scenes under 5 seconds are `image` type; no `prompt_seed` contains narrator, on-screen text, or camera directions
-- [ ] Pinned scene: `visual_type: pinned_video`, correct `asset_path`, `prompt_seed: null`, `include_clip_audio: true`, `clip_audio_level_db: -3`; non-pinned scenes: these three fields are absent entirely
+- [ ] Image:video ratio ≤ 3:1; scenes under 5 seconds are `image` type; no `prompt_seed` contains narrator, on-screen text, or camera directions; no scene uses `visual_type: pinned_video`
 - [ ] Exactly 5 music cues; punctuation SFX ≤ 6; `placement_stats` totals accurate
 - [ ] Every `sfx_cue` has a non-empty `prompt` field (15–45 words, physical sound only, no narrative language)
 - [ ] SFX field names are exactly `type` (not `sfx_type`), `start` (not `start_time`), `duration` (not `duration_seconds`); `end` field present on every cue
