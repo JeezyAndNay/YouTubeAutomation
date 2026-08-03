@@ -292,7 +292,7 @@ function assembleWithXfade(clipPaths, clipDurations, outputPath) {
     return xfadeBatch(clipPaths, clipDurations, outputPath);
   }
 
-  // Too many clips for one command — split into batches, xfade each, then copy-concat
+  // Too many clips for one command — split into batches, xfade each, then xfade segments together
   const numBatches = Math.ceil(n / XFADE_BATCH_SIZE);
   log(`  Batched xfade: ${n} clips → ${numBatches} segments of ≤${XFADE_BATCH_SIZE}`);
 
@@ -313,12 +313,13 @@ function assembleWithXfade(clipPaths, clipDurations, outputPath) {
     segPaths.push(segPath);
   }
 
-  // Copy-concat the xfaded segments (no re-encode needed, all same codec/params)
-  log(`  Concatenating ${segPaths.length} segments (stream copy)...`);
-  const concatFile = outputPath + '.segs.txt';
-  fs.writeFileSync(concatFile, segPaths.map(p => `file '${path.resolve(p)}'`).join('\n'));
-  const ok = run(`ffmpeg -y -f concat -safe 0 -i "${concatFile}" -c copy "${outputPath}"`, false).ok;
-  try { fs.unlinkSync(concatFile); } catch(e) {}
+  // Apply xfade crossfades across all batch segments so there are no hard cuts at batch boundaries.
+  // getDuration() on each segment gives the actual encoded length; xfadeBatch() computes offsets
+  // the same way it does for individual clips — so every batch-first scene becomes fully visible
+  // at exactly its visual_in time in the final output.
+  log(`  Applying xfade across ${segPaths.length} batch segments (no hard cuts)...`);
+  const segDurations = segPaths.map(p => getDuration(p));
+  const ok = xfadeBatch(segPaths, segDurations, outputPath);
   segPaths.forEach(s => { try { fs.unlinkSync(s); } catch(e) {} });
   return ok;
 }
@@ -634,13 +635,11 @@ function main() {
     console.log('[TIMING] Computing clip durations from visual_in timestamps');
     scenes[0].duration_seconds = Math.max(scenes[1].visual_in - scenes[0].visual_in, 0.5);
     for (let k = 1; k < scenes.length - 1; k++) {
-      // Batch-first clips (k % XFADE_BATCH_SIZE === 0) have no incoming xfade from the
-      // previous batch — batches are copy-concatenated, not xfaded together.
-      // Adding XFADE_DURATION to those clips' durations causes 5.25s of cumulative drift
-      // (7 batch boundaries × 0.75s) so we omit the compensation for batch-first clips.
-      const isFirstInBatch = (k % XFADE_BATCH_SIZE === 0);
+      // Every clip (including batch-first) gets XFADE_DURATION added so that after xfade
+      // transitions — both within batches AND between batch segments — each scene becomes
+      // fully visible at exactly its visual_in timestamp in the assembled output.
       scenes[k].duration_seconds = Math.max(
-        scenes[k + 1].visual_in - scenes[k].visual_in + (isFirstInBatch ? 0 : XFADE_DURATION), 0.5
+        scenes[k + 1].visual_in - scenes[k].visual_in + XFADE_DURATION, 0.5
       );
     }
     const last = scenes[scenes.length - 1];
@@ -666,8 +665,9 @@ function main() {
       const voDurActual = getDuration(voPathDrift);
       if (voDurActual > 0) {
         const targetDur     = voDurActual;
-        const numBatchesD   = Math.ceil(scenes.length / XFADE_BATCH_SIZE);
-        const xfadeReduction = (scenes.length - numBatchesD) * XFADE_DURATION;
+        // Total xfade transitions = (n - 1): (n - numBatches) within batches + (numBatches - 1)
+        // between batch segments. Simplifies to (n - 1) regardless of batch count.
+        const xfadeReduction = (scenes.length - 1) * XFADE_DURATION;
         const sumSceneDur   = scenes.reduce((s, sc) => s + sc.duration_seconds, 0);
         const driftRatio    = (targetDur + xfadeReduction) / sumSceneDur;
         if (Math.abs(driftRatio - 1.0) > 0.001) {
@@ -698,8 +698,8 @@ function main() {
       if (voDurActual > 0) {
         const sumSceneDur = scenes.reduce((s, sc) => s + (sc.duration_seconds || 0), 0);
         if (sumSceneDur > 0) {
-          const numBatches = Math.ceil(scenes.length / XFADE_BATCH_SIZE);
-          const xfadeReduction = (scenes.length - numBatches) * XFADE_DURATION;
+          // Total xfade transitions = (n - 1): within batches + between batch segments.
+          const xfadeReduction = (scenes.length - 1) * XFADE_DURATION;
           const driftRatio = (voDurActual + xfadeReduction) / sumSceneDur;
           if (Math.abs(driftRatio - 1.0) > 0.01) {
             console.log(`[SCALE] Fallback: scaling scenes by ${driftRatio.toFixed(4)}`);
