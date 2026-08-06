@@ -149,6 +149,10 @@ Write 1–2 sentences, 20–30 words maximum. This is a seed — the Image Promp
 
 **The prompt seed MUST illustrate what the narrator is saying in this exact scene's `narration_text` — not a related topic, not something that happens later in the episode, not general thematic content.** Before writing a seed, ask: *"What specific subject, object, place, or action is the narrator describing right now in these exact words?"* Then illustrate that specific thing.
 
+**CRITICAL — Do NOT read ahead.** The most common failure mode is writing a seed for a topic that appears 2–5 scenes later in the transcript. The fact that you have already read the full transcript does not mean the *viewer* has. Every seed must match what the narrator is saying *at this moment* — not what they are about to say, not what the episode is generally about, not what comes next.
+
+Before writing each prompt seed, stop and read the scene's `narration_text` again. Ask: "Is this seed showing what the narrator is describing *in these exact words*?" If the answer is no — even if the seed is topically adjacent — rewrite it.
+
 Focus on:
 - **Subject:** the specific thing being described in `narration_text` — name it precisely
 - **Setting:** where and when (time period, location, conditions)
@@ -157,7 +161,7 @@ Focus on:
 
 Do NOT write technical camera instructions in image seeds — those belong to the Video Prompt Agent. Do NOT reference the narrator or any on-screen text. Do NOT use general "ancient mystery" filler when the narration names something specific.
 
-**Example:**
+**Example (correct):**
 ```
 Narration: "The walls of the temple were covered in symbols no linguist has ever translated."
 Visual type: image
@@ -166,13 +170,24 @@ Low torchlight catches the depth of each inscription. The symbols are alien yet 
 filling every surface. Cinematic, mysterious, high detail."
 ```
 
-**Counter-example (wrong):**
+**Counter-example 1 (reads ahead — the most common failure):**
+```
+Narration: "The upper levels contain stables, carved stone troughs, channels for waste, spaces sized for animals."
+Wrong seed: "52 vertical ventilation shafts engineering diagram through underground complex, airflow"
+← WRONG: Ventilation shafts are described 4 scenes LATER in the script. This scene is about stables
+  and animal spaces. The agent read ahead and seeded a future topic. The viewer has not heard about
+  ventilation yet — showing a ventilation diagram here is a spoiler and a sync error.
+Correct seed: "Stone stables carved into volcanic rock, ancient carved troughs and channels for livestock,
+  torchlit underground space, animal waste channels cut into floor. Ancient construction, dimly lit."
+```
+
+**Counter-example 2 (topically adjacent but wrong scene):**
 ```
 Narration: "Beneath the soil less than a day's walk from where they drift, there are the foundations of a city."
 Wrong seed: "Medieval London illustration circa 1100 AD, thatched rooftops crowding along the Thames."
 ← WRONG: London is mentioned later in the episode. This scene is about hidden foundations underground.
 Correct seed: "Cross-section view of American floodplain soil revealing buried earthen foundations below the surface.
-Dark underground archaeology. Hidden ancient city structure beneath quiet grassland. Ominous, archaeological."
+  Dark underground archaeology. Hidden ancient city structure beneath quiet grassland. Ominous, archaeological."
 ```
 
 ---
@@ -389,7 +404,7 @@ Before outputting, verify all timing is internally consistent:
 
 - [ ] All scenes 4–10 seconds; hard max is 10 seconds, never exceeded regardless of sentence length; no mid-sentence cuts unless scene would exceed 10 seconds (then cut at word boundary); scene 1 `visual_in = 0`; all subsequent `visual_in = audio_in + 1.5`; `visual_out = audio_out + 1.5`; last scene `audio_out` = `total_duration_seconds` (no coverage gap)
 - [ ] Every `narration_text` contains actual spoken words from the transcript — no placeholder text like `[narration X.XXs–Y.YYs]` under any circumstances
-- [ ] Every `prompt_seed` illustrates the specific subject/action described in that scene's `narration_text` — not general topic content, not content from a different part of the episode; verify by reading the narration_text and asking "does this seed show exactly what the narrator is saying right now?"
+- [ ] Every `prompt_seed` illustrates the specific subject/action described in that scene's `narration_text` — not general topic content, not content from a different part of the episode; **for every single scene**, read the narration_text and ask "does this seed show exactly what the narrator is saying *right now* — or does it show something mentioned later?" If later: rewrite it. The most common failure is reading ahead and seeding future topics 2–5 scenes early.
 - [ ] Image:video ratio ≤ 3:1; scenes under 5 seconds are `image` type; no `prompt_seed` contains narrator, on-screen text, or camera directions; no scene uses `visual_type: pinned_video`
 - [ ] Exactly 5 music cues; punctuation SFX ≤ 6; `placement_stats` totals accurate
 - [ ] Every `sfx_cue` has a non-empty `prompt` field (15–45 words, physical sound only, no narrative language)

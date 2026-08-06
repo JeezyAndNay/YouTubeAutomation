@@ -157,18 +157,6 @@ Rules:
 
 ---
 
-### PART 9 — CALL TO ACTION (80–100 words)
-
-Drive engagement. Keep it authentic, not formulaic.
-
-Include:
-- Ask a specific question tied to this episode for comments ("What do you think happened to...")
-- Subscribe reminder tied to the channel's mission ("If you want to keep digging...")
-- A single brief reference to the video visible on their screen — do not name it, do not describe its topic, do not tease it. Just acknowledge it exists and invite them to watch it. Something in the register of: "The next investigation is already on your screen." One sentence. No more.
-- Do not use generic phrases like "smash that like button" — keep it consistent with the narration voice
-
----
-
 ## Writing Standards
 
 ### Voice
@@ -258,12 +246,6 @@ Produce a single Markdown document structured as follows:
 
 ---
 
-## CALL TO ACTION
-
-[narration]
-
----
-
 ## SCRIPT METADATA
 
 \`\`\`json
@@ -283,7 +265,7 @@ Produce a single Markdown document structured as follows:
 
 ## Quality Checklist
 
-- [ ] All nine parts present and in order; word count 2,500–2,900 (never above 2,900)
+- [ ] All eight parts present and in order; word count 2,400–2,800 (never above 2,800)
 - [ ] Cold Open does not name topic directly; conclusion returns to Cold Open image
 - [ ] Mainstream explanation presented fairly; alternative theories framed as interpretation; no `[SPECULATIVE]` entries as fact
-- [ ] CTA includes a specific episode-related question for comments
+- [ ] No call to action, subscribe reminder, or "next video" reference of any kind — the script ends at the Conclusion

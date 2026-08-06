@@ -40,7 +40,6 @@ A single Markdown document (`script.md`):
 ## ACT 4 -- WHAT THEY WON'T TELL YOU
 ## ACT 5 -- THE BIGGER PICTURE
 ## CONCLUSION
-## CALL TO ACTION
 
 ---
 
@@ -60,8 +59,7 @@ A single Markdown document (`script.md`):
 | Act 4 -- What They Won't Tell You | 550-700 words |
 | Act 5 -- Bigger Picture | 300-400 words |
 | Conclusion | 150-200 words |
-| Call to Action | 80-100 words |
-| **Total** | **2,800-3,200 words** |
+| **Total** | **2,400-2,800 words** |
 
 ### Responsibilities
 - Do not conduct research -- work exclusively from the research package
