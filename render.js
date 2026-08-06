@@ -735,28 +735,30 @@ function main() {
     }
   }
 
-  // [LEAD-IN] Opening pause + J-cut offset: extend the OPENING clip by
-  // (NARRATION_PAUSE_SECONDS + JCUT_SECONDS) to accomplish two things at once:
+  // [LEAD-IN] Opening pause: extend the OPENING clip by NARRATION_PAUSE_SECONDS only.
   //
-  //   1. OPENING PAUSE (NARRATION_PAUSE_SECONDS = 1.5s): music and the first visual
-  //      establish on screen before the narrator's voice enters — mirroring the
-  //      adelay(NARRATION_PAUSE_SECONDS) applied to the narration track in mixAudio().
+  // This mirrors the adelay(NARRATION_PAUSE_SECONDS) applied to the narration track in
+  // mixAudio() — music and the first visual establish on screen before the narrator's
+  // voice enters at t = NARRATION_PAUSE_SECONDS (1.5s).
   //
-  //   2. J-CUT OFFSET (JCUT_SECONDS = 1.5s): the video timeline is shifted an EXTRA
-  //      1.5s relative to the narration. Because mixAudio() only delays the narrator by
-  //      NARRATION_PAUSE_SECONDS (not the full 3s), the narrator always arrives 1.5s
-  //      BEFORE the video cuts to the scene it describes — a J-cut at every transition.
-  //      Music, SFX, and pinned-clip audio shift by the full (pause + J-cut) amount so
-  //      they stay locked to the video frame, not the narration. Only the narrator rides
-  //      early — which is exactly what a J-cut means.
+  // The J-cut (JCUT_SECONDS = 1.5s) is already baked into every scene's visual_in
+  // timestamp (visual_in = audio_in + JCUT_SECONDS). That means every scene's image
+  // lands JCUT_SECONDS after its narration begins in the source timeline. Adding
+  // NARRATION_PAUSE_SECONDS here shifts the video by 1.5s while narration is also
+  // delayed 1.5s (adelay), so the relative image-vs-narration gap remains exactly
+  // JCUT_SECONDS = 1.5s at every transition — the narrator always arrives 1.5s before
+  // the video cuts to the matching image.
   //
-  // Applied as a single fixed addition, LAST — after duration computation, drift
-  // correction, AND the pinned-clip fixup — so it (a) isn't diluted by proportional
-  // scaling and (b) can't be silently overwritten if the opening scene is ever pinned.
-  const leadInSeconds = NARRATION_PAUSE_SECONDS + JCUT_SECONDS;
+  // DO NOT add JCUT_SECONDS here — it would double-count the J-cut offset and push
+  // every image 3.0s behind narration instead of 1.5s.
+  //
+  // Applied LAST — after duration computation, drift correction, AND the pinned-clip
+  // fixup — so it (a) isn't diluted by proportional scaling and (b) can't be silently
+  // overwritten if the opening scene is ever pinned.
+  const leadInSeconds = NARRATION_PAUSE_SECONDS;
   if (leadInSeconds > 0 && scenes.length > 0) {
     scenes[0].duration_seconds += leadInSeconds;
-    console.log(`[LEAD-IN] Extending opening clip (${scenes[0].scene_id}) by ${leadInSeconds}s — narration enters at ${NARRATION_PAUSE_SECONDS}s, J-cut offset ${JCUT_SECONDS}s (narrator leads video by ${JCUT_SECONDS}s at every scene transition)`);
+    console.log(`[LEAD-IN] Extending opening clip (${scenes[0].scene_id}) by ${leadInSeconds}s — narration enters at ${NARRATION_PAUSE_SECONDS}s, J-cut ${JCUT_SECONDS}s already in visual_in timestamps`);
   }
 
   // [TAIL-PAD] Mirror of [LEAD-IN]: extend the CLOSING clip by NARRATION_TAIL_SECONDS so
