@@ -139,6 +139,112 @@ def enforce_ratio(scenes, warnings):
             f"(now {n_img}:{n_vid})")
 
 
+def smooth_ambient(scenes, warnings, min_run=3, max_cues=14):
+    """
+    Consolidate ambient labels into continuous beds.
+
+    Observed on the first real Haiku run (Derinkuyu chunk 0): the agent labels by
+    narrative subject rather than acoustic space — underground_chamber,
+    underground_city, underground_tunnel, underground_dwelling_ancient and
+    underground_phrygian are one stone-underground space to a listener — and
+    sprinkles nulls between them. That produced 17 runs across 30 scenes, which
+    would restart the ambient bed every few seconds.
+
+    Prose asked for continuity and did not get it, so this enforces it:
+      1. bridge short null gaps flanked by the same label
+      2. absorb runs shorter than min_run into a neighbour
+      3. collapse the smallest remaining runs until at most max_cues survive
+
+    Mutates scenes[]['_ambient'] in place.
+    """
+    labels = [s.get("_ambient") for s in scenes]
+    n = len(labels)
+    if n == 0:
+        return
+
+    def runs_of(seq):
+        out = []
+        for i, lab in enumerate(seq):
+            if out and out[-1][0] == lab:
+                out[-1][2] = i
+            else:
+                out.append([lab, i, i])
+        return out
+
+    # 1. Bridge null gaps of <= 2 scenes between identical labels.
+    for r_prev, r_gap, r_next in zip(runs_of(labels), runs_of(labels)[1:], runs_of(labels)[2:]):
+        if (r_gap[0] is None and r_prev[0] is not None
+                and r_prev[0] == r_next[0]
+                and (r_gap[2] - r_gap[1] + 1) <= 2):
+            for i in range(r_gap[1], r_gap[2] + 1):
+                labels[i] = r_prev[0]
+
+    # 2 & 3. Absorb short runs, then cap the total number of beds.
+    def collapse(threshold_only=None):
+        changed = True
+        while changed:
+            changed = False
+            rs = [r for r in runs_of(labels)]
+            for idx, (lab, a, b) in enumerate(rs):
+                if lab is None:
+                    continue
+                length = b - a + 1
+                if threshold_only is not None and length >= threshold_only:
+                    continue
+                prev_lab = rs[idx - 1][0] if idx > 0 else None
+                next_lab = rs[idx + 1][0] if idx + 1 < len(rs) else None
+                target = prev_lab if prev_lab is not None else next_lab
+                if target is None:
+                    continue
+                for i in range(a, b + 1):
+                    labels[i] = target
+                changed = True
+                break
+
+    # Hold the bed through abstract (null) scenes instead of dropping out and
+    # restarting a few seconds later — a gap reads as a mistake, a held bed does
+    # not. This also gives runs that were flanked by nulls on both sides a
+    # neighbour to be absorbed into on the next collapse pass.
+    last = None
+    for i, lab in enumerate(labels):
+        if lab is not None:
+            last = lab
+        elif last is not None:
+            labels[i] = last
+    if labels and labels[0] is None:
+        first = next((l for l in labels if l is not None), None)
+        for i, lab in enumerate(labels):
+            if lab is None:
+                labels[i] = first
+            else:
+                break
+
+    collapse(threshold_only=min_run)
+    guard = 0
+    while len([r for r in runs_of(labels) if r[0] is not None]) > max_cues and guard < n:
+        rs = [r for r in runs_of(labels) if r[0] is not None]
+        smallest = min(rs, key=lambda r: r[2] - r[1])
+        all_runs = runs_of(labels)
+        pos = next(i for i, r in enumerate(all_runs)
+                   if r[1] == smallest[1] and r[2] == smallest[2])
+        prev_lab = all_runs[pos - 1][0] if pos > 0 else None
+        next_lab = all_runs[pos + 1][0] if pos + 1 < len(all_runs) else None
+        target = prev_lab if prev_lab is not None else next_lab
+        if target is None:
+            break
+        for i in range(smallest[1], smallest[2] + 1):
+            labels[i] = target
+        guard += 1
+
+    before = len([r for r in runs_of([s.get("_ambient") for s in scenes]) if r[0] is not None])
+    for s, lab in zip(scenes, labels):
+        s["_ambient"] = lab
+    after = len([r for r in runs_of(labels) if r[0] is not None])
+    if before != after:
+        warnings.append(
+            f"ambient smoothing consolidated {before} label runs into {after} continuous beds")
+
+
 def build_ambient_cues(scenes, ambient_prompts, warnings):
     """Group consecutive scenes sharing an ambient_location into one cue."""
     cues, run = [], []
@@ -285,6 +391,7 @@ def main():
 
     enforce_ratio(scenes, warnings)
 
+    smooth_ambient(scenes, warnings)
     ambient = build_ambient_cues(scenes, ambient_prompts, warnings)
     punct = build_punctuation_cues(scenes, warnings)
 

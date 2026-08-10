@@ -178,11 +178,21 @@ Ambient sound is a continuous bed tied to the place being described. Give each s
 `ambient_location`: a short snake_case label naming the acoustic space
 (`underground_chamber`, `open_desert_plateau`, `museum_archive_room`, `andean_highland`).
 
-**Use the same label for every consecutive scene in the same place.** Code groups
+**Label the acoustic space, not the narrative subject.** This is the most common mistake:
+`underground_chamber`, `underground_city`, `underground_tunnel` and `underground_dwelling`
+all sound identical to a listener — they are *one* label. Ask "would a microphone here sound
+different?", not "is the narrator talking about something new?". Expect roughly **3–6
+distinct labels for an entire episode**, not one per topic.
+
+**Use the same label for every consecutive scene in the same space.** Code groups
 consecutive runs into a single ambient cue and derives its start and end from the scenes —
-so consistent labelling is what makes the bed continuous instead of stuttering. Change the
-label only when the narration genuinely moves somewhere else. Use `null` for abstract scenes
-with no physical location.
+consistent labelling is what makes the bed continuous instead of stuttering. Change the
+label only when the narration genuinely moves to an acoustically different place.
+
+Use `null` sparingly — only for genuinely abstract scenes. Prefer carrying the current
+label through a brief abstract moment; a bed that drops out for one scene and returns reads
+as a mistake. (Code will hold the previous bed through nulls and merge fragmented runs, but
+do not rely on that to do your labelling for you.)
 
 Then, in `ambient_prompts`, write one ElevenLabs prompt per distinct label used in this
 chunk. Follow the SFX prompt rules below and end with a steady-state quality
