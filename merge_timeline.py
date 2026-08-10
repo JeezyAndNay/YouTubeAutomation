@@ -171,11 +171,43 @@ def cap_real_photos(scenes, warnings, max_ratio=MAX_REAL_PHOTO_RATIO):
         return
 
     def score(s):
+        """
+        Rank by likelihood the query actually RETURNS something, not by how
+        descriptive it reads.
+
+        Measured against the live Commons API on the first Derinkuyu run:
+            "Derinkuyu underground city carved chambers architecture passages"  0 hits
+            "Derinkuyu underground city"                                        5 hits
+            "Phrygian rock-cut architecture cliff carving Anatolia"              0 hits
+            "Phrygian rock-cut tomb"                                            3 hits
+
+        Commons search is closer to a title match than a semantic search, so
+        long descriptive strings match nothing. An earlier version of this
+        function scored LONGER, proper-noun-heavier queries higher — exactly
+        backwards, and it selected for queries that fail. 1 of 37 sourced.
+
+        Short and canonical wins: one proper noun plus a concrete object.
+        """
         q = (s.get("wikimedia_search_query") or "").strip()
         toks = q.split()
+        n = len(toks)
         propers = sum(1 for w in toks if w[:1].isupper())
-        return (2.0 * propers
-                + 0.5 * min(len(toks), 5)
+
+        # Peak at 2-4 tokens; penalise sprawl hard.
+        if n == 0:
+            length_score = -5.0
+        elif n <= 4:
+            length_score = 3.0
+        elif n == 5:
+            length_score = 1.0
+        else:
+            length_score = 1.0 - 1.5 * (n - 5)
+
+        # One or two proper nouns anchors the search; more usually means the
+        # agent chained several concepts together and it will match nothing.
+        proper_score = 1.5 if propers in (1, 2) else (0.5 if propers else 0.0)
+
+        return (length_score + proper_score
                 + (1.0 if s["visual_type"] == "image" else 0.0))
 
     idx = {s["scene_id"]: i for i, s in enumerate(scenes)}

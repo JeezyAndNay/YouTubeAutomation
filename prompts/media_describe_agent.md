@@ -162,10 +162,27 @@ Olmec heads, Derinkuyu, Cappadocia, Machu Picchu, Nazca Lines, Baalbek, Sacsayhu
 Angkor Wat, Easter Island, most major museum artifacts. Private collections or niche
 unphotographed sites: `false`.
 
-**Query guidelines:** specific over generic (`"Derinkuyu underground city millstone door"`,
-not `"ancient door"`). Use proper site and artifact names as they appear on Wikimedia. Vary
-queries between adjacent scenes covering the same site so the search doesn't return
-duplicates.
+**Query guidelines — keep them SHORT.** Wikimedia Commons search behaves more like a title
+match than a semantic search, so descriptive phrases match nothing. Measured against the
+live API:
+
+| Query | Hits |
+|---|---|
+| `Derinkuyu underground city carved chambers architecture passages` | **0** |
+| `Derinkuyu underground city` | **5** |
+| `Phrygian rock-cut architecture cliff carving Anatolia` | **0** |
+| `Phrygian rock-cut tomb` | **3** |
+
+Rules:
+- **2–4 words.** One proper noun plus a concrete object. Never chain concepts together.
+- Use the canonical name as it appears on Commons (`Mount Erciyes`, not `Mount Erciyas`) —
+  **a misspelled proper noun guarantees zero results.** If you are not certain of the
+  spelling, use a more general term you *are* sure of, or set
+  `real_photo_preferred: false`.
+- Do not add mood, lighting, composition or era words. Those belong in `prompt_seed`, not
+  in a search query.
+- Vary queries between adjacent scenes covering the same site so the search doesn't return
+  the same file twice.
 
 **Default is `false`.** `prompt_seed` is still required on every scene — it is the fallback
 when Wikimedia returns nothing usable.
