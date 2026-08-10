@@ -35,6 +35,7 @@ import os
 import sys
 
 MAX_IMG_VID_RATIO = 3.0
+MAX_REAL_PHOTO_RATIO = 0.25   # ceiling on Wikimedia-sourced scenes per episode
 PUNCTUATION_CAP = 6
 
 AMBIENT_VOLUME_DB = -28
@@ -137,6 +138,69 @@ def enforce_ratio(scenes, warnings):
         warnings.append(
             f"ratio enforcement upgraded {upgrades} image scene(s) to video "
             f"(now {n_img}:{n_vid})")
+
+
+def cap_real_photos(scenes, warnings, max_ratio=MAX_REAL_PHOTO_RATIO):
+    """
+    Limit how much of the episode is sourced from Wikimedia rather than generated.
+
+    Observed on the first live run: the agent flagged 67 of 151 Derinkuyu scenes
+    (44%) as real_photo_preferred. The spec says flag true "only when confident a
+    specific, usable photo exists", so that is over-eager, and it matters because
+    Stock Sourcing takes the top search result — a weak or off-subject photo
+    lands silently, since "found a photo" counts as success. At 44% density it
+    also reads as stylistically inconsistent against cinematic AI footage.
+
+    Keeps the most defensible flags and clears the rest (the scenes still have a
+    prompt_seed, so they simply generate instead).
+
+    Ranking favours:
+      - proper nouns in the query (a named site or artifact is what Wikimedia is
+        actually good at, vs. a generic "ancient door")
+      - more specific multi-word queries
+      - image scenes over video scenes (a still on a video scene is a downgrade)
+
+    Then enforces spacing so surviving photos are spread through the episode
+    rather than clustered into one stretch that looks like a slideshow.
+    """
+    flagged = [s for s in scenes if s.get("real_photo_preferred")]
+    if not flagged:
+        return
+    limit = int(len(scenes) * max_ratio)
+    if len(flagged) <= limit:
+        return
+
+    def score(s):
+        q = (s.get("wikimedia_search_query") or "").strip()
+        toks = q.split()
+        propers = sum(1 for w in toks if w[:1].isupper())
+        return (2.0 * propers
+                + 0.5 * min(len(toks), 5)
+                + (1.0 if s["visual_type"] == "image" else 0.0))
+
+    idx = {s["scene_id"]: i for i, s in enumerate(scenes)}
+    keep, kept_idx = [], []
+    for s in sorted(flagged, key=score, reverse=True):
+        if len(keep) >= limit:
+            break
+        i = idx[s["scene_id"]]
+        if any(abs(i - j) < 2 for j in kept_idx):   # no two adjacent scenes
+            continue
+        keep.append(s["scene_id"])
+        kept_idx.append(i)
+
+    keep = set(keep)
+    cleared = 0
+    for s in flagged:
+        if s["scene_id"] not in keep:
+            s["real_photo_preferred"] = False
+            s["wikimedia_search_query"] = None
+            cleared += 1
+    if cleared:
+        pct = len(keep) / len(scenes) * 100
+        warnings.append(
+            f"real-photo cap: kept {len(keep)} of {len(flagged)} flagged scenes "
+            f"({pct:.0f}% of episode), cleared {cleared} to AI generation")
 
 
 def smooth_ambient(scenes, warnings, min_run=3, max_cues=14):
@@ -391,6 +455,7 @@ def main():
 
     enforce_ratio(scenes, warnings)
 
+    cap_real_photos(scenes, warnings)
     smooth_ambient(scenes, warnings)
     ambient = build_ambient_cues(scenes, ambient_prompts, warnings)
     punct = build_punctuation_cues(scenes, warnings)
