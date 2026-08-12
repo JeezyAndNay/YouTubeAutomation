@@ -251,7 +251,7 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst fs   = require('fs');\nconst vars = $(\"Set Awaiting Approval\").first().json;\nconst manifest = vars.imageManifest || JSON.parse(fs.readFileSync(vars.imageManifestPath, 'utf-8'));\nconst prompts  = manifest.image_prompts || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.imageCost  = 0;\nstaticData.imageCount = 0;\n\nreturn prompts.map((p, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/images',\n    promptIndex:  i + 1,\n    totalPrompts: prompts.length,\n    assetType:    'image',\n    sceneId:      p.scene_id,\n    sequence:     p.sequence,\n    visualIn:     p.visual_in,\n    visualOut:    p.visual_out,\n    rawPrompt:    p,\n    filename:     'image_' + p.scene_id\n  }\n}));\n"
+          "jsCode": "\nconst fs   = require('fs');\nconst vars = $(\"Set Awaiting Approval\").first().json;\nconst manifest = vars.imageManifest || JSON.parse(fs.readFileSync(vars.imageManifestPath, 'utf-8'));\nconst prompts  = manifest.image_prompts || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.imageCredits = 0;\nstaticData.imageCount = 0;\n\nreturn prompts.map((p, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/images',\n    promptIndex:  i + 1,\n    totalPrompts: prompts.length,\n    assetType:    'image',\n    sceneId:      p.scene_id,\n    sequence:     p.sequence,\n    visualIn:     p.visual_in,\n    visualOut:    p.visual_out,\n    rawPrompt:    p,\n    filename:     'image_' + p.scene_id\n  }\n}));\n"
         },
         "id": "9e2fc296-c7de-4aee-9dd4-324c2ae8dbe9",
         "name": "Extract Image Prompts",
@@ -264,7 +264,7 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst fs   = require('fs');\nconst vars = $(\"Set Awaiting Approval\").first().json;\nconst manifest = vars.videoManifest || JSON.parse(fs.readFileSync(vars.videoManifestPath, 'utf-8'));\nconst prompts  = manifest.video_prompts || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.videoCost  = 0;\nstaticData.videoCount = 0;\n\nreturn prompts.map((p, i) => ({\n  json: {\n    ...vars,\n    assetDir:             vars.projectDir + '/videos',\n    promptIndex:          i + 1,\n    totalPrompts:         prompts.length,\n    assetType:            'video',\n    sceneId:              p.scene_id,\n    sequence:             p.sequence,\n    visualIn:             p.visual_in,\n    visualOut:            p.visual_out,\n    targetDuration:       p.target_veo_duration_seconds || 8,\n    rawPrompt:            p,\n    filename:             'video_' + p.scene_id\n  }\n}));\n"
+          "jsCode": "\nconst fs   = require('fs');\nconst vars = $(\"Set Awaiting Approval\").first().json;\nconst manifest = vars.videoManifest || JSON.parse(fs.readFileSync(vars.videoManifestPath, 'utf-8'));\nconst prompts  = manifest.video_prompts || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.videoCredits = 0;\nstaticData.videoCount = 0;\n\nreturn prompts.map((p, i) => ({\n  json: {\n    ...vars,\n    assetDir:             vars.projectDir + '/videos',\n    promptIndex:          i + 1,\n    totalPrompts:         prompts.length,\n    assetType:            'video',\n    sceneId:              p.scene_id,\n    sequence:             p.sequence,\n    visualIn:             p.visual_in,\n    visualOut:            p.visual_out,\n    targetDuration:       p.target_veo_duration_seconds || 8,\n    rawPrompt:            p,\n    filename:             'video_' + p.scene_id\n  }\n}));\n"
         },
         "id": "8baa674a-8f1c-4ea9-bb19-ab8f31970152",
         "name": "Extract Video Prompts",
@@ -277,7 +277,7 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst fs   = require('fs');\nconst vars = $('Parse Media Timeline').first().json;\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst cues     = timeline.music_cues || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.musicCost  = 0;\nstaticData.musicCount = 0;\n\nreturn cues.map((c, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/music',\n    promptIndex:  i + 1,\n    totalPrompts: cues.length,\n    assetType:    'music',\n    cueId:        c.cue_id,\n    cueAct:       c.act,\n    cueStart:     c.start,\n    cueEnd:       c.end,\n    cueDuration:  c.duration,\n    rawPrompt:    c,\n    filename:     'music_' + String(i + 1).padStart(2, '0')\n  }\n}));\n"
+          "jsCode": "\nconst fs   = require('fs');\nconst vars = $('Parse Media Timeline').first().json;\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst cues     = timeline.music_cues || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.musicCredits = 0;\nstaticData.musicCount = 0;\n\nreturn cues.map((c, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/music',\n    promptIndex:  i + 1,\n    totalPrompts: cues.length,\n    assetType:    'music',\n    cueId:        c.cue_id,\n    cueAct:       c.act,\n    cueStart:     c.start,\n    cueEnd:       c.end,\n    cueDuration:  c.duration,\n    rawPrompt:    c,\n    filename:     'music_' + String(i + 1).padStart(2, '0')\n  }\n}));\n"
         },
         "id": "a826a467-e267-4c5b-b936-87e1652768e1",
         "name": "Extract Music Cues",
@@ -684,7 +684,7 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst fs   = require('fs');\nconst item = $input.item.json;\nconst c    = item.rawPrompt;\n\n// Save Music File calls realpath on assetDir. Without this the entire run dies\n// with ENOENT at the very last stage - after every image and video has already\n// been generated and paid for. Prepare SFX Request already does this; music was\n// the odd one out. (Derinkuyu exec 537, 2026-08-10.)\ntry { fs.mkdirSync(item.assetDir, { recursive: true }); } catch(e) {}\n\n// Build ElevenLabs sound generation body for music\n// Note: ElevenLabs sound generation caps at 22 seconds per clip.\n// The render pipeline loops/crossfades clips to cover full act durations.\nconst promptText = c.suno_prompt || c.style_prompt || c.mood || '';\n\nconst elBody = {\n  text:             promptText,\n  duration_seconds: Math.min(c.duration || 22, 22),\n  prompt_influence: 0.5,\n  output_format:    'mp3_44100_128'\n};\n\nreturn [{ json: {\n  ...item,\n  elBody:     JSON.stringify(elBody),\n  promptText,\n  filepath:   item.assetDir + '/' + item.filename + '.mp3'\n} }];\n"
+          "jsCode": "const fs   = require('fs');\nconst item = $input.item.json;\nconst c    = item.rawPrompt;\n\n// Save Music File calls realpath on assetDir. Without this the entire run dies\n// with ENOENT at the very last stage - after every image and video has already\n// been generated and paid for. Prepare SFX Request already does this; music was\n// the odd one out. (Derinkuyu exec 537, 2026-08-10.)\ntry { fs.mkdirSync(item.assetDir, { recursive: true }); } catch(e) {}\n\n// Kie.ai / Suno generation body. Music moved to ElevenLabs sound-generation\n// briefly (2026-07/08) but that API caps prompts at 450 chars, which cannot\n// carry the era/culture accent palette's 80-150 word suno_prompt - every music\n// cue failed text_too_long. Back on Suno as of 2026-08-12; contract recovered\n// from commit 13b5faf (the last commit before the ElevenLabs switch).\nconst kieBody = {\n  model:        c.model        || 'V4_5',\n  prompt:       c.suno_prompt  || c.style_prompt || c.mood || '',\n  customMode:   c.customMode   !== undefined ? c.customMode : true,\n  instrumental: c.instrumental !== undefined ? c.instrumental : true,\n  style:        c.suno_tags    || '',\n  title:        c.suno_title   || '',\n  negativeTags: c.negativeTags || 'vocals, lyrics, voice, singing, chanting, humming, spoken word, breath sounds',\n  callBackUrl:  'http://localhost:9999/callback'\n};\n\nreturn [{ json: {\n  ...item,\n  kieBody:    JSON.stringify(kieBody),\n  promptText: kieBody.prompt,\n  filepath:   item.assetDir + '/' + item.filename + '.mp3'\n} }];"
         },
         "id": "3af72b53-a630-4ec4-b87f-8c5679aa4c26",
         "name": "Prepare Music Request",
@@ -698,34 +698,28 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://api.elevenlabs.io/v1/sound-generation",
+          "url": "https://api.kie.ai/api/v1/generate",
           "authentication": "genericCredentialType",
           "genericAuthType": "httpHeaderAuth",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
               {
-                "name": "Accept",
-                "value": "audio/mpeg"
+                "name": "Content-Type",
+                "value": "application/json"
               }
             ]
           },
           "sendBody": true,
           "contentType": "raw",
           "rawContentType": "application/json",
-          "body": "={{ $json.elBody }}",
+          "body": "={{ $json.kieBody }}",
           "options": {
-            "response": {
-              "response": {
-                "responseFormat": "file",
-                "outputPropertyName": "musicAudio"
-              }
-            },
-            "timeout": 60000
+            "timeout": 30000
           }
         },
         "id": "add1be3d-22f5-4942-a7ca-6acb87838969",
-        "name": "Submit Music to ElevenLabs",
+        "name": "Submit Music to Kie.ai",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
@@ -734,8 +728,8 @@
         ],
         "credentials": {
           "httpHeaderAuth": {
-            "id": "y7U5lql3fiLpT7fn",
-            "name": "ElevenLabs API Key"
+            "id": "0U8Ob6H4EiGx7N2v",
+            "name": "Kie AI API"
           }
         }
       },
@@ -1684,6 +1678,38 @@
         ],
         "id": "2eee3140-c8f7-4a6a-9dc5-e16d31cbd721",
         "name": "Run Merge"
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $json.assetUrl }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "User-Agent",
+                "value": "Mozilla/5.0 (RuinsUntold)"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file",
+                "outputPropertyName": "musicAudio"
+              }
+            },
+            "timeout": 60000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2132,
+          1504
+        ],
+        "id": "49f8bef0-a136-4a77-bc8f-3b1f7d397cc1",
+        "name": "Download Music from Kie.ai"
       }
     ],
     "connections": {
@@ -2116,7 +2142,7 @@
         "main": [
           [
             {
-              "node": "Submit Music to ElevenLabs",
+              "node": "Submit Music to Kie.ai",
               "type": "main",
               "index": 0
             }
@@ -2178,7 +2204,7 @@
         "main": [
           [
             {
-              "node": "Save Music File",
+              "node": "Download Music from Kie.ai",
               "type": "main",
               "index": 0
             }
@@ -2492,17 +2518,6 @@
           ]
         ]
       },
-      "Submit Music to ElevenLabs": {
-        "main": [
-          [
-            {
-              "node": "Save Music File",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Stock Sourcing": {
         "main": [
           [
@@ -2636,6 +2651,28 @@
           [
             {
               "node": "Validate Media Timeline",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Submit Music to Kie.ai": {
+        "main": [
+          [
+            {
+              "node": "Extract Music Task ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download Music from Kie.ai": {
+        "main": [
+          [
+            {
+              "node": "Save Music File",
               "type": "main",
               "index": 0
             }

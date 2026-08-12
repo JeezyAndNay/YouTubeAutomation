@@ -86,6 +86,29 @@ def r3(x):
     return round(float(x), 3)
 
 
+def load_music_composition(episode_dir):
+    """
+    Read compose_music.py's output if present.
+
+    compose_music.py may not have run, may have failed the bridge call, or may have
+    produced output that failed validation and wrote nothing — all of those are normal,
+    not errors. In every case this returns None and the caller falls back to
+    MUSIC_TEMPLATES, exactly as if this stage never existed. No episode is blocked by a
+    missing or bad music_composition.json.
+    """
+    path = os.path.join(episode_dir, "scripts", "music_composition.json")
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data.get("cues"), dict):
+        return None
+    return data
+
+
 def load_chunks(episode_dir, pattern):
     paths = sorted(glob.glob(os.path.join(episode_dir, pattern)))
     if not paths:
@@ -499,13 +522,39 @@ def main():
         c["prompt"] = TRANSITION_PROMPTS[i % len(TRANSITION_PROMPTS)]
         transitions.append(c)
 
+    composition = load_music_composition(ep)
+    era_culture_accent = None
+    if composition is not None:
+        era_culture_accent = composition.get("era_culture_accent")
+
     music = []
     for c in skel.get("music_cues") or []:
         c = dict(c)
-        mood, style = MUSIC_TEMPLATES.get(
-            c["cue_id"], ("atmospheric", "Atmospheric cinematic underscore, instrumental"))
-        c["mood"] = mood
-        c["style_prompt"] = style
+        composed = (composition or {}).get("cues", {}).get(c["cue_id"])
+        if composed:
+            # compose_music.py's era-aware output — full Suno-ready cue.
+            c["mood"] = composed.get("mood", "atmospheric")
+            c["style_prompt"] = composed.get("style_prompt", "")
+            c["suno_prompt"] = composed.get("suno_prompt", "")
+            c["suno_tags"] = composed.get("suno_tags", "")
+            c["suno_title"] = composed.get("suno_title", "")
+            c["instrumental"] = composed.get("instrumental", True)
+            c["customMode"] = composed.get("customMode", True)
+            c["model"] = composed.get("model", "V4_5")
+            c["negativeTags"] = composed.get(
+                "negativeTags",
+                "vocals, lyrics, voice, singing, chanting, humming, spoken word, breath sounds")
+        else:
+            # No composition (never ran, failed the bridge call, or failed validation) —
+            # generic fallback, same behaviour as before compose_music.py existed.
+            mood, style = MUSIC_TEMPLATES.get(
+                c["cue_id"], ("atmospheric", "Atmospheric cinematic underscore, instrumental"))
+            c["mood"] = mood
+            c["style_prompt"] = style
+            if composition is not None:
+                warnings.append(
+                    f"{c['cue_id']}: music_composition.json present but missing this "
+                    f"cue — used generic fallback")
         music.append(c)
 
     for s in scenes:
@@ -520,7 +569,8 @@ def main():
         "topic": skel.get("topic"),
         "audio_file": skel.get("audio_file"),
         "total_duration_seconds": skel["total_duration_seconds"],
-        "generated_by": "segment.py + media_describe_agent + merge_timeline.py",
+        "generated_by": "segment.py + media_describe_agent + compose_music_agent + merge_timeline.py",
+        "era_culture_accent": era_culture_accent or "none — generic cinematic documentary",
         "default_transition": skel.get("default_transition"),
         "scenes": scenes,
         "music_cues": music,
