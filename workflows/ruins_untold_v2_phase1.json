@@ -805,6 +805,33 @@
           4144,
           304
         ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const fs = require('fs');\nconst vars = $input.first().json;\n\n// Pause here before the script is sent to ElevenLabs for paid TTS synthesis.\n// script.md is already on disk (written by Parse Script, earlier in this run) \u2014\n// same narration content as `fullScript` here, just in its readable markdown form\n// rather than the EL-v3-tag-stripped concatenated text that actually gets voiced.\nconst resumeUrl = $execution.resumeUrl;\nfs.writeFileSync(vars.projectDir + '/.n8n_resume_url', resumeUrl, 'utf-8');\nfs.writeFileSync(vars.projectDir + '/.status', 'awaiting_script_approval', 'utf-8');\nconsole.log('Awaiting script approval. Resume URL:', resumeUrl);\nconsole.log('Review at:', vars.projectDir + '/scripts/script.md');\nreturn [{ json: vars }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2238,
+          434
+        ],
+        "id": "4249299a-c828-418d-898f-2ad1a54a7edb",
+        "name": "Set Script Awaiting Approval"
+      },
+      {
+        "parameters": {
+          "resume": "webhook",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1,
+        "position": [
+          2238,
+          564
+        ],
+        "id": "1789e69e-e465-42b5-a8f2-b8f9aa785579",
+        "name": "Await Script Approval"
       }
     ],
     "connections": {
@@ -1043,7 +1070,7 @@
         "main": [
           [
             {
-              "node": "Push Script to GitHub",
+              "node": "Set Script Awaiting Approval",
               "type": "main",
               "index": 0
             }
@@ -1132,6 +1159,28 @@
           [
             {
               "node": "Cleanup EL Project",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set Script Awaiting Approval": {
+        "main": [
+          [
+            {
+              "node": "Await Script Approval",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Await Script Approval": {
+        "main": [
+          [
+            {
+              "node": "Push Script to GitHub",
               "type": "main",
               "index": 0
             }
