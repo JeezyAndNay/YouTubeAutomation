@@ -133,6 +133,43 @@ export async function rejectEpisode(slug: string): Promise<{ error?: string }> {
   return {};
 }
 
+/**
+ * Approve the script (read at scripts/script.md, the "Script" artifact) and
+ * resume Phase 1, sending it to ElevenLabs for paid TTS synthesis. Mirrors
+ * approveMediaPrompts below — same .n8n_resume_url / GET-to-resume pattern —
+ * but with no editable JSON manifest: script.md is markdown, reviewed and
+ * edited (if needed) directly on disk before approving, not through an
+ * in-browser edit buffer.
+ */
+export async function approveScript(slug: string): Promise<{ error?: string }> {
+  const fs = await import("fs");
+  const path = await import("path");
+  const dir = `/Users/jneal/n8n_projects/${slug}`;
+
+  let resumeUrl: string;
+  try {
+    resumeUrl = fs.readFileSync(path.join(dir, ".n8n_resume_url"), "utf-8").trim();
+    if (!resumeUrl) throw new Error("empty");
+  } catch {
+    return { error: "No n8n resume URL found — was the workflow paused correctly?" };
+  }
+
+  setEpisodeStatus(slug, "running");
+  try {
+    const res = await fetch(resumeUrl, { method: "GET" });
+    if (!res.ok) {
+      setEpisodeStatus(slug, "awaiting_script_approval");
+      return { error: `n8n resume failed: HTTP ${res.status}` };
+    }
+  } catch (e) {
+    setEpisodeStatus(slug, "awaiting_script_approval");
+    return { error: `Failed to reach n8n: ${String(e)}` };
+  }
+
+  revalidatePath(`/episodes/${slug}`);
+  return {};
+}
+
 export async function approveMediaPrompts(
   slug: string,
   edits: { imageManifest?: string; videoManifest?: string }
