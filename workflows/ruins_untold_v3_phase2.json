@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-08-13T18:26:51.618Z",
+  "updatedAt": "2026-08-13T18:51:25.351Z",
   "createdAt": "2026-06-04T14:36:33.098Z",
   "id": "ru-phase2-v3-split",
   "name": "Ruins Untold v3 \u2014 Phase 2: Split Placement (segment + describe)",
   "description": null,
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -1012,7 +1012,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const fs = require('fs');\nconst vars = $input.first().json;\nreturn [{ json: { ...vars, timelineExists: fs.existsSync(vars.mediaTimelinePath) } }];"
+        "jsCode": "const fs = require('fs');\nconst vars = $('Prepare Media Vars').first().json;\nreturn [{ json: { ...vars, timelineExists: fs.existsSync(vars.mediaTimelinePath) } }];"
       },
       "id": "b53eb90d-9063-4f19-b3f4-2237e6a1bff8",
       "name": "Check Media Timeline",
@@ -1533,7 +1533,7 @@
         "url": "http://host.docker.internal:3333/validate",
         "sendBody": true,
         "contentType": "raw",
-        "body": "={{ JSON.stringify({ episode_dir: $json.projectDir }) }}",
+        "body": "={{ JSON.stringify({ episode_dir: $('Prepare Media Vars').first().json.projectDir }) }}",
         "options": {
           "timeout": 300000,
           "response": {
@@ -2687,9 +2687,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "8e0717f9-c692-4d86-a221-73a038900d05",
-  "activeVersionId": null,
-  "versionCounter": 5,
+  "versionId": "ef03ed14-ad95-45d5-b396-fb623847374e",
+  "activeVersionId": "ef03ed14-ad95-45d5-b396-fb623847374e",
+  "versionCounter": 8,
   "triggerCount": 1,
   "tags": [],
   "shared": [
