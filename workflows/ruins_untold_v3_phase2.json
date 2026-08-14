@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-14T12:43:17.516Z",
+  "updatedAt": "2026-08-14T17:22:21.121Z",
   "createdAt": "2026-06-04T14:36:33.098Z",
   "id": "ru-phase2-v3-split",
   "name": "Ruins Untold v3 \u2014 Phase 2: Split Placement (segment + describe)",
@@ -1299,7 +1299,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst slug = $json.body?.slug || $json.slug;\nif (!slug) throw new Error('No slug in webhook body \u2014 expected { slug: \"episode_slug\" }');\n\nconst projectDir = `/Users/jneal/n8n_projects/${slug}`;\nif (!fs.existsSync(projectDir)) throw new Error(`Project directory not found: ${projectDir}`);\n\nconst voicePackage = JSON.parse(fs.readFileSync(path.join(projectDir, 'audio', 'voice_package.json'), 'utf-8'));\nconst topic = voicePackage.topic || slug;\n\nreturn [{ json: {\n  slug,\n  projectDir,\n  topic,\n  voiceFinalPath:    path.join(projectDir, 'audio', 'voiceover_final.mp3'),\n  scriptPath:        path.join(projectDir, 'scripts', 'script.md'),\n  researchPath:      path.join(projectDir, 'scripts', 'research_package.json'),\n  voicePackagePath:  path.join(projectDir, 'audio', 'voice_package.json'),\n  mediaTimelinePath: path.join(projectDir, 'scripts', 'media_timeline.json'),\n  imageManifestPath: path.join(projectDir, 'scripts', 'image_manifest.json'),\n  videoManifestPath: path.join(projectDir, 'scripts', 'video_manifest.json'),\n  metadataPath:      path.join(projectDir, 'scripts', 'metadata_package.json')\n} }];"
+        "jsCode": "const fs   = require('fs');\nconst path = require('path');\nconst slug = $json.body?.slug || $json.slug;\nif (!slug) throw new Error('No slug in webhook body \u2014 expected { slug: \"episode_slug\" }');\n\nconst projectDir = `/Users/jneal/n8n_projects/${slug}`;\nif (!fs.existsSync(projectDir)) throw new Error(`Project directory not found: ${projectDir}`);\n\n// Write execution -> projectDir mapping for the Error Trigger\nconst execMapDir = '/Users/jneal/n8n_projects/.exec_map';\nfs.mkdirSync(execMapDir, { recursive: true });\nfs.writeFileSync(path.join(execMapDir, $execution.id), projectDir, 'utf-8');\n\nconst voicePackage = JSON.parse(fs.readFileSync(path.join(projectDir, 'audio', 'voice_package.json'), 'utf-8'));\nconst topic = voicePackage.topic || slug;\n\nreturn [{ json: {\n  slug,\n  projectDir,\n  topic,\n  voiceFinalPath:    path.join(projectDir, 'audio', 'voiceover_final.mp3'),\n  scriptPath:        path.join(projectDir, 'scripts', 'script.md'),\n  researchPath:      path.join(projectDir, 'scripts', 'research_package.json'),\n  voicePackagePath:  path.join(projectDir, 'audio', 'voice_package.json'),\n  mediaTimelinePath: path.join(projectDir, 'scripts', 'media_timeline.json'),\n  imageManifestPath: path.join(projectDir, 'scripts', 'image_manifest.json'),\n  videoManifestPath: path.join(projectDir, 'scripts', 'video_manifest.json'),\n  metadataPath:      path.join(projectDir, 'scripts', 'metadata_package.json')\n} }];"
       },
       "id": "3fe75f26-4dbd-419c-a097-b0deb59bf70e",
       "name": "Load Project from Slug",
@@ -1710,6 +1710,30 @@
       ],
       "id": "49f8bef0-a136-4a77-bc8f-3b1f7d397cc1",
       "name": "Download Music from Kie.ai"
+    },
+    {
+      "parameters": {},
+      "id": "error-trigger-v3-added-20260814",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        2440
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const execId = $json.execution.id;\nconst fs   = require('fs');\nconst path = require('path');\nconst mapFile = '/Users/jneal/n8n_projects/.exec_map/' + execId;\n\nlet projectDir;\ntry {\n  projectDir = fs.readFileSync(mapFile, 'utf-8').trim();\n} catch {\n  console.log('[ERROR TRIGGER] No exec mapping for', execId);\n  return [{ json: { handled: false, execId } }];\n}\n\nconst errMsg = ($json.execution && $json.execution.error && $json.execution.error.message) || '';\n\ntry {\n  fs.writeFileSync(path.join(projectDir, '.status'), 'error', 'utf-8');\n  console.log('[ERROR TRIGGER] Wrote error status to', projectDir, '-', errMsg.substring(0, 200));\n} catch (e) {\n  console.log('[ERROR TRIGGER] Failed to write status:', e.message);\n}\n\ntry { fs.unlinkSync(mapFile); } catch {}\n\nreturn [{ json: { handled: true, projectDir, execId } }];"
+      },
+      "id": "write-error-status-v3-added-20260814",
+      "name": "Write Error Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        2440
+      ]
     }
   ],
   "connections": {
@@ -2678,18 +2702,30 @@
           }
         ]
       ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Write Error Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "errorWorkflow": "ru-phase2-v3-split"
   },
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "9d97f051-03cf-4390-ac68-7be55cd19ea3",
-  "activeVersionId": "9d97f051-03cf-4390-ac68-7be55cd19ea3",
-  "versionCounter": 24,
+  "versionId": "9f6d78ca-f930-45c9-8889-3779e2c39ed0",
+  "activeVersionId": "9f6d78ca-f930-45c9-8889-3779e2c39ed0",
+  "versionCounter": 31,
   "triggerCount": 1,
   "tags": [],
   "shared": [

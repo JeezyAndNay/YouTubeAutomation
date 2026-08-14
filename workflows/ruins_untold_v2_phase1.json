@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-12T21:27:17.933Z",
+  "updatedAt": "2026-08-14T19:23:39.479Z",
   "createdAt": "2026-06-03T09:47:18.435Z",
   "id": "YNCvi72wqNsGyXtH",
   "name": "Ruins Untold v2 \u2014 Production Pipeline",
@@ -1189,7 +1189,8 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "errorWorkflow": "YNCvi72wqNsGyXtH"
   },
   "staticData": {
     "global": {
@@ -1201,9 +1202,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "a0a338fc-0718-4993-91c1-fa4ee19d36fb",
-  "activeVersionId": "a0a338fc-0718-4993-91c1-fa4ee19d36fb",
-  "versionCounter": 321,
+  "versionId": "9cd0314d-32db-4af4-b563-754a0c604d3a",
+  "activeVersionId": "9cd0314d-32db-4af4-b563-754a0c604d3a",
+  "versionCounter": 324,
   "triggerCount": 1,
   "tags": [],
   "shared": [
