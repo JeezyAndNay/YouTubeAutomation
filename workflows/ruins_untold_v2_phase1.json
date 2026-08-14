@@ -1,2394 +1,1232 @@
-[
-  {
-    "updatedAt": "2026-07-27T14:32:37.154Z",
-    "createdAt": "2026-06-03T09:47:18.435Z",
-    "id": "YNCvi72wqNsGyXtH",
-    "name": "Ruins Untold v2 \u2014 Production Pipeline",
-    "description": null,
-    "active": true,
-    "isArchived": false,
-    "nodes": [
-      {
-        "parameters": {},
-        "id": "401a41f1-2e38-40be-a549-7452c6bd4b06",
-        "name": "Manual Trigger",
-        "type": "n8n-nodes-base.manualTrigger",
-        "typeVersion": 1,
-        "position": [
-          -48,
-          -240
-        ]
-      },
-      {
-        "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
-            "mode": "id"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Ideas",
-            "mode": "name"
-          },
-          "options": {}
-        },
-        "id": "a051f7d9-6318-472c-816f-208424b219e2",
-        "name": "Read Topic Sheet",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          176,
-          -240
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "5KlwkkXYEjhrIznj",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst rows = $input.all();\nconst newRows = rows.filter(item =>\n  (item.json.STATUS || '').toString().trim().toLowerCase() === 'new'\n);\nif (newRows.length === 0) throw new Error('No rows with STATUS = \"New\" found in the Ideas sheet.');\nconst displayRows = newRows.slice(0, 10);\nconst topicList = displayRows.map((item, i) => `${i + 1}. ${item.json.TOPIC || '(no topic)'}`).join('\\n');\nreturn [{ json: { topicList, allRows: JSON.stringify(displayRows.map(r => r.json)), count: displayRows.length } }];\n"
-        },
-        "id": "86f64e14-ad79-4a6d-9d86-611512340a2f",
-        "name": "Aggregate Topics",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          384,
-          -240
-        ]
-      },
-      {
-        "parameters": {
-          "resume": "form",
-          "formTitle": "RUINS UNTOLD \u2014 CASE FILE SELECTION",
-          "formDescription": "={{ 'CLASSIFIED \u2014 INTERNAL PRODUCTION USE ONLY\\n'+ '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n'+ 'OPEN CASE FILES \u2014 STATUS: NEW\\n'+ '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n\\n'+ $json.topicList+ '\\n\\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n'+ 'Enter the case number to open for production.' }}",
-          "formFields": {
-            "values": [
-              {
-                "fieldLabel": "CASE NUMBER",
-                "fieldType": "number",
-                "placeholder": "1",
-                "requiredField": true
-              }
-            ]
-          },
-          "responseMode": "lastNode",
-          "options": {}
-        },
-        "id": "80574763-613d-446f-a501-60e8c10428ed",
-        "name": "Select Episode Topic",
-        "type": "n8n-nodes-base.wait",
-        "typeVersion": 1,
-        "position": [
-          592,
-          -240
-        ],
-        "webhookId": "22ba042a-581c-4c64-aee6-1554cce19cec"
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Aggregate Topics').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection \"${selection}\". Enter 1\u2013${allRows.length}.`);\nconst row  = allRows[selection - 1];\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nreturn [{\n  json: {\n    topic:      row.TOPIC || '',\n    audience:   'curious history fans, conspiracy-adjacent adults 25\u201345',\n    runtime:    20,\n    slug,\n    projectDir: '/Users/jneal/n8n_projects/' + slug,\n    row_number: row.row_number || null\n  }\n}];\n"
-        },
-        "id": "75fc9b0f-9859-44f2-ab1c-073614e9fbbb",
-        "name": "Look Up Selected Row",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          832,
-          -240
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "update",
-          "documentId": {
-            "__rl": true,
-            "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
-            "mode": "id"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Ideas",
-            "mode": "name"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "row_number": "={{ $json.row_number }}",
-              "STATUS": "In Progress"
-            },
-            "matchingColumns": [
-              "row_number"
-            ],
-            "schema": [
-              {
-                "id": "ID",
-                "displayName": "ID",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true,
-                "removed": false
-              },
-              {
-                "id": "DATE_ADDED",
-                "displayName": "DATE_ADDED",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true,
-                "removed": false
-              },
-              {
-                "id": "STATUS",
-                "displayName": "STATUS",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "TOPIC",
-                "displayName": "TOPIC",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "ANGLE",
-                "displayName": "ANGLE",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true,
-                "removed": false
-              },
-              {
-                "id": "KEY_EVIDENCE",
-                "displayName": "KEY_EVIDENCE",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true,
-                "removed": false
-              },
-              {
-                "id": "KEY_RESEARCHERS",
-                "displayName": "KEY_RESEARCHERS",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true,
-                "removed": false
-              },
-              {
-                "id": "HOOK_STYLE",
-                "displayName": "HOOK_STYLE",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true,
-                "removed": false
-              },
-              {
-                "id": "TONE_DIAL",
-                "displayName": "TONE_DIAL",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true,
-                "removed": false
-              },
-              {
-                "id": "RELATED_VIDEO",
-                "displayName": "RELATED_VIDEO",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true,
-                "removed": false
-              },
-              {
-                "id": "NOTES",
-                "displayName": "NOTES",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true,
-                "removed": false
-              },
-              {
-                "id": "row_number",
-                "displayName": "row_number",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "number",
-                "canBeUsedToMatch": true,
-                "readOnly": true,
-                "removed": false
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "cb28556f-ce82-406d-8e07-719ffa8a02a4",
-        "name": "Mark In Progress",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          1056,
-          -240
-        ],
-        "alwaysOutputData": true,
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "5KlwkkXYEjhrIznj",
-            "name": "Google Sheets account"
-          }
-        },
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "jsCode": "const fs   = require('fs');\nconst path = require('path');\nlet vars;\ntry { vars = $('Look Up Selected Row').first().json; } catch(e) { vars = $('Webhook Topic Setup').first().json; }\n\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(vars.projectDir, { recursive: true });\nfor (const d of dirs) {\n  fs.mkdirSync(path.join(vars.projectDir, d), { recursive: true });\n}\n\nconsole.log('Directories created: ' + vars.projectDir);\nreturn [{ json: vars }];"
-        },
-        "id": "c7740251-10a4-47f1-abaf-a39d4cd08ef9",
-        "name": "Restore Project Vars",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1280,
-          -240
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/research_agent.md', 'utf-8');\nconst userInput = JSON.stringify({ topic: vars.topic, audience: vars.audience, runtime: vars.runtime }, null, 2);\nconst prompt = sys + '\\n\\n---\\n\\nYour input:\\n\\n' + userInput;\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt }) } }];\n"
-        },
-        "id": "658d0f93-92a5-420c-9f51-eb9b6b77b898",
-        "name": "Build Research Prompt",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          -80,
-          368
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "http://host.docker.internal:3333/generate",
-          "sendBody": true,
-          "contentType": "raw",
-          "body": "={{ $json.claudeBody }}",
-          "options": {
-            "timeout": 1500000
-          }
-        },
-        "id": "a97ff91c-ddd2-499c-ac53-e3a923c7c6db",
-        "name": "Call Research Agent",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          144,
-          368
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Research Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0) {\n  if (inp.error === 'usage_limit') throw new Error('USAGE_LIMIT_PAUSE|' + (inp.retryAfter || ''));\n  throw new Error('Claude bridge error: ' + inp.error);\n}\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = vars.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\n// Pass only project vars \u2014 research_package.json is on disk\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
-        },
-        "id": "93ce37a5-9e18-4c90-b1ef-b2ccf64d58cc",
-        "name": "Parse Research Package",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          400,
-          368
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/script_agent.md', 'utf-8');\nconst researchJson = fs.readFileSync(vars.projectDir + '/scripts/research_package.json', 'utf-8');\nconst prompt = sys + '\\n\\n---\\n\\nYour input (research_package.json):\\n\\n' + researchJson;\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt }) } }];\n"
-        },
-        "id": "87fff6aa-88ee-4020-9dab-19415e921e4a",
-        "name": "Build Script Prompt",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          640,
-          368
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "http://host.docker.internal:3333/generate",
-          "sendBody": true,
-          "contentType": "raw",
-          "body": "={{ $json.claudeBody }}",
-          "options": {
-            "timeout": 1500000
-          }
-        },
-        "id": "714319df-501f-4261-9ad8-f56c6860319b",
-        "name": "Call Script Agent",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          864,
-          368
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Script Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0) {\n  if (inp.error === 'usage_limit') throw new Error('USAGE_LIMIT_PAUSE|' + (inp.retryAfter || ''));\n  throw new Error('Claude bridge error: ' + inp.error);\n}\nconst script = (inp.output || '').trim();\nif (!script) throw new Error('Script Agent returned empty output');\nfs.writeFileSync(vars.projectDir + '/scripts/script.md', script, 'utf-8');\n// script.md is on disk \u2014 don't carry large string through item data\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
-        },
-        "id": "ade8043f-bf3e-4be6-a4a9-01861044d473",
-        "name": "Parse Script",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1168,
-          368
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/voice_agent.md', 'utf-8');\nconst scriptContent = fs.readFileSync(vars.projectDir + '/scripts/script.md', 'utf-8');\n\n// Strip SCRIPT METADATA block then split by section headers\nconst cleanScript = scriptContent.replace(/## SCRIPT METADATA[\\s\\S]*$/, '').trim();\nconst chunks = cleanScript.split(/\\n(?=## )/);\n\nconst actIdMap = {\n  'COLD OPEN':      'cold_open',\n  'CHANNEL HOOK':   'hook',\n  'CONCLUSION':     'conclusion',\n  'CALL TO ACTION': 'cta'\n};\nconst actNumRe = /ACT\\s+(\\d)/;\n\nconst results = [];\nfor (let i = 0; i < chunks.length; i++) {\n  const chunk = chunks[i].trim();\n  if (!chunk.startsWith('## ')) continue;\n  const nl = chunk.indexOf('\\n');\n  const header = (nl > -1 ? chunk.substring(0, nl) : chunk).replace(/^## /, '').trim().toUpperCase();\n  const sectionText = nl > -1 ? chunk.substring(nl + 1).trim() : '';\n  if (!sectionText) continue;\n\n  let actId = null;\n  for (const [key, id] of Object.entries(actIdMap)) {\n    if (header.includes(key)) { actId = id; break; }\n  }\n  if (!actId) {\n    const nm = header.match(actNumRe);\n    if (nm) actId = 'act' + nm[1];\n  }\n  if (!actId) continue;\n\n  const prompt = sys\n    + '\\n\\nSECTION PROCESSING MODE\\n\\n'\n    + 'Process this ONE section of the script only. Apply Steps 1-6 from your instructions.\\n'\n    + 'Act ID for this section: ' + actId + '\\n'\n    + 'Use segment IDs: ' + actId + '_01, ' + actId + '_02, etc. Sequence starts at 1.\\n\\n'\n    + 'IMPORTANT: Return ONLY a raw JSON array of segment objects. '\n    + 'No markdown fences, no outer wrapper object, no explanation text.\\n\\n'\n    + 'Section text:\\n\\n' + sectionText;\n\n  results.push({\n    json: {\n      ...vars,\n      actId,\n      sectionIndex: i,\n      claudeBody: JSON.stringify({ prompt, max_tokens: 8192, effort: \"low\" })\n    }\n  });\n}\n\nreturn results;"
-        },
-        "id": "27fbc8ec-8f97-4e57-9b9c-9eb2f9118293",
-        "name": "Split Script by Section",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          48,
-          608
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "http://host.docker.internal:3333/generate",
-          "sendBody": true,
-          "contentType": "raw",
-          "body": "={{ $json.claudeBody }}",
-          "options": {
-            "timeout": 3600000
-          }
-        },
-        "id": "7675c05c-fa15-42f8-84e4-f5c305a38d7a",
-        "name": "Call Voice Agent",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          272,
-          608
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const responses    = $input.all();\nconst sectionItems = $('Split Script by Section').all();\n\nreturn responses.map((resp, i) => {\n  const vars  = sectionItems[i].json;\n  const actId = vars.actId;\n  const inp   = resp.json;\n\n  if (inp.exitCode !== undefined && inp.exitCode !== 0) {\n    if (inp.error === 'usage_limit') throw new Error('USAGE_LIMIT_PAUSE|' + (inp.retryAfter || ''));\n    throw new Error('Voice chunk error [' + actId + ']: ' + inp.error);\n  }\n\n  let raw = (inp.output || '').trim();\n  const m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\n  if (m) raw = m[1].trim();\n\n  let segments;\n  try {\n    segments = JSON.parse(raw);\n  } catch (e) {\n    const s = raw.indexOf('['), en = raw.lastIndexOf(']');\n    if (s === -1 || en === -1)\n      throw new Error('Cannot parse segments for ' + actId + '. Raw: ' + raw.substring(0, 200));\n    segments = JSON.parse(raw.substring(s, en + 1));\n  }\n\n  if (!Array.isArray(segments))\n    throw new Error('Expected array for ' + actId + ', got ' + typeof segments);\n\n  return { json: { ...vars, segments } };\n});"
-        },
-        "id": "6bc0f2a3-4a61-4853-b011-b865ee6a3af7",
-        "name": "Parse Voice Chunk",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          528,
-          608
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst inp  = $input.first().json;\nreturn inp.voicePackage.segments.map((seg, i) => ({\n  json: {\n    projectDir:   inp.projectDir,\n    voiceId:      inp.voicePackage.voice_id,\n    model:        inp.voicePackage.model,\n    segmentId:    seg.segment_id,\n    sequence:     seg.sequence,\n    seqPad:       String(seg.sequence).padStart(3, '0'),\n    chunkText:    seg.voice_optimized_text,\n    isFirstChunk: i === 0\n  }\n}));\n"
-        },
-        "id": "6c3dacd1-a5a7-4b2d-b91f-0069f785c222",
-        "name": "Extract Voice Segments",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1840,
-          304
-        ]
-      },
-      {
-        "parameters": {
-          "content": "## Ruins Untold v2 \u2014 Phase 1\n**Topic \u2192 Research \u2192 Script \u2192 Voice \u2192 TTS (ElevenLabs v3) \u2192 Concat**\n\n- Claude bridge must be running\n- `ElevenLabs API Key` credential set\n- `Google Sheets account` credential set",
-          "height": 532,
-          "width": 1640,
-          "color": "#000485"
-        },
-        "id": "0cd72025-205a-4456-918d-5b3da452f891",
-        "name": "Note: Overview",
-        "type": "n8n-nodes-base.stickyNote",
-        "typeVersion": 1,
-        "position": [
-          -160,
-          -400
-        ]
-      },
-      {
-        "parameters": {
-          "content": "## Agent Pattern\nEach agent = **Build Prompt** (Code) \u2192 **Call Claude** (HTTP) \u2192 **Parse + Save** (Code)\n\nNo `fetch` or `async` in Code nodes \u2014 HTTP calls are httpRequest nodes.",
-          "height": 644,
-          "width": 1640,
-          "color": "#4E3B3C"
-        },
-        "id": "ace72299-124b-4289-a398-056fab8a34b0",
-        "name": "Note: Agents",
-        "type": "n8n-nodes-base.stickyNote",
-        "typeVersion": 1,
-        "position": [
-          -160,
-          176
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const fs       = require('fs');\nconst allItems = $input.all();\nconst vars     = allItems[0].json;\n\nlet allSegments = [];\nlet seq = 1;\nfor (const item of allItems) {\n  for (const seg of (item.json.segments || [])) {\n    seg.sequence = seq++;\n    allSegments.push(seg);\n  }\n}\n\nconst voicePackage = {\n  topic:    vars.topic,\n  voice_id: 'Lp2NZJAfG4zDynNcYPSz',\n  model:    'eleven_v3',\n  stability: 'natural',\n  total_word_count: allSegments.reduce((s, seg) => s + (seg.word_count || 0), 0),\n  estimated_total_runtime_seconds: allSegments.reduce((s, seg) => s + (seg.estimated_duration_seconds || 0), 0),\n  segments: allSegments\n};\n\nconst pkgPath = vars.projectDir + '/audio/voice_package.json';\nfs.writeFileSync(pkgPath, JSON.stringify(voicePackage, null, 2), 'utf-8');\n\nconst sd = $getWorkflowStaticData('global');\nsd.ruinsVoicePrevIds = [];\n\nreturn [{ json: { ...vars, voicePackage } }];"
-        },
-        "id": "bb96b9d2-dab1-46fa-bd98-2c62f8e7615f",
-        "name": "Merge Voice Chunks",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          944,
-          608
-        ]
-      },
-      {
-        "parameters": {
-          "content": "## Voiceover Recording\nSend Enhanced Script to ElevenLabs",
-          "height": 976,
-          "width": 2336,
-          "color": 4
-        },
-        "type": "n8n-nodes-base.stickyNote",
-        "position": [
-          1520,
-          176
-        ],
-        "typeVersion": 1,
-        "id": "e49e51eb-4fe4-4746-95ef-08f1f520e24c",
-        "name": "Sticky Note"
-      },
-      {
-        "parameters": {
-          "httpMethod": "POST",
-          "path": "ruins-untold/phase1",
-          "options": {}
-        },
-        "id": "2b509c15-7152-4515-b6a2-c4eb7d8c0249",
-        "name": "Webhook Trigger",
-        "type": "n8n-nodes-base.webhook",
-        "typeVersion": 2,
-        "position": [
-          -16,
-          0
-        ],
-        "webhookId": "5268010f-8d13-4dab-a2d2-a704e729c99d"
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst body = $input.first().json.body || $input.first().json;\nconst topic = (body.topic || '').trim();\nif (!topic) throw new Error('Webhook payload must include { \"topic\": \"...\" }');\n\n// Use pre-created slug/projectDir if provided (promoted from Ideas page), else generate\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = body.slug || (topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/, '').substring(0, 45) + '_' + ts);\nconst projectDir = body.projectDir || ('/Users/jneal/n8n_projects/' + slug);\n\n// Ensure directories exist (idempotent if already created by web app)\nconst fs   = require('fs');\nconst path = require('path');\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(projectDir, { recursive: true });\nfor (const d of dirs) { fs.mkdirSync(path.join(projectDir, d), { recursive: true }); }\n\n// Write full topic so the web UI can display it without slug truncation\nfs.writeFileSync(path.join(projectDir, '.topic'), topic, 'utf-8');\n\n\n// Write execution -> projectDir mapping for error trigger\nconst execMapDir = '/Users/jneal/n8n_projects/.exec_map';\nfs.mkdirSync(execMapDir, { recursive: true });\nfs.writeFileSync(require('path').join(execMapDir, $execution.id), projectDir, 'utf-8');\nreturn [{ json: {\n  topic,\n  audience: 'curious history fans, conspiracy-adjacent adults 25-45',\n  runtime:  20,\n  slug,\n  projectDir,\n  row_number: body.rowNumber || null\n} }];\n"
-        },
-        "id": "f6701a7b-5d74-4ddb-a2bf-96f6aa17f5da",
-        "name": "Webhook Topic Setup",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          736,
-          0
-        ]
-      },
-      {
-        "parameters": {},
-        "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        "name": "Error Trigger",
-        "type": "n8n-nodes-base.errorTrigger",
-        "typeVersion": 1,
-        "position": [
-          352,
-          976
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const execId = $json.execution.id;\nconst fs   = require('fs');\nconst path = require('path');\nconst mapFile = '/Users/jneal/n8n_projects/.exec_map/' + execId;\n\nlet projectDir;\ntry {\n  projectDir = fs.readFileSync(mapFile, 'utf-8').trim();\n} catch {\n  console.log('[ERROR TRIGGER] No exec mapping for', execId);\n  return [{ json: { handled: false, execId } }];\n}\n\nconst errMsg = ($json.execution && $json.execution.error && $json.execution.error.message) || '';\nconst pauseMatch = errMsg.match(/^USAGE_LIMIT_PAUSE\\|(.*)$/);\n\ntry {\n  if (pauseMatch) {\n    const retryAfter = pauseMatch[1] || null;\n    fs.writeFileSync(path.join(projectDir, '.status'), 'paused_until', 'utf-8');\n    fs.writeFileSync(path.join(projectDir, '.paused_until'), JSON.stringify({\n      retryAfter,\n      phase: 1,\n      pausedAt: new Date().toISOString()\n    }, null, 2), 'utf-8');\n    console.log('[ERROR TRIGGER] Usage limit reached \u2014 paused', projectDir, 'until', retryAfter);\n  } else {\n    fs.writeFileSync(path.join(projectDir, '.status'), 'error', 'utf-8');\n    console.log('[ERROR TRIGGER] Wrote error status to', projectDir);\n  }\n} catch (e) {\n  console.log('[ERROR TRIGGER] Failed to write status:', e.message);\n}\n\ntry { fs.unlinkSync(mapFile); } catch {}\n\nreturn [{ json: { handled: true, projectDir, execId, paused: !!pauseMatch } }];\n"
-        },
-        "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-        "name": "Write Error Status",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          544,
-          976
-        ]
-      },
-      {
-        "parameters": {
-          "content": "## Workflow Error\n",
-          "height": 320,
-          "width": 496,
-          "color": "#A80000"
-        },
-        "type": "n8n-nodes-base.stickyNote",
-        "position": [
-          256,
-          864
-        ],
-        "typeVersion": 1,
-        "id": "480ac859-d719-4503-8d39-1cb8ec2a578f",
-        "name": "Sticky Note1"
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst allItems = $input.all();\nconst first    = allItems[0].json;\n\n// Approved EL v3 behavior tags \u2014 keep these, strip everything else in brackets\n// (phonetic guides like [POO-mah POON-koo] would be read aloud literally by EL)\nconst ALLOWED_TAGS = new Set(['[whispers]', '[curious]', '[pause]', '[awe]', '[dramatic tone]']);\n\nfunction stripPhoneticsKeepTags(text) {\n  return text\n    .replace(/\\[[^\\]]+\\]/g, (match) => ALLOWED_TAGS.has(match) ? match : '')\n    .replace(/  +/g, ' ')   // collapse double-spaces left by stripped brackets\n    .trim();\n}\n\n// Concatenate voice_optimized_text from every segment, stripping phonetic brackets\nconst fullScript = allItems\n  .map(it => stripPhoneticsKeepTags(it.json.chunkText))\n  .join('\\n\\n');\n\n// Always use canonical voice ID \u2014 voice_package.json may carry a stale one\nconst voiceId   = 'Lp2NZJAfG4zDynNcYPSz';\nconst slug      = first.projectDir.split('/').pop();\nconst ghPath    = `episodes/${slug}/script_el.txt`;\nconst rawUrl    = `https://raw.githubusercontent.com/JeezyAndNay/YouTubeAutomation/main/${ghPath}`;\nconst b64Script = Buffer.from(fullScript).toString('base64');\n\nconsole.log(`[PROJECTS] Script ready \u2014 ${allItems.length} segments, ${fullScript.length} chars`);\n\nreturn [{\n  json: {\n    projectDir:   first.projectDir,\n    voiceId,\n    slug,\n    fullScript,\n    b64Script,\n    githubPath:   ghPath,\n    rawUrl,\n    segmentCount: allItems.length\n  }\n}];\n"
-        },
-        "id": "82b79b19-aee4-4fd9-8712-527904ddcdb1",
-        "name": "Aggregate Script",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2128,
-          304
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst GH_TOKEN = $env.GITHUB_TOKEN;\nif (!GH_TOKEN) throw new Error('GITHUB_TOKEN not in $env');\n\nconst agg    = $('Aggregate Script').item.json;\nconst ghPath = agg.githubPath;\nconst slug   = agg.slug;\n\nlet sha = null;\nconst checkResp = await httpsReq('GET',\n  `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n  { Authorization: `Bearer ${GH_TOKEN}`, 'User-Agent': 'ruins-untold-n8n' }\n);\nif (checkResp.statusCode === 200 && checkResp.body?.sha) {\n  sha = checkResp.body.sha;\n}\n\nconst body = { message: `Add EL script for ${slug}`, content: agg.b64Script };\nif (sha) body.sha = sha;\n\nconst putResp = await httpsReq('PUT',\n  `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n  { Authorization: `Bearer ${GH_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'ruins-untold-n8n' },\n  JSON.stringify(body)\n);\n\nif (putResp.statusCode < 200 || putResp.statusCode >= 300) {\n  throw new Error(`GitHub push failed ${putResp.statusCode}: ${putResp.rawBody.slice(0,300)}`);\n}\n\nconst ghSha = putResp.body?.content?.sha ?? null;\nconsole.log(`[GITHUB] Pushed: ${ghPath} SHA=${ghSha?.slice(0,8) ?? 'n/a'}`);\nawait new Promise(r => setTimeout(r, 3000));\nreturn [{ json: { ...agg, githubSha: ghSha } }];\n",
-          "mode": "runOnceForAllItems"
-        },
-        "id": "606be494-d818-46da-ab4b-1cd80fc11cda",
-        "name": "Push Script to GitHub",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2352,
-          304
-        ],
-        "credentials": {}
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.elevenlabs.io/v1/studio/projects",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
-          "credentials": {
-            "httpHeaderAuth": {
-              "id": "y7U5lql3fiLpT7fn",
-              "name": "ElevenLabs API Key"
-            }
-          },
-          "sendBody": true,
-          "contentType": "multipart-form-data",
-          "bodyParameters": {
-            "parameters": [
-              {
-                "name": "name",
-                "value": "={{ $('Aggregate Script').item.json.slug }}"
-              },
-              {
-                "name": "default_title_voice_id",
-                "value": "={{ $('Aggregate Script').item.json.voiceId }}"
-              },
-              {
-                "name": "default_paragraph_voice_id",
-                "value": "={{ $('Aggregate Script').item.json.voiceId }}"
-              },
-              {
-                "name": "default_model_id",
-                "value": "eleven_v3"
-              },
-              {
-                "name": "from_url",
-                "value": "={{ $('Push Script to GitHub').item.json.rawUrl }}"
-              },
-              {
-                "name": "voice_settings",
-                "value": "{\"voice_id\": \"Lp2NZJAfG4zDynNcYPSz\", \"stability\": 0.35, \"similarity_boost\": 0.75, \"style\": 0.35, \"use_speaker_boost\": true}"
-              }
-            ]
-          },
-          "options": {
-            "timeout": 30000
-          }
-        },
-        "id": "9e9f7599-a140-457c-b069-5fe45be915ea",
-        "name": "Create EL Project",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          2576,
-          304
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "y7U5lql3fiLpT7fn",
-            "name": "ElevenLabs API Key"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "method": "GET",
-          "url": "=https://api.elevenlabs.io/v1/studio/projects/{{ $('Create EL Project').item.json.project.project_id }}/snapshots",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
-          "credentials": {
-            "httpHeaderAuth": {
-              "id": "y7U5lql3fiLpT7fn",
-              "name": "ElevenLabs API Key"
-            }
-          },
-          "sendBody": false,
-          "options": {
-            "timeout": 30000
-          }
-        },
-        "id": "59c3face-1b71-4233-9484-45069c3e7a86",
-        "name": "Create EL Chapter",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          2800,
-          304
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "y7U5lql3fiLpT7fn",
-            "name": "ElevenLabs API Key"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "=https://api.elevenlabs.io/v1/studio/projects/{{ $('Create EL Project').item.json.project.project_id }}/convert",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
-          "credentials": {
-            "httpHeaderAuth": {
-              "id": "y7U5lql3fiLpT7fn",
-              "name": "ElevenLabs API Key"
-            }
-          },
-          "options": {
-            "timeout": 30000
-          }
-        },
-        "id": "7a3bf151-b286-49ce-86e1-52b84cbe0884",
-        "name": "Trigger EL Conversion",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          3024,
-          304
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "y7U5lql3fiLpT7fn",
-            "name": "ElevenLabs API Key"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst EL_KEY    = $env.ELEVENLABS_API_KEY;\nconst projectId = $('Create EL Project').item.json.project.project_id;\n\nif (!EL_KEY)    throw new Error('ELEVENLABS_API_KEY not in $env');\nif (!projectId) throw new Error('No project_id from Create EL Project (expected .project.project_id)');\n\nconst maxAttempts = 25;\nconst intervalMs  = 45000;\n\nfor (let attempt = 1; attempt <= maxAttempts; attempt++) {\n  await new Promise(r => setTimeout(r, intervalMs));\n  const resp = await httpsReq('GET',\n    `https://api.elevenlabs.io/v1/studio/projects/${projectId}`,\n    { 'xi-api-key': EL_KEY }\n  );\n  const data    = resp.body;\n  const state   = data?.state ?? 'unknown';\n  const canDl   = data?.can_be_downloaded ?? false;\n  const ch0     = (data?.chapters ?? [])[0];\n  const chState = ch0?.state ?? 'unknown';\n  console.log(`[POLL ${attempt}/${maxAttempts}] project=${state} chapter=${chState} can_dl=${canDl}`);\n\n  if (canDl === true) {\n    return [{ json: { projectId, state, chapterState: chState, attempts: attempt } }];\n  }\n  if (state === 'error' || state === 'failed') {\n    throw new Error(`EL conversion failed (${state}): ${ch0?.last_conversion_error || JSON.stringify(data)}`);\n  }\n}\nthrow new Error(`EL conversion timed out after ${maxAttempts} polls (~${Math.round(maxAttempts * intervalMs / 60000)} min)`);\n"
-        },
-        "id": "5d3d9354-8a3f-4202-a2ef-78d997d5253c",
-        "name": "Poll EL Conversion",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          3248,
-          304
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "=https://api.elevenlabs.io/v1/studio/projects/{{ $('Create EL Project').item.json.project.project_id }}/snapshots/{{ $('Create EL Chapter').item.json.snapshots[0].project_snapshot_id }}/stream",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
-          "credentials": {
-            "httpHeaderAuth": {
-              "id": "y7U5lql3fiLpT7fn",
-              "name": "ElevenLabs API Key"
-            }
-          },
-          "options": {
-            "response": {
-              "response": {
-                "responseFormat": "file",
-                "outputPropertyName": "voiceoverAudio"
-              }
-            },
-            "timeout": 120000
-          },
-          "sendBody": true,
-          "contentType": "json",
-          "body": "{}"
-        },
-        "id": "e2362eea-9c12-46c2-abac-4b5b90ad55f1",
-        "name": "Download Voiceover",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          3472,
-          304
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "y7U5lql3fiLpT7fn",
-            "name": "ElevenLabs API Key"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "fileName": "={{ $('Aggregate Script').item.json.projectDir }}/audio/voiceover_final.mp3",
-          "dataPropertyName": "voiceoverAudio"
-        },
-        "id": "f1852cbc-005b-4548-9b9f-fce39bed5e69",
-        "name": "Save Voiceover Final",
-        "type": "n8n-nodes-base.writeBinaryFile",
-        "typeVersion": 1,
-        "position": [
-          3696,
-          304
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst GH_TOKEN = $env.GITHUB_TOKEN;\nconst agg      = $('Aggregate Script').item.json;\nconst ghPath   = agg.githubPath;\n\ntry {\n  const checkResp = await httpsReq('GET',\n    `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n    { Authorization: `Bearer ${GH_TOKEN}`, 'User-Agent': 'ruins-untold-n8n' }\n  );\n  if (checkResp.statusCode === 200 && checkResp.body?.sha) {\n    await httpsReq('DELETE',\n      `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n      { Authorization: `Bearer ${GH_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'ruins-untold-n8n' },\n      JSON.stringify({ message: `Remove EL script for ${agg.slug}`, sha: checkResp.body.sha })\n    );\n    console.log(`[CLEANUP] Deleted GitHub file: ${ghPath}`);\n  }\n} catch(e) {\n  console.log(`[CLEANUP] GitHub delete skipped: ${e.message}`);\n}\n\nreturn [{ json: { projectDir: agg.projectDir, voiceoverReady: true } }];\n"
-        },
-        "id": "40421e7e-4712-47e8-a036-82f84eb06634",
-        "name": "Cleanup GitHub File",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          3920,
-          304
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst EL_KEY    = $env.ELEVENLABS_API_KEY;\nconst projectId = $('Poll EL Conversion').item.json.projectId;\n\ntry {\n  const resp = await httpsReq('DELETE',\n    `https://api.elevenlabs.io/v1/studio/projects/${projectId}`,\n    { 'xi-api-key': EL_KEY }\n  );\n  console.log(`[CLEANUP] Deleted EL project: ${projectId} (${resp.statusCode})`);\n} catch(e) {\n  console.log(`[CLEANUP] EL delete non-fatal: ${e.message}`);\n}\n\nreturn $input.all();\n"
-        },
-        "id": "cf03f8b0-0e07-43b9-8f2a-3d6dd4bab77e",
-        "name": "Cleanup EL Project",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          4144,
-          304
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const fs = require('fs');\nconst vars = $input.first().json;\n\n// Pause here before the script is sent to ElevenLabs for paid TTS synthesis.\n// script.md is already on disk (written by Parse Script, earlier in this run) \u2014\n// same narration content as `fullScript` here, just in its readable markdown form\n// rather than the EL-v3-tag-stripped concatenated text that actually gets voiced.\nconst resumeUrl = $execution.resumeUrl;\nfs.writeFileSync(vars.projectDir + '/.n8n_resume_url', resumeUrl, 'utf-8');\nfs.writeFileSync(vars.projectDir + '/.status', 'awaiting_script_approval', 'utf-8');\nconsole.log('Awaiting script approval. Resume URL:', resumeUrl);\nconsole.log('Review at:', vars.projectDir + '/scripts/script.md');\nreturn [{ json: vars }];"
-        },
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2238,
-          434
-        ],
-        "id": "4249299a-c828-418d-898f-2ad1a54a7edb",
-        "name": "Set Script Awaiting Approval"
-      },
-      {
-        "parameters": {
-          "resume": "webhook",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.wait",
-        "typeVersion": 1,
-        "position": [
-          2238,
-          564
-        ],
-        "id": "1789e69e-e465-42b5-a8f2-b8f9aa785579",
-        "name": "Await Script Approval"
-      }
-    ],
-    "connections": {
-      "Manual Trigger": {
-        "main": [
-          [
-            {
-              "node": "Read Topic Sheet",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Read Topic Sheet": {
-        "main": [
-          [
-            {
-              "node": "Aggregate Topics",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Aggregate Topics": {
-        "main": [
-          [
-            {
-              "node": "Select Episode Topic",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Select Episode Topic": {
-        "main": [
-          [
-            {
-              "node": "Look Up Selected Row",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Look Up Selected Row": {
-        "main": [
-          [
-            {
-              "node": "Mark In Progress",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Mark In Progress": {
-        "main": [
-          [
-            {
-              "node": "Restore Project Vars",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Restore Project Vars": {
-        "main": [
-          [
-            {
-              "node": "Build Research Prompt",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Build Research Prompt": {
-        "main": [
-          [
-            {
-              "node": "Call Research Agent",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Call Research Agent": {
-        "main": [
-          [
-            {
-              "node": "Parse Research Package",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Parse Research Package": {
-        "main": [
-          [
-            {
-              "node": "Build Script Prompt",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Build Script Prompt": {
-        "main": [
-          [
-            {
-              "node": "Call Script Agent",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Call Script Agent": {
-        "main": [
-          [
-            {
-              "node": "Parse Script",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Parse Script": {
-        "main": [
-          [
-            {
-              "node": "Split Script by Section",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Call Voice Agent": {
-        "main": [
-          [
-            {
-              "node": "Parse Voice Chunk",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Extract Voice Segments": {
-        "main": [
-          [
-            {
-              "node": "Aggregate Script",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Split Script by Section": {
-        "main": [
-          [
-            {
-              "node": "Call Voice Agent",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Parse Voice Chunk": {
-        "main": [
-          [
-            {
-              "node": "Merge Voice Chunks",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Merge Voice Chunks": {
-        "main": [
-          [
-            {
-              "node": "Extract Voice Segments",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Webhook Trigger": {
-        "main": [
-          [
-            {
-              "node": "Webhook Topic Setup",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Webhook Topic Setup": {
-        "main": [
-          [
-            {
-              "node": "Mark In Progress",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Error Trigger": {
-        "main": [
-          [
-            {
-              "node": "Write Error Status",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Aggregate Script": {
-        "main": [
-          [
-            {
-              "node": "Set Script Awaiting Approval",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Push Script to GitHub": {
-        "main": [
-          [
-            {
-              "node": "Create EL Project",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Create EL Project": {
-        "main": [
-          [
-            {
-              "node": "Trigger EL Conversion",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Create EL Chapter": {
-        "main": [
-          [
-            {
-              "node": "Download Voiceover",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Trigger EL Conversion": {
-        "main": [
-          [
-            {
-              "node": "Poll EL Conversion",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Poll EL Conversion": {
-        "main": [
-          [
-            {
-              "node": "Create EL Chapter",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Download Voiceover": {
-        "main": [
-          [
-            {
-              "node": "Save Voiceover Final",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Save Voiceover Final": {
-        "main": [
-          [
-            {
-              "node": "Cleanup GitHub File",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Cleanup GitHub File": {
-        "main": [
-          [
-            {
-              "node": "Cleanup EL Project",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Set Script Awaiting Approval": {
-        "main": [
-          [
-            {
-              "node": "Await Script Approval",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Await Script Approval": {
-        "main": [
-          [
-            {
-              "node": "Push Script to GitHub",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
+{
+  "updatedAt": "2026-08-12T21:27:17.933Z",
+  "createdAt": "2026-06-03T09:47:18.435Z",
+  "id": "YNCvi72wqNsGyXtH",
+  "name": "Ruins Untold v2 \u2014 Production Pipeline",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "401a41f1-2e38-40be-a549-7452c6bd4b06",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -240
+      ]
     },
-    "settings": {
-      "executionOrder": "v1",
-      "binaryMode": "separate"
-    },
-    "staticData": {
-      "global": {
-        "ruinsVoicePrevIds": [
-          "9824e6d35f1b378df6b2b6c8ad72d98b",
-          "cf082735f0e272f125ce79dc4b1f340f",
-          "a43fe50a487b5f0f5074169bf6f3fae9"
-        ],
-        "retryCount_paracas_skulls_the_dna_results_that_never_got_202606121322_act3_02": 1,
-        "retryCount_paracas_skulls_the_dna_results_that_never_got_202606121322_act3_04": 1,
-        "retryCount_paracas_skulls_the_dna_results_that_never_got_202606121322_act4_02": 1
-      }
-    },
-    "meta": null,
-    "pinData": {},
-    "versionId": "0430833a-2e75-4790-a1c0-a40a1cf8cb2c",
-    "activeVersionId": "0430833a-2e75-4790-a1c0-a40a1cf8cb2c",
-    "versionCounter": 303,
-    "triggerCount": 1,
-    "shared": [
-      {
-        "updatedAt": "2026-06-03T09:47:18.435Z",
-        "createdAt": "2026-06-03T09:47:18.435Z",
-        "role": "workflow:owner",
-        "workflowId": "YNCvi72wqNsGyXtH",
-        "projectId": "ltHsn5mbKZUTpYlg",
-        "project": {
-          "updatedAt": "2026-05-18T15:28:45.014Z",
-          "createdAt": "2026-05-18T15:27:22.980Z",
-          "id": "ltHsn5mbKZUTpYlg",
-          "name": "JeezyAndNay Neal <unclejeezyandladynay@gmail.com>",
-          "type": "personal",
-          "icon": null,
-          "description": null,
-          "creatorId": "af2abf74-a4e9-4319-875f-87671c53e774"
-        }
-      }
-    ],
-    "tags": [],
-    "activeVersion": {
-      "updatedAt": "2026-07-27T14:32:37.161Z",
-      "createdAt": "2026-07-27T14:32:37.161Z",
-      "versionId": "0430833a-2e75-4790-a1c0-a40a1cf8cb2c",
-      "workflowId": "YNCvi72wqNsGyXtH",
-      "nodes": [
-        {
-          "parameters": {},
-          "id": "401a41f1-2e38-40be-a549-7452c6bd4b06",
-          "name": "Manual Trigger",
-          "type": "n8n-nodes-base.manualTrigger",
-          "typeVersion": 1,
-          "position": [
-            -48,
-            -240
-          ]
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
+          "mode": "id"
         },
-        {
-          "parameters": {
-            "documentId": {
-              "__rl": true,
-              "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
-              "mode": "id"
-            },
-            "sheetName": {
-              "__rl": true,
-              "value": "Ideas",
-              "mode": "name"
-            },
-            "options": {}
-          },
-          "id": "a051f7d9-6318-472c-816f-208424b219e2",
-          "name": "Read Topic Sheet",
-          "type": "n8n-nodes-base.googleSheets",
-          "typeVersion": 4,
-          "position": [
-            176,
-            -240
-          ],
-          "credentials": {
-            "googleSheetsOAuth2Api": {
-              "id": "5KlwkkXYEjhrIznj",
-              "name": "Google Sheets account"
-            }
-          }
+        "sheetName": {
+          "__rl": true,
+          "value": "Ideas",
+          "mode": "name"
         },
-        {
-          "parameters": {
-            "jsCode": "\nconst rows = $input.all();\nconst newRows = rows.filter(item =>\n  (item.json.STATUS || '').toString().trim().toLowerCase() === 'new'\n);\nif (newRows.length === 0) throw new Error('No rows with STATUS = \"New\" found in the Ideas sheet.');\nconst displayRows = newRows.slice(0, 10);\nconst topicList = displayRows.map((item, i) => `${i + 1}. ${item.json.TOPIC || '(no topic)'}`).join('\\n');\nreturn [{ json: { topicList, allRows: JSON.stringify(displayRows.map(r => r.json)), count: displayRows.length } }];\n"
-          },
-          "id": "86f64e14-ad79-4a6d-9d86-611512340a2f",
-          "name": "Aggregate Topics",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            384,
-            -240
-          ]
-        },
-        {
-          "parameters": {
-            "resume": "form",
-            "formTitle": "RUINS UNTOLD \u2014 CASE FILE SELECTION",
-            "formDescription": "={{ 'CLASSIFIED \u2014 INTERNAL PRODUCTION USE ONLY\\n'+ '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n'+ 'OPEN CASE FILES \u2014 STATUS: NEW\\n'+ '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n\\n'+ $json.topicList+ '\\n\\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n'+ 'Enter the case number to open for production.' }}",
-            "formFields": {
-              "values": [
-                {
-                  "fieldLabel": "CASE NUMBER",
-                  "fieldType": "number",
-                  "placeholder": "1",
-                  "requiredField": true
-                }
-              ]
-            },
-            "responseMode": "lastNode",
-            "options": {}
-          },
-          "id": "80574763-613d-446f-a501-60e8c10428ed",
-          "name": "Select Episode Topic",
-          "type": "n8n-nodes-base.wait",
-          "typeVersion": 1,
-          "position": [
-            592,
-            -240
-          ],
-          "webhookId": "22ba042a-581c-4c64-aee6-1554cce19cec"
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Aggregate Topics').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection \"${selection}\". Enter 1\u2013${allRows.length}.`);\nconst row  = allRows[selection - 1];\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nreturn [{\n  json: {\n    topic:      row.TOPIC || '',\n    audience:   'curious history fans, conspiracy-adjacent adults 25\u201345',\n    runtime:    20,\n    slug,\n    projectDir: '/Users/jneal/n8n_projects/' + slug,\n    row_number: row.row_number || null\n  }\n}];\n"
-          },
-          "id": "75fc9b0f-9859-44f2-ab1c-073614e9fbbb",
-          "name": "Look Up Selected Row",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            832,
-            -240
-          ]
-        },
-        {
-          "parameters": {
-            "operation": "update",
-            "documentId": {
-              "__rl": true,
-              "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
-              "mode": "id"
-            },
-            "sheetName": {
-              "__rl": true,
-              "value": "Ideas",
-              "mode": "name"
-            },
-            "columns": {
-              "mappingMode": "defineBelow",
-              "value": {
-                "row_number": "={{ $json.row_number }}",
-                "STATUS": "In Progress"
-              },
-              "matchingColumns": [
-                "row_number"
-              ],
-              "schema": [
-                {
-                  "id": "ID",
-                  "displayName": "ID",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true,
-                  "removed": false
-                },
-                {
-                  "id": "DATE_ADDED",
-                  "displayName": "DATE_ADDED",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true,
-                  "removed": false
-                },
-                {
-                  "id": "STATUS",
-                  "displayName": "STATUS",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true
-                },
-                {
-                  "id": "TOPIC",
-                  "displayName": "TOPIC",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true
-                },
-                {
-                  "id": "ANGLE",
-                  "displayName": "ANGLE",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true,
-                  "removed": false
-                },
-                {
-                  "id": "KEY_EVIDENCE",
-                  "displayName": "KEY_EVIDENCE",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true,
-                  "removed": false
-                },
-                {
-                  "id": "KEY_RESEARCHERS",
-                  "displayName": "KEY_RESEARCHERS",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true,
-                  "removed": false
-                },
-                {
-                  "id": "HOOK_STYLE",
-                  "displayName": "HOOK_STYLE",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true,
-                  "removed": false
-                },
-                {
-                  "id": "TONE_DIAL",
-                  "displayName": "TONE_DIAL",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true,
-                  "removed": false
-                },
-                {
-                  "id": "RELATED_VIDEO",
-                  "displayName": "RELATED_VIDEO",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true,
-                  "removed": false
-                },
-                {
-                  "id": "NOTES",
-                  "displayName": "NOTES",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "string",
-                  "canBeUsedToMatch": true,
-                  "removed": false
-                },
-                {
-                  "id": "row_number",
-                  "displayName": "row_number",
-                  "required": false,
-                  "defaultMatch": false,
-                  "display": true,
-                  "type": "number",
-                  "canBeUsedToMatch": true,
-                  "readOnly": true,
-                  "removed": false
-                }
-              ],
-              "attemptToConvertTypes": false,
-              "convertFieldsToString": false
-            },
-            "options": {}
-          },
-          "id": "cb28556f-ce82-406d-8e07-719ffa8a02a4",
-          "name": "Mark In Progress",
-          "type": "n8n-nodes-base.googleSheets",
-          "typeVersion": 4,
-          "position": [
-            1056,
-            -240
-          ],
-          "alwaysOutputData": true,
-          "credentials": {
-            "googleSheetsOAuth2Api": {
-              "id": "5KlwkkXYEjhrIznj",
-              "name": "Google Sheets account"
-            }
-          },
-          "continueOnFail": true
-        },
-        {
-          "parameters": {
-            "jsCode": "const fs   = require('fs');\nconst path = require('path');\nlet vars;\ntry { vars = $('Look Up Selected Row').first().json; } catch(e) { vars = $('Webhook Topic Setup').first().json; }\n\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(vars.projectDir, { recursive: true });\nfor (const d of dirs) {\n  fs.mkdirSync(path.join(vars.projectDir, d), { recursive: true });\n}\n\nconsole.log('Directories created: ' + vars.projectDir);\nreturn [{ json: vars }];"
-          },
-          "id": "c7740251-10a4-47f1-abaf-a39d4cd08ef9",
-          "name": "Restore Project Vars",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            1280,
-            -240
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/research_agent.md', 'utf-8');\nconst userInput = JSON.stringify({ topic: vars.topic, audience: vars.audience, runtime: vars.runtime }, null, 2);\nconst prompt = sys + '\\n\\n---\\n\\nYour input:\\n\\n' + userInput;\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt }) } }];\n"
-          },
-          "id": "658d0f93-92a5-420c-9f51-eb9b6b77b898",
-          "name": "Build Research Prompt",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            -80,
-            368
-          ]
-        },
-        {
-          "parameters": {
-            "method": "POST",
-            "url": "http://host.docker.internal:3333/generate",
-            "sendBody": true,
-            "contentType": "raw",
-            "body": "={{ $json.claudeBody }}",
-            "options": {
-              "timeout": 1500000
-            }
-          },
-          "id": "a97ff91c-ddd2-499c-ac53-e3a923c7c6db",
-          "name": "Call Research Agent",
-          "type": "n8n-nodes-base.httpRequest",
-          "typeVersion": 4.2,
-          "position": [
-            144,
-            368
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Research Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0) {\n  if (inp.error === 'usage_limit') throw new Error('USAGE_LIMIT_PAUSE|' + (inp.retryAfter || ''));\n  throw new Error('Claude bridge error: ' + inp.error);\n}\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = vars.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\n// Pass only project vars \u2014 research_package.json is on disk\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
-          },
-          "id": "93ce37a5-9e18-4c90-b1ef-b2ccf64d58cc",
-          "name": "Parse Research Package",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            400,
-            368
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/script_agent.md', 'utf-8');\nconst researchJson = fs.readFileSync(vars.projectDir + '/scripts/research_package.json', 'utf-8');\nconst prompt = sys + '\\n\\n---\\n\\nYour input (research_package.json):\\n\\n' + researchJson;\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt }) } }];\n"
-          },
-          "id": "87fff6aa-88ee-4020-9dab-19415e921e4a",
-          "name": "Build Script Prompt",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            640,
-            368
-          ]
-        },
-        {
-          "parameters": {
-            "method": "POST",
-            "url": "http://host.docker.internal:3333/generate",
-            "sendBody": true,
-            "contentType": "raw",
-            "body": "={{ $json.claudeBody }}",
-            "options": {
-              "timeout": 1500000
-            }
-          },
-          "id": "714319df-501f-4261-9ad8-f56c6860319b",
-          "name": "Call Script Agent",
-          "type": "n8n-nodes-base.httpRequest",
-          "typeVersion": 4.2,
-          "position": [
-            864,
-            368
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Script Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0) {\n  if (inp.error === 'usage_limit') throw new Error('USAGE_LIMIT_PAUSE|' + (inp.retryAfter || ''));\n  throw new Error('Claude bridge error: ' + inp.error);\n}\nconst script = (inp.output || '').trim();\nif (!script) throw new Error('Script Agent returned empty output');\nfs.writeFileSync(vars.projectDir + '/scripts/script.md', script, 'utf-8');\n// script.md is on disk \u2014 don't carry large string through item data\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
-          },
-          "id": "ade8043f-bf3e-4be6-a4a9-01861044d473",
-          "name": "Parse Script",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            1168,
-            368
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "const fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/voice_agent.md', 'utf-8');\nconst scriptContent = fs.readFileSync(vars.projectDir + '/scripts/script.md', 'utf-8');\n\n// Strip SCRIPT METADATA block then split by section headers\nconst cleanScript = scriptContent.replace(/## SCRIPT METADATA[\\s\\S]*$/, '').trim();\nconst chunks = cleanScript.split(/\\n(?=## )/);\n\nconst actIdMap = {\n  'COLD OPEN':      'cold_open',\n  'CHANNEL HOOK':   'hook',\n  'CONCLUSION':     'conclusion',\n  'CALL TO ACTION': 'cta'\n};\nconst actNumRe = /ACT\\s+(\\d)/;\n\nconst results = [];\nfor (let i = 0; i < chunks.length; i++) {\n  const chunk = chunks[i].trim();\n  if (!chunk.startsWith('## ')) continue;\n  const nl = chunk.indexOf('\\n');\n  const header = (nl > -1 ? chunk.substring(0, nl) : chunk).replace(/^## /, '').trim().toUpperCase();\n  const sectionText = nl > -1 ? chunk.substring(nl + 1).trim() : '';\n  if (!sectionText) continue;\n\n  let actId = null;\n  for (const [key, id] of Object.entries(actIdMap)) {\n    if (header.includes(key)) { actId = id; break; }\n  }\n  if (!actId) {\n    const nm = header.match(actNumRe);\n    if (nm) actId = 'act' + nm[1];\n  }\n  if (!actId) continue;\n\n  const prompt = sys\n    + '\\n\\nSECTION PROCESSING MODE\\n\\n'\n    + 'Process this ONE section of the script only. Apply Steps 1-6 from your instructions.\\n'\n    + 'Act ID for this section: ' + actId + '\\n'\n    + 'Use segment IDs: ' + actId + '_01, ' + actId + '_02, etc. Sequence starts at 1.\\n\\n'\n    + 'IMPORTANT: Return ONLY a raw JSON array of segment objects. '\n    + 'No markdown fences, no outer wrapper object, no explanation text.\\n\\n'\n    + 'Section text:\\n\\n' + sectionText;\n\n  results.push({\n    json: {\n      ...vars,\n      actId,\n      sectionIndex: i,\n      claudeBody: JSON.stringify({ prompt, max_tokens: 8192, effort: \"low\" })\n    }\n  });\n}\n\nreturn results;"
-          },
-          "id": "27fbc8ec-8f97-4e57-9b9c-9eb2f9118293",
-          "name": "Split Script by Section",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            48,
-            608
-          ]
-        },
-        {
-          "parameters": {
-            "method": "POST",
-            "url": "http://host.docker.internal:3333/generate",
-            "sendBody": true,
-            "contentType": "raw",
-            "body": "={{ $json.claudeBody }}",
-            "options": {
-              "timeout": 3600000
-            }
-          },
-          "id": "7675c05c-fa15-42f8-84e4-f5c305a38d7a",
-          "name": "Call Voice Agent",
-          "type": "n8n-nodes-base.httpRequest",
-          "typeVersion": 4.2,
-          "position": [
-            272,
-            608
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "const responses    = $input.all();\nconst sectionItems = $('Split Script by Section').all();\n\nreturn responses.map((resp, i) => {\n  const vars  = sectionItems[i].json;\n  const actId = vars.actId;\n  const inp   = resp.json;\n\n  if (inp.exitCode !== undefined && inp.exitCode !== 0) {\n    if (inp.error === 'usage_limit') throw new Error('USAGE_LIMIT_PAUSE|' + (inp.retryAfter || ''));\n    throw new Error('Voice chunk error [' + actId + ']: ' + inp.error);\n  }\n\n  let raw = (inp.output || '').trim();\n  const m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\n  if (m) raw = m[1].trim();\n\n  let segments;\n  try {\n    segments = JSON.parse(raw);\n  } catch (e) {\n    const s = raw.indexOf('['), en = raw.lastIndexOf(']');\n    if (s === -1 || en === -1)\n      throw new Error('Cannot parse segments for ' + actId + '. Raw: ' + raw.substring(0, 200));\n    segments = JSON.parse(raw.substring(s, en + 1));\n  }\n\n  if (!Array.isArray(segments))\n    throw new Error('Expected array for ' + actId + ', got ' + typeof segments);\n\n  return { json: { ...vars, segments } };\n});"
-          },
-          "id": "6bc0f2a3-4a61-4853-b011-b865ee6a3af7",
-          "name": "Parse Voice Chunk",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            528,
-            608
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst inp  = $input.first().json;\nreturn inp.voicePackage.segments.map((seg, i) => ({\n  json: {\n    projectDir:   inp.projectDir,\n    voiceId:      inp.voicePackage.voice_id,\n    model:        inp.voicePackage.model,\n    segmentId:    seg.segment_id,\n    sequence:     seg.sequence,\n    seqPad:       String(seg.sequence).padStart(3, '0'),\n    chunkText:    seg.voice_optimized_text,\n    isFirstChunk: i === 0\n  }\n}));\n"
-          },
-          "id": "6c3dacd1-a5a7-4b2d-b91f-0069f785c222",
-          "name": "Extract Voice Segments",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            1840,
-            304
-          ]
-        },
-        {
-          "parameters": {
-            "content": "## Ruins Untold v2 \u2014 Phase 1\n**Topic \u2192 Research \u2192 Script \u2192 Voice \u2192 TTS (ElevenLabs v3) \u2192 Concat**\n\n- Claude bridge must be running\n- `ElevenLabs API Key` credential set\n- `Google Sheets account` credential set",
-            "height": 532,
-            "width": 1640,
-            "color": "#000485"
-          },
-          "id": "0cd72025-205a-4456-918d-5b3da452f891",
-          "name": "Note: Overview",
-          "type": "n8n-nodes-base.stickyNote",
-          "typeVersion": 1,
-          "position": [
-            -160,
-            -400
-          ]
-        },
-        {
-          "parameters": {
-            "content": "## Agent Pattern\nEach agent = **Build Prompt** (Code) \u2192 **Call Claude** (HTTP) \u2192 **Parse + Save** (Code)\n\nNo `fetch` or `async` in Code nodes \u2014 HTTP calls are httpRequest nodes.",
-            "height": 644,
-            "width": 1640,
-            "color": "#4E3B3C"
-          },
-          "id": "ace72299-124b-4289-a398-056fab8a34b0",
-          "name": "Note: Agents",
-          "type": "n8n-nodes-base.stickyNote",
-          "typeVersion": 1,
-          "position": [
-            -160,
-            176
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "const fs       = require('fs');\nconst allItems = $input.all();\nconst vars     = allItems[0].json;\n\nlet allSegments = [];\nlet seq = 1;\nfor (const item of allItems) {\n  for (const seg of (item.json.segments || [])) {\n    seg.sequence = seq++;\n    allSegments.push(seg);\n  }\n}\n\nconst voicePackage = {\n  topic:    vars.topic,\n  voice_id: 'Lp2NZJAfG4zDynNcYPSz',\n  model:    'eleven_v3',\n  stability: 'natural',\n  total_word_count: allSegments.reduce((s, seg) => s + (seg.word_count || 0), 0),\n  estimated_total_runtime_seconds: allSegments.reduce((s, seg) => s + (seg.estimated_duration_seconds || 0), 0),\n  segments: allSegments\n};\n\nconst pkgPath = vars.projectDir + '/audio/voice_package.json';\nfs.writeFileSync(pkgPath, JSON.stringify(voicePackage, null, 2), 'utf-8');\n\nconst sd = $getWorkflowStaticData('global');\nsd.ruinsVoicePrevIds = [];\n\nreturn [{ json: { ...vars, voicePackage } }];"
-          },
-          "id": "bb96b9d2-dab1-46fa-bd98-2c62f8e7615f",
-          "name": "Merge Voice Chunks",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            944,
-            608
-          ]
-        },
-        {
-          "parameters": {
-            "content": "## Voiceover Recording\nSend Enhanced Script to ElevenLabs",
-            "height": 976,
-            "width": 2336,
-            "color": 4
-          },
-          "type": "n8n-nodes-base.stickyNote",
-          "position": [
-            1520,
-            176
-          ],
-          "typeVersion": 1,
-          "id": "e49e51eb-4fe4-4746-95ef-08f1f520e24c",
-          "name": "Sticky Note"
-        },
-        {
-          "parameters": {
-            "httpMethod": "POST",
-            "path": "ruins-untold/phase1",
-            "options": {}
-          },
-          "id": "2b509c15-7152-4515-b6a2-c4eb7d8c0249",
-          "name": "Webhook Trigger",
-          "type": "n8n-nodes-base.webhook",
-          "typeVersion": 2,
-          "position": [
-            -16,
-            0
-          ],
-          "webhookId": "5268010f-8d13-4dab-a2d2-a704e729c99d"
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst body = $input.first().json.body || $input.first().json;\nconst topic = (body.topic || '').trim();\nif (!topic) throw new Error('Webhook payload must include { \"topic\": \"...\" }');\n\n// Use pre-created slug/projectDir if provided (promoted from Ideas page), else generate\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = body.slug || (topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/, '').substring(0, 45) + '_' + ts);\nconst projectDir = body.projectDir || ('/Users/jneal/n8n_projects/' + slug);\n\n// Ensure directories exist (idempotent if already created by web app)\nconst fs   = require('fs');\nconst path = require('path');\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(projectDir, { recursive: true });\nfor (const d of dirs) { fs.mkdirSync(path.join(projectDir, d), { recursive: true }); }\n\n// Write full topic so the web UI can display it without slug truncation\nfs.writeFileSync(path.join(projectDir, '.topic'), topic, 'utf-8');\n\n\n// Write execution -> projectDir mapping for error trigger\nconst execMapDir = '/Users/jneal/n8n_projects/.exec_map';\nfs.mkdirSync(execMapDir, { recursive: true });\nfs.writeFileSync(require('path').join(execMapDir, $execution.id), projectDir, 'utf-8');\nreturn [{ json: {\n  topic,\n  audience: 'curious history fans, conspiracy-adjacent adults 25-45',\n  runtime:  20,\n  slug,\n  projectDir,\n  row_number: body.rowNumber || null\n} }];\n"
-          },
-          "id": "f6701a7b-5d74-4ddb-a2bf-96f6aa17f5da",
-          "name": "Webhook Topic Setup",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            736,
-            0
-          ]
-        },
-        {
-          "parameters": {},
-          "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-          "name": "Error Trigger",
-          "type": "n8n-nodes-base.errorTrigger",
-          "typeVersion": 1,
-          "position": [
-            352,
-            976
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "const execId = $json.execution.id;\nconst fs   = require('fs');\nconst path = require('path');\nconst mapFile = '/Users/jneal/n8n_projects/.exec_map/' + execId;\n\nlet projectDir;\ntry {\n  projectDir = fs.readFileSync(mapFile, 'utf-8').trim();\n} catch {\n  console.log('[ERROR TRIGGER] No exec mapping for', execId);\n  return [{ json: { handled: false, execId } }];\n}\n\nconst errMsg = ($json.execution && $json.execution.error && $json.execution.error.message) || '';\nconst pauseMatch = errMsg.match(/^USAGE_LIMIT_PAUSE\\|(.*)$/);\n\ntry {\n  if (pauseMatch) {\n    const retryAfter = pauseMatch[1] || null;\n    fs.writeFileSync(path.join(projectDir, '.status'), 'paused_until', 'utf-8');\n    fs.writeFileSync(path.join(projectDir, '.paused_until'), JSON.stringify({\n      retryAfter,\n      phase: 1,\n      pausedAt: new Date().toISOString()\n    }, null, 2), 'utf-8');\n    console.log('[ERROR TRIGGER] Usage limit reached \u2014 paused', projectDir, 'until', retryAfter);\n  } else {\n    fs.writeFileSync(path.join(projectDir, '.status'), 'error', 'utf-8');\n    console.log('[ERROR TRIGGER] Wrote error status to', projectDir);\n  }\n} catch (e) {\n  console.log('[ERROR TRIGGER] Failed to write status:', e.message);\n}\n\ntry { fs.unlinkSync(mapFile); } catch {}\n\nreturn [{ json: { handled: true, projectDir, execId, paused: !!pauseMatch } }];\n"
-          },
-          "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-          "name": "Write Error Status",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            544,
-            976
-          ]
-        },
-        {
-          "parameters": {
-            "content": "## Workflow Error\n",
-            "height": 320,
-            "width": 496,
-            "color": "#A80000"
-          },
-          "type": "n8n-nodes-base.stickyNote",
-          "position": [
-            256,
-            864
-          ],
-          "typeVersion": 1,
-          "id": "480ac859-d719-4503-8d39-1cb8ec2a578f",
-          "name": "Sticky Note1"
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst allItems = $input.all();\nconst first    = allItems[0].json;\n\n// Approved EL v3 behavior tags \u2014 keep these, strip everything else in brackets\n// (phonetic guides like [POO-mah POON-koo] would be read aloud literally by EL)\nconst ALLOWED_TAGS = new Set(['[whispers]', '[curious]', '[pause]', '[awe]', '[dramatic tone]']);\n\nfunction stripPhoneticsKeepTags(text) {\n  return text\n    .replace(/\\[[^\\]]+\\]/g, (match) => ALLOWED_TAGS.has(match) ? match : '')\n    .replace(/  +/g, ' ')   // collapse double-spaces left by stripped brackets\n    .trim();\n}\n\n// Concatenate voice_optimized_text from every segment, stripping phonetic brackets\nconst fullScript = allItems\n  .map(it => stripPhoneticsKeepTags(it.json.chunkText))\n  .join('\\n\\n');\n\n// Always use canonical voice ID \u2014 voice_package.json may carry a stale one\nconst voiceId   = 'Lp2NZJAfG4zDynNcYPSz';\nconst slug      = first.projectDir.split('/').pop();\nconst ghPath    = `episodes/${slug}/script_el.txt`;\nconst rawUrl    = `https://raw.githubusercontent.com/JeezyAndNay/YouTubeAutomation/main/${ghPath}`;\nconst b64Script = Buffer.from(fullScript).toString('base64');\n\nconsole.log(`[PROJECTS] Script ready \u2014 ${allItems.length} segments, ${fullScript.length} chars`);\n\nreturn [{\n  json: {\n    projectDir:   first.projectDir,\n    voiceId,\n    slug,\n    fullScript,\n    b64Script,\n    githubPath:   ghPath,\n    rawUrl,\n    segmentCount: allItems.length\n  }\n}];\n"
-          },
-          "id": "82b79b19-aee4-4fd9-8712-527904ddcdb1",
-          "name": "Aggregate Script",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            2128,
-            304
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst GH_TOKEN = $env.GITHUB_TOKEN;\nif (!GH_TOKEN) throw new Error('GITHUB_TOKEN not in $env');\n\nconst agg    = $('Aggregate Script').item.json;\nconst ghPath = agg.githubPath;\nconst slug   = agg.slug;\n\nlet sha = null;\nconst checkResp = await httpsReq('GET',\n  `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n  { Authorization: `Bearer ${GH_TOKEN}`, 'User-Agent': 'ruins-untold-n8n' }\n);\nif (checkResp.statusCode === 200 && checkResp.body?.sha) {\n  sha = checkResp.body.sha;\n}\n\nconst body = { message: `Add EL script for ${slug}`, content: agg.b64Script };\nif (sha) body.sha = sha;\n\nconst putResp = await httpsReq('PUT',\n  `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n  { Authorization: `Bearer ${GH_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'ruins-untold-n8n' },\n  JSON.stringify(body)\n);\n\nif (putResp.statusCode < 200 || putResp.statusCode >= 300) {\n  throw new Error(`GitHub push failed ${putResp.statusCode}: ${putResp.rawBody.slice(0,300)}`);\n}\n\nconst ghSha = putResp.body?.content?.sha ?? null;\nconsole.log(`[GITHUB] Pushed: ${ghPath} SHA=${ghSha?.slice(0,8) ?? 'n/a'}`);\nawait new Promise(r => setTimeout(r, 3000));\nreturn [{ json: { ...agg, githubSha: ghSha } }];\n",
-            "mode": "runOnceForAllItems"
-          },
-          "id": "606be494-d818-46da-ab4b-1cd80fc11cda",
-          "name": "Push Script to GitHub",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            2352,
-            304
-          ],
-          "credentials": {}
-        },
-        {
-          "parameters": {
-            "method": "POST",
-            "url": "https://api.elevenlabs.io/v1/studio/projects",
-            "authentication": "genericCredentialType",
-            "genericAuthType": "httpHeaderAuth",
-            "credentials": {
-              "httpHeaderAuth": {
-                "id": "y7U5lql3fiLpT7fn",
-                "name": "ElevenLabs API Key"
-              }
-            },
-            "sendBody": true,
-            "contentType": "multipart-form-data",
-            "bodyParameters": {
-              "parameters": [
-                {
-                  "name": "name",
-                  "value": "={{ $('Aggregate Script').item.json.slug }}"
-                },
-                {
-                  "name": "default_title_voice_id",
-                  "value": "={{ $('Aggregate Script').item.json.voiceId }}"
-                },
-                {
-                  "name": "default_paragraph_voice_id",
-                  "value": "={{ $('Aggregate Script').item.json.voiceId }}"
-                },
-                {
-                  "name": "default_model_id",
-                  "value": "eleven_v3"
-                },
-                {
-                  "name": "from_url",
-                  "value": "={{ $('Push Script to GitHub').item.json.rawUrl }}"
-                },
-                {
-                  "name": "voice_settings",
-                  "value": "{\"voice_id\": \"Lp2NZJAfG4zDynNcYPSz\", \"stability\": 0.35, \"similarity_boost\": 0.75, \"style\": 0.35, \"use_speaker_boost\": true}"
-                }
-              ]
-            },
-            "options": {
-              "timeout": 30000
-            }
-          },
-          "id": "9e9f7599-a140-457c-b069-5fe45be915ea",
-          "name": "Create EL Project",
-          "type": "n8n-nodes-base.httpRequest",
-          "typeVersion": 4.2,
-          "position": [
-            2576,
-            304
-          ],
-          "credentials": {
-            "httpHeaderAuth": {
-              "id": "y7U5lql3fiLpT7fn",
-              "name": "ElevenLabs API Key"
-            }
-          }
-        },
-        {
-          "parameters": {
-            "method": "GET",
-            "url": "=https://api.elevenlabs.io/v1/studio/projects/{{ $('Create EL Project').item.json.project.project_id }}/snapshots",
-            "authentication": "genericCredentialType",
-            "genericAuthType": "httpHeaderAuth",
-            "credentials": {
-              "httpHeaderAuth": {
-                "id": "y7U5lql3fiLpT7fn",
-                "name": "ElevenLabs API Key"
-              }
-            },
-            "sendBody": false,
-            "options": {
-              "timeout": 30000
-            }
-          },
-          "id": "59c3face-1b71-4233-9484-45069c3e7a86",
-          "name": "Create EL Chapter",
-          "type": "n8n-nodes-base.httpRequest",
-          "typeVersion": 4.2,
-          "position": [
-            2800,
-            304
-          ],
-          "credentials": {
-            "httpHeaderAuth": {
-              "id": "y7U5lql3fiLpT7fn",
-              "name": "ElevenLabs API Key"
-            }
-          }
-        },
-        {
-          "parameters": {
-            "method": "POST",
-            "url": "=https://api.elevenlabs.io/v1/studio/projects/{{ $('Create EL Project').item.json.project.project_id }}/convert",
-            "authentication": "genericCredentialType",
-            "genericAuthType": "httpHeaderAuth",
-            "credentials": {
-              "httpHeaderAuth": {
-                "id": "y7U5lql3fiLpT7fn",
-                "name": "ElevenLabs API Key"
-              }
-            },
-            "options": {
-              "timeout": 30000
-            }
-          },
-          "id": "7a3bf151-b286-49ce-86e1-52b84cbe0884",
-          "name": "Trigger EL Conversion",
-          "type": "n8n-nodes-base.httpRequest",
-          "typeVersion": 4.2,
-          "position": [
-            3024,
-            304
-          ],
-          "credentials": {
-            "httpHeaderAuth": {
-              "id": "y7U5lql3fiLpT7fn",
-              "name": "ElevenLabs API Key"
-            }
-          }
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst EL_KEY    = $env.ELEVENLABS_API_KEY;\nconst projectId = $('Create EL Project').item.json.project.project_id;\n\nif (!EL_KEY)    throw new Error('ELEVENLABS_API_KEY not in $env');\nif (!projectId) throw new Error('No project_id from Create EL Project (expected .project.project_id)');\n\nconst maxAttempts = 25;\nconst intervalMs  = 45000;\n\nfor (let attempt = 1; attempt <= maxAttempts; attempt++) {\n  await new Promise(r => setTimeout(r, intervalMs));\n  const resp = await httpsReq('GET',\n    `https://api.elevenlabs.io/v1/studio/projects/${projectId}`,\n    { 'xi-api-key': EL_KEY }\n  );\n  const data    = resp.body;\n  const state   = data?.state ?? 'unknown';\n  const canDl   = data?.can_be_downloaded ?? false;\n  const ch0     = (data?.chapters ?? [])[0];\n  const chState = ch0?.state ?? 'unknown';\n  console.log(`[POLL ${attempt}/${maxAttempts}] project=${state} chapter=${chState} can_dl=${canDl}`);\n\n  if (canDl === true) {\n    return [{ json: { projectId, state, chapterState: chState, attempts: attempt } }];\n  }\n  if (state === 'error' || state === 'failed') {\n    throw new Error(`EL conversion failed (${state}): ${ch0?.last_conversion_error || JSON.stringify(data)}`);\n  }\n}\nthrow new Error(`EL conversion timed out after ${maxAttempts} polls (~${Math.round(maxAttempts * intervalMs / 60000)} min)`);\n"
-          },
-          "id": "5d3d9354-8a3f-4202-a2ef-78d997d5253c",
-          "name": "Poll EL Conversion",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            3248,
-            304
-          ]
-        },
-        {
-          "parameters": {
-            "method": "POST",
-            "url": "=https://api.elevenlabs.io/v1/studio/projects/{{ $('Create EL Project').item.json.project.project_id }}/snapshots/{{ $('Create EL Chapter').item.json.snapshots[0].project_snapshot_id }}/stream",
-            "authentication": "genericCredentialType",
-            "genericAuthType": "httpHeaderAuth",
-            "credentials": {
-              "httpHeaderAuth": {
-                "id": "y7U5lql3fiLpT7fn",
-                "name": "ElevenLabs API Key"
-              }
-            },
-            "options": {
-              "response": {
-                "response": {
-                  "responseFormat": "file",
-                  "outputPropertyName": "voiceoverAudio"
-                }
-              },
-              "timeout": 120000
-            },
-            "sendBody": true,
-            "contentType": "json",
-            "body": "{}"
-          },
-          "id": "e2362eea-9c12-46c2-abac-4b5b90ad55f1",
-          "name": "Download Voiceover",
-          "type": "n8n-nodes-base.httpRequest",
-          "typeVersion": 4.2,
-          "position": [
-            3472,
-            304
-          ],
-          "credentials": {
-            "httpHeaderAuth": {
-              "id": "y7U5lql3fiLpT7fn",
-              "name": "ElevenLabs API Key"
-            }
-          }
-        },
-        {
-          "parameters": {
-            "fileName": "={{ $('Aggregate Script').item.json.projectDir }}/audio/voiceover_final.mp3",
-            "dataPropertyName": "voiceoverAudio"
-          },
-          "id": "f1852cbc-005b-4548-9b9f-fce39bed5e69",
-          "name": "Save Voiceover Final",
-          "type": "n8n-nodes-base.writeBinaryFile",
-          "typeVersion": 1,
-          "position": [
-            3696,
-            304
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst GH_TOKEN = $env.GITHUB_TOKEN;\nconst agg      = $('Aggregate Script').item.json;\nconst ghPath   = agg.githubPath;\n\ntry {\n  const checkResp = await httpsReq('GET',\n    `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n    { Authorization: `Bearer ${GH_TOKEN}`, 'User-Agent': 'ruins-untold-n8n' }\n  );\n  if (checkResp.statusCode === 200 && checkResp.body?.sha) {\n    await httpsReq('DELETE',\n      `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n      { Authorization: `Bearer ${GH_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'ruins-untold-n8n' },\n      JSON.stringify({ message: `Remove EL script for ${agg.slug}`, sha: checkResp.body.sha })\n    );\n    console.log(`[CLEANUP] Deleted GitHub file: ${ghPath}`);\n  }\n} catch(e) {\n  console.log(`[CLEANUP] GitHub delete skipped: ${e.message}`);\n}\n\nreturn [{ json: { projectDir: agg.projectDir, voiceoverReady: true } }];\n"
-          },
-          "id": "40421e7e-4712-47e8-a036-82f84eb06634",
-          "name": "Cleanup GitHub File",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            3920,
-            304
-          ]
-        },
-        {
-          "parameters": {
-            "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst EL_KEY    = $env.ELEVENLABS_API_KEY;\nconst projectId = $('Poll EL Conversion').item.json.projectId;\n\ntry {\n  const resp = await httpsReq('DELETE',\n    `https://api.elevenlabs.io/v1/studio/projects/${projectId}`,\n    { 'xi-api-key': EL_KEY }\n  );\n  console.log(`[CLEANUP] Deleted EL project: ${projectId} (${resp.statusCode})`);\n} catch(e) {\n  console.log(`[CLEANUP] EL delete non-fatal: ${e.message}`);\n}\n\nreturn $input.all();\n"
-          },
-          "id": "cf03f8b0-0e07-43b9-8f2a-3d6dd4bab77e",
-          "name": "Cleanup EL Project",
-          "type": "n8n-nodes-base.code",
-          "typeVersion": 2,
-          "position": [
-            4144,
-            304
-          ]
-        }
+        "options": {}
+      },
+      "id": "a051f7d9-6318-472c-816f-208424b219e2",
+      "name": "Read Topic Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        176,
+        -240
       ],
-      "connections": {
-        "Manual Trigger": {
-          "main": [
-            [
-              {
-                "node": "Read Topic Sheet",
-                "type": "main",
-                "index": 0
-              }
-            ]
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5KlwkkXYEjhrIznj",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst rows = $input.all();\nconst newRows = rows.filter(item =>\n  (item.json.STATUS || '').toString().trim().toLowerCase() === 'new'\n);\nif (newRows.length === 0) throw new Error('No rows with STATUS = \"New\" found in the Ideas sheet.');\nconst displayRows = newRows.slice(0, 10);\nconst topicList = displayRows.map((item, i) => `${i + 1}. ${item.json.TOPIC || '(no topic)'}`).join('\\n');\nreturn [{ json: { topicList, allRows: JSON.stringify(displayRows.map(r => r.json)), count: displayRows.length } }];\n"
+      },
+      "id": "86f64e14-ad79-4a6d-9d86-611512340a2f",
+      "name": "Aggregate Topics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "RUINS UNTOLD \u2014 CASE FILE SELECTION",
+        "formDescription": "={{ 'CLASSIFIED \u2014 INTERNAL PRODUCTION USE ONLY\\n'+ '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n'+ 'OPEN CASE FILES \u2014 STATUS: NEW\\n'+ '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n\\n'+ $json.topicList+ '\\n\\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n'+ 'Enter the case number to open for production.' }}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "CASE NUMBER",
+              "fieldType": "number",
+              "placeholder": "1",
+              "requiredField": true
+            }
           ]
         },
-        "Read Topic Sheet": {
-          "main": [
-            [
-              {
-                "node": "Aggregate Topics",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "80574763-613d-446f-a501-60e8c10428ed",
+      "name": "Select Episode Topic",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        592,
+        -240
+      ],
+      "webhookId": "22ba042a-581c-4c64-aee6-1554cce19cec"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst selection = parseInt($json['CASE NUMBER'], 10);\nconst allRows   = JSON.parse($('Aggregate Topics').first().json.allRows);\nif (!selection || selection < 1 || selection > allRows.length)\n  throw new Error(`Invalid selection \"${selection}\". Enter 1\u2013${allRows.length}.`);\nconst row  = allRows[selection - 1];\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = (row.TOPIC || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 45) + '_' + ts;\nreturn [{\n  json: {\n    topic:      row.TOPIC || '',\n    audience:   'curious history fans, conspiracy-adjacent adults 25\u201345',\n    runtime:    20,\n    slug,\n    projectDir: '/Users/jneal/n8n_projects/' + slug,\n    row_number: row.row_number || null\n  }\n}];\n"
+      },
+      "id": "75fc9b0f-9859-44f2-ab1c-073614e9fbbb",
+      "name": "Look Up Selected Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1kF8cfyh3qZZIcPcSWYs8olZZYPxFhxBTUhtjK04Eb68",
+          "mode": "id"
         },
-        "Aggregate Topics": {
-          "main": [
-            [
-              {
-                "node": "Select Episode Topic",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
+        "sheetName": {
+          "__rl": true,
+          "value": "Ideas",
+          "mode": "name"
         },
-        "Select Episode Topic": {
-          "main": [
-            [
-              {
-                "node": "Look Up Selected Row",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "STATUS": "In Progress"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "DATE_ADDED",
+              "displayName": "DATE_ADDED",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "STATUS",
+              "displayName": "STATUS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TOPIC",
+              "displayName": "TOPIC",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ANGLE",
+              "displayName": "ANGLE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "KEY_EVIDENCE",
+              "displayName": "KEY_EVIDENCE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "KEY_RESEARCHERS",
+              "displayName": "KEY_RESEARCHERS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "HOOK_STYLE",
+              "displayName": "HOOK_STYLE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "TONE_DIAL",
+              "displayName": "TONE_DIAL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "RELATED_VIDEO",
+              "displayName": "RELATED_VIDEO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "NOTES",
+              "displayName": "NOTES",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
-        "Look Up Selected Row": {
-          "main": [
-            [
-              {
-                "node": "Mark In Progress",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Mark In Progress": {
-          "main": [
-            [
-              {
-                "node": "Restore Project Vars",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Restore Project Vars": {
-          "main": [
-            [
-              {
-                "node": "Build Research Prompt",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Build Research Prompt": {
-          "main": [
-            [
-              {
-                "node": "Call Research Agent",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Call Research Agent": {
-          "main": [
-            [
-              {
-                "node": "Parse Research Package",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Parse Research Package": {
-          "main": [
-            [
-              {
-                "node": "Build Script Prompt",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Build Script Prompt": {
-          "main": [
-            [
-              {
-                "node": "Call Script Agent",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Call Script Agent": {
-          "main": [
-            [
-              {
-                "node": "Parse Script",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Parse Script": {
-          "main": [
-            [
-              {
-                "node": "Split Script by Section",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Call Voice Agent": {
-          "main": [
-            [
-              {
-                "node": "Parse Voice Chunk",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Extract Voice Segments": {
-          "main": [
-            [
-              {
-                "node": "Aggregate Script",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Split Script by Section": {
-          "main": [
-            [
-              {
-                "node": "Call Voice Agent",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Parse Voice Chunk": {
-          "main": [
-            [
-              {
-                "node": "Merge Voice Chunks",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Merge Voice Chunks": {
-          "main": [
-            [
-              {
-                "node": "Extract Voice Segments",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Webhook Trigger": {
-          "main": [
-            [
-              {
-                "node": "Webhook Topic Setup",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Webhook Topic Setup": {
-          "main": [
-            [
-              {
-                "node": "Mark In Progress",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Error Trigger": {
-          "main": [
-            [
-              {
-                "node": "Write Error Status",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Aggregate Script": {
-          "main": [
-            [
-              {
-                "node": "Push Script to GitHub",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Push Script to GitHub": {
-          "main": [
-            [
-              {
-                "node": "Create EL Project",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Create EL Project": {
-          "main": [
-            [
-              {
-                "node": "Trigger EL Conversion",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Create EL Chapter": {
-          "main": [
-            [
-              {
-                "node": "Download Voiceover",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Trigger EL Conversion": {
-          "main": [
-            [
-              {
-                "node": "Poll EL Conversion",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Poll EL Conversion": {
-          "main": [
-            [
-              {
-                "node": "Create EL Chapter",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Download Voiceover": {
-          "main": [
-            [
-              {
-                "node": "Save Voiceover Final",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Save Voiceover Final": {
-          "main": [
-            [
-              {
-                "node": "Cleanup GitHub File",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
-        },
-        "Cleanup GitHub File": {
-          "main": [
-            [
-              {
-                "node": "Cleanup EL Project",
-                "type": "main",
-                "index": 0
-              }
-            ]
-          ]
+        "options": {}
+      },
+      "id": "cb28556f-ce82-406d-8e07-719ffa8a02a4",
+      "name": "Mark In Progress",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1056,
+        -240
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5KlwkkXYEjhrIznj",
+          "name": "Google Sheets account"
         }
       },
-      "authors": "JeezyAndNay Neal",
-      "name": null,
-      "description": null,
-      "autosaved": false,
-      "workflowPublishHistory": [
-        {
-          "createdAt": "2026-07-27T14:32:37.289Z",
-          "id": 212,
-          "workflowId": "YNCvi72wqNsGyXtH",
-          "versionId": "0430833a-2e75-4790-a1c0-a40a1cf8cb2c",
-          "event": "deactivated",
-          "userId": "af2abf74-a4e9-4319-875f-87671c53e774"
-        },
-        {
-          "createdAt": "2026-07-27T14:32:37.334Z",
-          "id": 213,
-          "workflowId": "YNCvi72wqNsGyXtH",
-          "versionId": "0430833a-2e75-4790-a1c0-a40a1cf8cb2c",
-          "event": "activated",
-          "userId": "af2abf74-a4e9-4319-875f-87671c53e774"
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs   = require('fs');\nconst path = require('path');\nlet vars;\ntry { vars = $('Look Up Selected Row').first().json; } catch(e) { vars = $('Webhook Topic Setup').first().json; }\n\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(vars.projectDir, { recursive: true });\nfor (const d of dirs) {\n  fs.mkdirSync(path.join(vars.projectDir, d), { recursive: true });\n}\n\nconsole.log('Directories created: ' + vars.projectDir);\nreturn [{ json: vars }];"
+      },
+      "id": "c7740251-10a4-47f1-abaf-a39d4cd08ef9",
+      "name": "Restore Project Vars",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/research_agent.md', 'utf-8');\nconst userInput = JSON.stringify({ topic: vars.topic, audience: vars.audience, runtime: vars.runtime }, null, 2);\nconst prompt = sys + '\\n\\n---\\n\\nYour input:\\n\\n' + userInput;\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt }) } }];\n"
+      },
+      "id": "658d0f93-92a5-420c-9f51-eb9b6b77b898",
+      "name": "Build Research Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/generate",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.claudeBody }}",
+        "options": {
+          "timeout": 1500000
         }
+      },
+      "id": "a97ff91c-ddd2-499c-ac53-e3a923c7c6db",
+      "name": "Call Research Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        144,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Research Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0) {\n  if (inp.error === 'usage_limit') throw new Error('USAGE_LIMIT_PAUSE|' + (inp.retryAfter || ''));\n  throw new Error('Claude bridge error: ' + inp.error);\n}\nlet raw = (inp.output || '').trim();\nconst m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\nif (m) raw = m[1].trim();\nlet pkg;\ntry { pkg = JSON.parse(raw); }\ncatch (e) {\n  const s = raw.indexOf('{'), en = raw.lastIndexOf('}');\n  if (s === -1 || en === -1) throw new Error('Cannot parse research_package.json. Raw output:\\n' + raw.substring(0, 300));\n  pkg = JSON.parse(raw.substring(s, en + 1));\n}\nconst outPath = vars.projectDir + '/scripts/research_package.json';\nfs.writeFileSync(outPath, JSON.stringify(pkg, null, 2), 'utf-8');\n// Pass only project vars \u2014 research_package.json is on disk\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
+      },
+      "id": "93ce37a5-9e18-4c90-b1ef-b2ccf64d58cc",
+      "name": "Parse Research Package",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/script_agent.md', 'utf-8');\nconst researchJson = fs.readFileSync(vars.projectDir + '/scripts/research_package.json', 'utf-8');\nconst prompt = sys + '\\n\\n---\\n\\nYour input (research_package.json):\\n\\n' + researchJson;\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt }) } }];\n"
+      },
+      "id": "87fff6aa-88ee-4020-9dab-19415e921e4a",
+      "name": "Build Script Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/generate",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.claudeBody }}",
+        "options": {
+          "timeout": 1500000
+        }
+      },
+      "id": "714319df-501f-4261-9ad8-f56c6860319b",
+      "name": "Call Script Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        864,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst fs   = require('fs');\nconst inp  = $input.first().json;\nconst vars = $('Build Script Prompt').first().json;\nif (inp.exitCode !== undefined && inp.exitCode !== 0) {\n  if (inp.error === 'usage_limit') throw new Error('USAGE_LIMIT_PAUSE|' + (inp.retryAfter || ''));\n  throw new Error('Claude bridge error: ' + inp.error);\n}\nconst script = (inp.output || '').trim();\nif (!script) throw new Error('Script Agent returned empty output');\nfs.writeFileSync(vars.projectDir + '/scripts/script.md', script, 'utf-8');\n// script.md is on disk \u2014 don't carry large string through item data\nreturn [{ json: { topic: vars.topic, audience: vars.audience, runtime: vars.runtime, slug: vars.slug, projectDir: vars.projectDir } }];\n"
+      },
+      "id": "ade8043f-bf3e-4be6-a4a9-01861044d473",
+      "name": "Parse Script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs   = require('fs');\nconst vars = $input.first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/voice_agent.md', 'utf-8');\nconst scriptContent = fs.readFileSync(vars.projectDir + '/scripts/script.md', 'utf-8');\n\n// Strip SCRIPT METADATA block then split by section headers\nconst cleanScript = scriptContent.replace(/## SCRIPT METADATA[\\s\\S]*$/, '').trim();\nconst chunks = cleanScript.split(/\\n(?=## )/);\n\nconst actIdMap = {\n  'COLD OPEN':      'cold_open',\n  'CHANNEL HOOK':   'hook',\n  'CONCLUSION':     'conclusion',\n  'CALL TO ACTION': 'cta'\n};\nconst actNumRe = /ACT\\s+(\\d)/;\n\nconst results = [];\nfor (let i = 0; i < chunks.length; i++) {\n  const chunk = chunks[i].trim();\n  if (!chunk.startsWith('## ')) continue;\n  const nl = chunk.indexOf('\\n');\n  const header = (nl > -1 ? chunk.substring(0, nl) : chunk).replace(/^## /, '').trim().toUpperCase();\n  const sectionText = nl > -1 ? chunk.substring(nl + 1).trim() : '';\n  if (!sectionText) continue;\n\n  let actId = null;\n  for (const [key, id] of Object.entries(actIdMap)) {\n    if (header.includes(key)) { actId = id; break; }\n  }\n  if (!actId) {\n    const nm = header.match(actNumRe);\n    if (nm) actId = 'act' + nm[1];\n  }\n  if (!actId) continue;\n\n  const prompt = sys\n    + '\\n\\nSECTION PROCESSING MODE\\n\\n'\n    + 'Process this ONE section of the script only. Apply Steps 1-6 from your instructions.\\n'\n    + 'Act ID for this section: ' + actId + '\\n'\n    + 'Use segment IDs: ' + actId + '_01, ' + actId + '_02, etc. Sequence starts at 1.\\n\\n'\n    + 'IMPORTANT: Return ONLY a raw JSON array of segment objects. '\n    + 'No markdown fences, no outer wrapper object, no explanation text.\\n\\n'\n    + 'Section text:\\n\\n' + sectionText;\n\n  results.push({\n    json: {\n      ...vars,\n      actId,\n      sectionIndex: i,\n      claudeBody: JSON.stringify({ prompt, max_tokens: 8192, effort: \"low\" })\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "27fbc8ec-8f97-4e57-9b9c-9eb2f9118293",
+      "name": "Split Script by Section",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/generate",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ $json.claudeBody }}",
+        "options": {
+          "timeout": 3600000
+        }
+      },
+      "id": "7675c05c-fa15-42f8-84e4-f5c305a38d7a",
+      "name": "Call Voice Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const responses    = $input.all();\nconst sectionItems = $('Split Script by Section').all();\n\nreturn responses.map((resp, i) => {\n  const vars  = sectionItems[i].json;\n  const actId = vars.actId;\n  const inp   = resp.json;\n\n  if (inp.exitCode !== undefined && inp.exitCode !== 0) {\n    if (inp.error === 'usage_limit') throw new Error('USAGE_LIMIT_PAUSE|' + (inp.retryAfter || ''));\n    throw new Error('Voice chunk error [' + actId + ']: ' + inp.error);\n  }\n\n  let raw = (inp.output || '').trim();\n  const m = raw.match(/```(?:json)?\\n?([\\s\\S]*?)```/);\n  if (m) raw = m[1].trim();\n\n  let segments;\n  try {\n    segments = JSON.parse(raw);\n  } catch (e) {\n    const s = raw.indexOf('['), en = raw.lastIndexOf(']');\n    if (s === -1 || en === -1)\n      throw new Error('Cannot parse segments for ' + actId + '. Raw: ' + raw.substring(0, 200));\n    segments = JSON.parse(raw.substring(s, en + 1));\n  }\n\n  if (!Array.isArray(segments))\n    throw new Error('Expected array for ' + actId + ', got ' + typeof segments);\n\n  return { json: { ...vars, segments } };\n});"
+      },
+      "id": "6bc0f2a3-4a61-4853-b011-b865ee6a3af7",
+      "name": "Parse Voice Chunk",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst inp  = $input.first().json;\nreturn inp.voicePackage.segments.map((seg, i) => ({\n  json: {\n    projectDir:   inp.projectDir,\n    voiceId:      inp.voicePackage.voice_id,\n    model:        inp.voicePackage.model,\n    segmentId:    seg.segment_id,\n    sequence:     seg.sequence,\n    seqPad:       String(seg.sequence).padStart(3, '0'),\n    chunkText:    seg.voice_optimized_text,\n    isFirstChunk: i === 0\n  }\n}));\n"
+      },
+      "id": "6c3dacd1-a5a7-4b2d-b91f-0069f785c222",
+      "name": "Extract Voice Segments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Ruins Untold v2 \u2014 Phase 1\n**Topic \u2192 Research \u2192 Script \u2192 Voice \u2192 TTS (ElevenLabs v3) \u2192 Concat**\n\n- Claude bridge must be running\n- `ElevenLabs API Key` credential set\n- `Google Sheets account` credential set",
+        "height": 532,
+        "width": 1640,
+        "color": "#000485"
+      },
+      "id": "0cd72025-205a-4456-918d-5b3da452f891",
+      "name": "Note: Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Agent Pattern\nEach agent = **Build Prompt** (Code) \u2192 **Call Claude** (HTTP) \u2192 **Parse + Save** (Code)\n\nNo `fetch` or `async` in Code nodes \u2014 HTTP calls are httpRequest nodes.",
+        "height": 644,
+        "width": 1640,
+        "color": "#4E3B3C"
+      },
+      "id": "ace72299-124b-4289-a398-056fab8a34b0",
+      "name": "Note: Agents",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs       = require('fs');\nconst allItems = $input.all();\nconst vars     = allItems[0].json;\n\nlet allSegments = [];\nlet seq = 1;\nfor (const item of allItems) {\n  for (const seg of (item.json.segments || [])) {\n    seg.sequence = seq++;\n    allSegments.push(seg);\n  }\n}\n\nconst voicePackage = {\n  topic:    vars.topic,\n  voice_id: 'Lp2NZJAfG4zDynNcYPSz',\n  model:    'eleven_v3',\n  stability: 'natural',\n  total_word_count: allSegments.reduce((s, seg) => s + (seg.word_count || 0), 0),\n  estimated_total_runtime_seconds: allSegments.reduce((s, seg) => s + (seg.estimated_duration_seconds || 0), 0),\n  segments: allSegments\n};\n\nconst pkgPath = vars.projectDir + '/audio/voice_package.json';\nfs.writeFileSync(pkgPath, JSON.stringify(voicePackage, null, 2), 'utf-8');\n\nconst sd = $getWorkflowStaticData('global');\nsd.ruinsVoicePrevIds = [];\n\nreturn [{ json: { ...vars, voicePackage } }];"
+      },
+      "id": "bb96b9d2-dab1-46fa-bd98-2c62f8e7615f",
+      "name": "Merge Voice Chunks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Voiceover Recording\nSend Enhanced Script to ElevenLabs",
+        "height": 976,
+        "width": 2336,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1520,
+        176
+      ],
+      "typeVersion": 1,
+      "id": "e49e51eb-4fe4-4746-95ef-08f1f520e24c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ruins-untold/phase1",
+        "options": {}
+      },
+      "id": "2b509c15-7152-4515-b6a2-c4eb7d8c0249",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        0
+      ],
+      "webhookId": "5268010f-8d13-4dab-a2d2-a704e729c99d"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst body = $input.first().json.body || $input.first().json;\nconst topic = (body.topic || '').trim();\nif (!topic) throw new Error('Webhook payload must include { \"topic\": \"...\" }');\n\n// Use pre-created slug/projectDir if provided (promoted from Ideas page), else generate\nconst ts   = new Date().toISOString().replace(/[^0-9]/g, '').substring(0, 12);\nconst slug = body.slug || (topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/, '').substring(0, 45) + '_' + ts);\nconst projectDir = body.projectDir || ('/Users/jneal/n8n_projects/' + slug);\n\n// Ensure directories exist (idempotent if already created by web app)\nconst fs   = require('fs');\nconst path = require('path');\nconst dirs = ['scripts','audio','images','videos','clips','music','sfx'];\nfs.mkdirSync(projectDir, { recursive: true });\nfor (const d of dirs) { fs.mkdirSync(path.join(projectDir, d), { recursive: true }); }\n\n// Write full topic so the web UI can display it without slug truncation\nfs.writeFileSync(path.join(projectDir, '.topic'), topic, 'utf-8');\n\n\n// Write execution -> projectDir mapping for error trigger\nconst execMapDir = '/Users/jneal/n8n_projects/.exec_map';\nfs.mkdirSync(execMapDir, { recursive: true });\nfs.writeFileSync(require('path').join(execMapDir, $execution.id), projectDir, 'utf-8');\nreturn [{ json: {\n  topic,\n  audience: 'curious history fans, conspiracy-adjacent adults 25-45',\n  runtime:  20,\n  slug,\n  projectDir,\n  row_number: body.rowNumber || null\n} }];\n"
+      },
+      "id": "f6701a7b-5d74-4ddb-a2bf-96f6aa17f5da",
+      "name": "Webhook Topic Setup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        352,
+        976
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const execId = $json.execution.id;\nconst fs   = require('fs');\nconst path = require('path');\nconst mapFile = '/Users/jneal/n8n_projects/.exec_map/' + execId;\n\nlet projectDir;\ntry {\n  projectDir = fs.readFileSync(mapFile, 'utf-8').trim();\n} catch {\n  console.log('[ERROR TRIGGER] No exec mapping for', execId);\n  return [{ json: { handled: false, execId } }];\n}\n\nconst errMsg = ($json.execution && $json.execution.error && $json.execution.error.message) || '';\nconst pauseMatch = errMsg.match(/^USAGE_LIMIT_PAUSE\\|(.*)$/);\n\ntry {\n  if (pauseMatch) {\n    const retryAfter = pauseMatch[1] || null;\n    fs.writeFileSync(path.join(projectDir, '.status'), 'paused_until', 'utf-8');\n    fs.writeFileSync(path.join(projectDir, '.paused_until'), JSON.stringify({\n      retryAfter,\n      phase: 1,\n      pausedAt: new Date().toISOString()\n    }, null, 2), 'utf-8');\n    console.log('[ERROR TRIGGER] Usage limit reached \u2014 paused', projectDir, 'until', retryAfter);\n  } else {\n    fs.writeFileSync(path.join(projectDir, '.status'), 'error', 'utf-8');\n    console.log('[ERROR TRIGGER] Wrote error status to', projectDir);\n  }\n} catch (e) {\n  console.log('[ERROR TRIGGER] Failed to write status:', e.message);\n}\n\ntry { fs.unlinkSync(mapFile); } catch {}\n\nreturn [{ json: { handled: true, projectDir, execId, paused: !!pauseMatch } }];\n"
+      },
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Write Error Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        976
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Workflow Error\n",
+        "height": 320,
+        "width": 496,
+        "color": "#A80000"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        864
+      ],
+      "typeVersion": 1,
+      "id": "480ac859-d719-4503-8d39-1cb8ec2a578f",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst allItems = $input.all();\nconst first    = allItems[0].json;\n\n// Approved EL v3 behavior tags \u2014 keep these, strip everything else in brackets\n// (phonetic guides like [POO-mah POON-koo] would be read aloud literally by EL)\nconst ALLOWED_TAGS = new Set(['[whispers]', '[curious]', '[pause]', '[awe]', '[dramatic tone]']);\n\nfunction stripPhoneticsKeepTags(text) {\n  return text\n    .replace(/\\[[^\\]]+\\]/g, (match) => ALLOWED_TAGS.has(match) ? match : '')\n    .replace(/  +/g, ' ')   // collapse double-spaces left by stripped brackets\n    .trim();\n}\n\n// Concatenate voice_optimized_text from every segment, stripping phonetic brackets\nconst fullScript = allItems\n  .map(it => stripPhoneticsKeepTags(it.json.chunkText))\n  .join('\\n\\n');\n\n// Always use canonical voice ID \u2014 voice_package.json may carry a stale one\nconst voiceId   = 'Lp2NZJAfG4zDynNcYPSz';\nconst slug      = first.projectDir.split('/').pop();\nconst ghPath    = `episodes/${slug}/script_el.txt`;\nconst rawUrl    = `https://raw.githubusercontent.com/JeezyAndNay/YouTubeAutomation/main/${ghPath}`;\nconst b64Script = Buffer.from(fullScript).toString('base64');\n\nconsole.log(`[PROJECTS] Script ready \u2014 ${allItems.length} segments, ${fullScript.length} chars`);\n\nreturn [{\n  json: {\n    projectDir:   first.projectDir,\n    voiceId,\n    slug,\n    fullScript,\n    b64Script,\n    githubPath:   ghPath,\n    rawUrl,\n    segmentCount: allItems.length\n  }\n}];\n"
+      },
+      "id": "82b79b19-aee4-4fd9-8712-527904ddcdb1",
+      "name": "Aggregate Script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2128,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst GH_TOKEN = $env.GITHUB_TOKEN;\nif (!GH_TOKEN) throw new Error('GITHUB_TOKEN not in $env');\n\nconst agg    = $('Aggregate Script').item.json;\nconst ghPath = agg.githubPath;\nconst slug   = agg.slug;\n\nlet sha = null;\nconst checkResp = await httpsReq('GET',\n  `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n  { Authorization: `Bearer ${GH_TOKEN}`, 'User-Agent': 'ruins-untold-n8n' }\n);\nif (checkResp.statusCode === 200 && checkResp.body?.sha) {\n  sha = checkResp.body.sha;\n}\n\nconst body = { message: `Add EL script for ${slug}`, content: agg.b64Script };\nif (sha) body.sha = sha;\n\nconst putResp = await httpsReq('PUT',\n  `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n  { Authorization: `Bearer ${GH_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'ruins-untold-n8n' },\n  JSON.stringify(body)\n);\n\nif (putResp.statusCode < 200 || putResp.statusCode >= 300) {\n  throw new Error(`GitHub push failed ${putResp.statusCode}: ${putResp.rawBody.slice(0,300)}`);\n}\n\nconst ghSha = putResp.body?.content?.sha ?? null;\nconsole.log(`[GITHUB] Pushed: ${ghPath} SHA=${ghSha?.slice(0,8) ?? 'n/a'}`);\nawait new Promise(r => setTimeout(r, 3000));\nreturn [{ json: { ...agg, githubSha: ghSha } }];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "606be494-d818-46da-ab4b-1cd80fc11cda",
+      "name": "Push Script to GitHub",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2352,
+        304
+      ],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/studio/projects",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "y7U5lql3fiLpT7fn",
+            "name": "ElevenLabs API Key"
+          }
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $('Aggregate Script').item.json.slug }}"
+            },
+            {
+              "name": "default_title_voice_id",
+              "value": "={{ $('Aggregate Script').item.json.voiceId }}"
+            },
+            {
+              "name": "default_paragraph_voice_id",
+              "value": "={{ $('Aggregate Script').item.json.voiceId }}"
+            },
+            {
+              "name": "default_model_id",
+              "value": "eleven_v3"
+            },
+            {
+              "name": "from_url",
+              "value": "={{ $('Push Script to GitHub').item.json.rawUrl }}"
+            },
+            {
+              "name": "voice_settings",
+              "value": "{\"voice_id\": \"Lp2NZJAfG4zDynNcYPSz\", \"stability\": 0.0, \"similarity_boost\": 0.75, \"style\": 0.0, \"use_speaker_boost\": true}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "9e9f7599-a140-457c-b069-5fe45be915ea",
+      "name": "Create EL Project",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2576,
+        304
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "y7U5lql3fiLpT7fn",
+          "name": "ElevenLabs API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.elevenlabs.io/v1/studio/projects/{{ $('Create EL Project').item.json.project.project_id }}/snapshots",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "y7U5lql3fiLpT7fn",
+            "name": "ElevenLabs API Key"
+          }
+        },
+        "sendBody": false,
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "59c3face-1b71-4233-9484-45069c3e7a86",
+      "name": "Create EL Chapter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2800,
+        304
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "y7U5lql3fiLpT7fn",
+          "name": "ElevenLabs API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/studio/projects/{{ $('Create EL Project').item.json.project.project_id }}/convert",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "y7U5lql3fiLpT7fn",
+            "name": "ElevenLabs API Key"
+          }
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "7a3bf151-b286-49ce-86e1-52b84cbe0884",
+      "name": "Trigger EL Conversion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3024,
+        304
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "y7U5lql3fiLpT7fn",
+          "name": "ElevenLabs API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst EL_KEY    = $env.ELEVENLABS_API_KEY;\nconst projectId = $('Create EL Project').item.json.project.project_id;\n\nif (!EL_KEY)    throw new Error('ELEVENLABS_API_KEY not in $env');\nif (!projectId) throw new Error('No project_id from Create EL Project (expected .project.project_id)');\n\nconst maxAttempts = 25;\nconst intervalMs  = 45000;\n\nfor (let attempt = 1; attempt <= maxAttempts; attempt++) {\n  await new Promise(r => setTimeout(r, intervalMs));\n  const resp = await httpsReq('GET',\n    `https://api.elevenlabs.io/v1/studio/projects/${projectId}`,\n    { 'xi-api-key': EL_KEY }\n  );\n  const data    = resp.body;\n  const state   = data?.state ?? 'unknown';\n  const canDl   = data?.can_be_downloaded ?? false;\n  const ch0     = (data?.chapters ?? [])[0];\n  const chState = ch0?.state ?? 'unknown';\n  console.log(`[POLL ${attempt}/${maxAttempts}] project=${state} chapter=${chState} can_dl=${canDl}`);\n\n  if (canDl === true) {\n    return [{ json: { projectId, state, chapterState: chState, attempts: attempt } }];\n  }\n  if (state === 'error' || state === 'failed') {\n    throw new Error(`EL conversion failed (${state}): ${ch0?.last_conversion_error || JSON.stringify(data)}`);\n  }\n}\nthrow new Error(`EL conversion timed out after ${maxAttempts} polls (~${Math.round(maxAttempts * intervalMs / 60000)} min)`);\n"
+      },
+      "id": "5d3d9354-8a3f-4202-a2ef-78d997d5253c",
+      "name": "Poll EL Conversion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3248,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/studio/projects/{{ $('Create EL Project').item.json.project.project_id }}/snapshots/{{ $('Create EL Chapter').item.json.snapshots[0].project_snapshot_id }}/stream",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "y7U5lql3fiLpT7fn",
+            "name": "ElevenLabs API Key"
+          }
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "voiceoverAudio"
+            }
+          },
+          "timeout": 120000
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "{}"
+      },
+      "id": "e2362eea-9c12-46c2-abac-4b5b90ad55f1",
+      "name": "Download Voiceover",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3472,
+        304
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "y7U5lql3fiLpT7fn",
+          "name": "ElevenLabs API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fileName": "={{ $('Aggregate Script').item.json.projectDir }}/audio/voiceover_final.mp3",
+        "dataPropertyName": "voiceoverAudio"
+      },
+      "id": "f1852cbc-005b-4548-9b9f-fce39bed5e69",
+      "name": "Save Voiceover Final",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        3696,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst GH_TOKEN = $env.GITHUB_TOKEN;\nconst agg      = $('Aggregate Script').item.json;\nconst ghPath   = agg.githubPath;\n\ntry {\n  const checkResp = await httpsReq('GET',\n    `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n    { Authorization: `Bearer ${GH_TOKEN}`, 'User-Agent': 'ruins-untold-n8n' }\n  );\n  if (checkResp.statusCode === 200 && checkResp.body?.sha) {\n    await httpsReq('DELETE',\n      `https://api.github.com/repos/JeezyAndNay/YouTubeAutomation/contents/${ghPath}`,\n      { Authorization: `Bearer ${GH_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'ruins-untold-n8n' },\n      JSON.stringify({ message: `Remove EL script for ${agg.slug}`, sha: checkResp.body.sha })\n    );\n    console.log(`[CLEANUP] Deleted GitHub file: ${ghPath}`);\n  }\n} catch(e) {\n  console.log(`[CLEANUP] GitHub delete skipped: ${e.message}`);\n}\n\nreturn [{ json: { projectDir: agg.projectDir, voiceoverReady: true } }];\n"
+      },
+      "id": "40421e7e-4712-47e8-a036-82f84eb06634",
+      "name": "Cleanup GitHub File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3920,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst https = require('https');\nconst { URL: NodeURL } = require('url');\n\nfunction httpsReq(method, urlStr, headers, bodyStr) {\n  return new Promise((resolve, reject) => {\n    const u = new NodeURL(urlStr);\n    const opts = {\n      hostname: u.hostname,\n      path: u.pathname + (u.search || ''),\n      method,\n      headers: headers || {}\n    };\n    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);\n    const req = https.request(opts, (res) => {\n      const chunks = [];\n      res.on('data', c => chunks.push(c));\n      res.on('end', () => {\n        const raw = Buffer.concat(chunks).toString();\n        let parsed;\n        try { parsed = JSON.parse(raw); } catch(e) { parsed = raw; }\n        resolve({ statusCode: res.statusCode, body: parsed, rawBody: raw });\n      });\n    });\n    req.on('error', reject);\n    if (bodyStr) req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst EL_KEY    = $env.ELEVENLABS_API_KEY;\nconst projectId = $('Poll EL Conversion').item.json.projectId;\n\ntry {\n  const resp = await httpsReq('DELETE',\n    `https://api.elevenlabs.io/v1/studio/projects/${projectId}`,\n    { 'xi-api-key': EL_KEY }\n  );\n  console.log(`[CLEANUP] Deleted EL project: ${projectId} (${resp.statusCode})`);\n} catch(e) {\n  console.log(`[CLEANUP] EL delete non-fatal: ${e.message}`);\n}\n\nreturn $input.all();\n"
+      },
+      "id": "cf03f8b0-0e07-43b9-8f2a-3d6dd4bab77e",
+      "name": "Cleanup EL Project",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4144,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst vars = $input.first().json;\n\n// Pause here before the script is sent to ElevenLabs for paid TTS synthesis.\n// script.md is already on disk (written by Parse Script, earlier in this run) \u2014\n// same narration content as `fullScript` here, just in its readable markdown form\n// rather than the EL-v3-tag-stripped concatenated text that actually gets voiced.\nconst resumeUrl = $execution.resumeUrl;\nfs.writeFileSync(vars.projectDir + '/.n8n_resume_url', resumeUrl, 'utf-8');\nfs.writeFileSync(vars.projectDir + '/.status', 'awaiting_script_approval', 'utf-8');\nconsole.log('Awaiting script approval. Resume URL:', resumeUrl);\nconsole.log('Review at:', vars.projectDir + '/scripts/script.md');\nreturn [{ json: vars }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2238,
+        434
+      ],
+      "id": "4249299a-c828-418d-898f-2ad1a54a7edb",
+      "name": "Set Script Awaiting Approval"
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        2238,
+        564
+      ],
+      "id": "1789e69e-e465-42b5-a8f2-b8f9aa785579",
+      "name": "Await Script Approval"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Topic Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Topic Sheet": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Topics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Topics": {
+      "main": [
+        [
+          {
+            "node": "Select Episode Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Episode Topic": {
+      "main": [
+        [
+          {
+            "node": "Look Up Selected Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Look Up Selected Row": {
+      "main": [
+        [
+          {
+            "node": "Mark In Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark In Progress": {
+      "main": [
+        [
+          {
+            "node": "Restore Project Vars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Project Vars": {
+      "main": [
+        [
+          {
+            "node": "Build Research Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Research Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Research Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Research Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Research Package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Research Package": {
+      "main": [
+        [
+          {
+            "node": "Build Script Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Script Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Script Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Script Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Script": {
+      "main": [
+        [
+          {
+            "node": "Split Script by Section",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Voice Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Voice Chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Voice Segments": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Script by Section": {
+      "main": [
+        [
+          {
+            "node": "Call Voice Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Voice Chunk": {
+      "main": [
+        [
+          {
+            "node": "Merge Voice Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Voice Chunks": {
+      "main": [
+        [
+          {
+            "node": "Extract Voice Segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Webhook Topic Setup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Topic Setup": {
+      "main": [
+        [
+          {
+            "node": "Mark In Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Write Error Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Script": {
+      "main": [
+        [
+          {
+            "node": "Set Script Awaiting Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Push Script to GitHub": {
+      "main": [
+        [
+          {
+            "node": "Create EL Project",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create EL Project": {
+      "main": [
+        [
+          {
+            "node": "Trigger EL Conversion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create EL Chapter": {
+      "main": [
+        [
+          {
+            "node": "Download Voiceover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger EL Conversion": {
+      "main": [
+        [
+          {
+            "node": "Poll EL Conversion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll EL Conversion": {
+      "main": [
+        [
+          {
+            "node": "Create EL Chapter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Voiceover": {
+      "main": [
+        [
+          {
+            "node": "Save Voiceover Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Voiceover Final": {
+      "main": [
+        [
+          {
+            "node": "Cleanup GitHub File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cleanup GitHub File": {
+      "main": [
+        [
+          {
+            "node": "Cleanup EL Project",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Script Awaiting Approval": {
+      "main": [
+        [
+          {
+            "node": "Await Script Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Await Script Approval": {
+      "main": [
+        [
+          {
+            "node": "Push Script to GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": {
+    "global": {
+      "ruinsVoicePrevIds": [],
+      "retryCount_paracas_skulls_the_dna_results_that_never_got_202606121322_act3_02": 1,
+      "retryCount_paracas_skulls_the_dna_results_that_never_got_202606121322_act3_04": 1,
+      "retryCount_paracas_skulls_the_dna_results_that_never_got_202606121322_act4_02": 1
+    }
+  },
+  "meta": null,
+  "pinData": {},
+  "versionId": "a0a338fc-0718-4993-91c1-fa4ee19d36fb",
+  "activeVersionId": "a0a338fc-0718-4993-91c1-fa4ee19d36fb",
+  "versionCounter": 321,
+  "triggerCount": 1,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-06-03T09:47:18.435Z",
+      "createdAt": "2026-06-03T09:47:18.435Z",
+      "role": "workflow:owner",
+      "workflowId": "YNCvi72wqNsGyXtH",
+      "projectId": "ltHsn5mbKZUTpYlg",
+      "project": {
+        "updatedAt": "2026-05-18T15:28:45.014Z",
+        "createdAt": "2026-05-18T15:27:22.980Z",
+        "id": "ltHsn5mbKZUTpYlg",
+        "name": "JeezyAndNay Neal <unclejeezyandladynay@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "af2abf74-a4e9-4319-875f-87671c53e774"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
   }
-]
+}
