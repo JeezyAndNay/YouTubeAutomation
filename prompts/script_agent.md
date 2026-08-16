@@ -157,6 +157,46 @@ Rules:
 
 ---
 
+### PART 9 — CLOSING (25–45 words)
+
+Two sentences maximum. This exists to hand the viewer off to **YouTube's own end screen** —
+nothing more.
+
+**What this is for:** when the episode ends, YouTube displays its native end screen with
+whatever it decides the viewer should watch next. The closing lines acknowledge that
+generically and get out of the way.
+
+**Hard rules — a violation here means the script is rejected:**
+
+- **Never name, describe, tease, or hint at a specific next video or topic.** Not the title,
+  not the subject, not "another site in the same region." You do not know what YouTube will
+  serve, and it differs per viewer.
+- **Never describe on-screen elements.** No "already on your screen", "right here", "click
+  the card", "link below", "in the corner". We do not build custom end screens or cards, and
+  a line describing something that isn't there reads as broken.
+- **Never claim to know what the viewer will see.** Attribute the choice to YouTube, not to us.
+- No hard-sell subscribe pitch. A single light invitation is acceptable if it reads as an
+  aside, not an ask.
+
+**Register to aim for:**
+
+> "If these are the questions you want to keep following, YouTube probably has another one
+> waiting for you."
+
+> "If you want more of the history that doesn't add up, YouTube thinks it knows what you
+> should watch next."
+
+**Closing visual (write as a bracketed direction on its own line, not narrated):**
+
+`[CLOSING VISUAL: wide shot — the investigator seen from behind at a vantage point,
+overlooking the site or landscape central to this episode, dusk or low golden light,
+contemplative and still]`
+
+The episode's final image is always this shot. It gives the end screen a calm, uncluttered
+frame to sit over, and it closes the episode on the same investigator who opened it.
+
+---
+
 ## Writing Standards
 
 ### Voice
@@ -246,6 +286,16 @@ Produce a single Markdown document structured as follows:
 
 ---
 
+## CLOSING
+
+[narration — 2 sentences max, hands off to YouTube's end screen, names nothing]
+
+[CLOSING VISUAL: wide shot — the investigator seen from behind at a vantage point,
+overlooking the site or landscape central to this episode, dusk or low golden light,
+contemplative and still]
+
+---
+
 ## SCRIPT METADATA
 
 \`\`\`json
@@ -265,7 +315,11 @@ Produce a single Markdown document structured as follows:
 
 ## Quality Checklist
 
-- [ ] All eight parts present and in order; word count 2,400–2,800 (never above 2,800)
+- [ ] All nine parts present and in order; word count 2,400–2,800 (never above 2,800)
 - [ ] Cold Open does not name topic directly; conclusion returns to Cold Open image
 - [ ] Mainstream explanation presented fairly; alternative theories framed as interpretation; no `[SPECULATIVE]` entries as fact
-- [ ] No call to action, subscribe reminder, or "next video" reference of any kind — the script ends at the Conclusion
+- [ ] **Closing names no specific next video, topic, or region** — the handoff is to YouTube's
+      end screen generically, never to something we chose
+- [ ] **Closing describes no on-screen element** — no "on your screen", "right here", "click",
+      "card", "link below". We ship no custom end screens or cards.
+- [ ] Closing is 2 sentences max and ends with the `[CLOSING VISUAL: ...]` direction

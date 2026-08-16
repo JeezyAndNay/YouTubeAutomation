@@ -262,11 +262,70 @@ def call_cli(system: str, prompt: str, model: str, max_tokens: int = MAX_TOKENS,
     return output, exit_code, error, retry_after
 
 
+VALIDATOR_PATH = "/Users/jneal/n8n_projects/validate_media_timeline.py"
+
+# Host-side Phase 2 stages. n8n runs in an Alpine/Node container with no python3
+# (verified: `docker exec n8n-n8n-1 command -v python3` returns nothing), so
+# these cannot be executeCommand nodes. Whitelisted by name — the stage name from
+# the request is never used to build a path.
+STAGE_SCRIPTS = {
+    "segment": "/Users/jneal/n8n_projects/segment.py",
+    "merge": "/Users/jneal/n8n_projects/merge_timeline.py",
+    "validate": VALIDATOR_PATH,
+}
+
+
+def run_stage(stage: str, episode_dir: str, extra_args=None) -> tuple[bool, str]:
+    """Run a whitelisted Phase 2 stage script on the host."""
+    script = STAGE_SCRIPTS[stage]
+    cmd = ["python3", script, episode_dir] + list(extra_args or [])
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+    return proc.returncode == 0, (proc.stdout or "") + (proc.stderr or "")
+
+
+def run_timeline_validator(episode_dir: str) -> tuple[bool, dict, str]:
+    """
+    Run the deterministic media_timeline.json validator on the host.
+
+    Exists because n8n runs in an Alpine/Node container without python3, so an
+    executeCommand node can't do this. Same pattern as /transcribe, which shells
+    out to whisper-cli on the host.
+
+    Returns (valid, report_dict, human_readable_stdout).
+    """
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tf:
+        json_out = tf.name
+
+    cmd = ["python3", VALIDATOR_PATH, episode_dir, "--json-out", json_out]
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+
+    report = {}
+    try:
+        with open(json_out) as f:
+            report = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        pass
+    finally:
+        try:
+            os.unlink(json_out)
+        except OSError:
+            pass
+
+    valid = proc.returncode == 0
+    return valid, report, proc.stdout + proc.stderr
+
+
 class ClaudeHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
-        if self.path not in ("/generate", "/transcribe"):
-            self.send_error(404, "Supported endpoints: POST /generate, POST /transcribe")
+        if self.path not in ("/generate", "/transcribe", "/validate", "/stage"):
+            self.send_error(
+                404,
+                "Supported endpoints: POST /generate, POST /transcribe, "
+                "POST /validate, POST /stage",
+            )
             return
 
         try:
@@ -275,6 +334,14 @@ class ClaudeHandler(BaseHTTPRequestHandler):
 
             if self.path == "/transcribe":
                 self._handle_transcribe(body)
+                return
+
+            if self.path == "/validate":
+                self._handle_validate(body)
+                return
+
+            if self.path == "/stage":
+                self._handle_stage(body)
                 return
 
             prompt = body.get("prompt", "").strip()
@@ -349,6 +416,66 @@ class ClaudeHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(response_body.encode())
+
+    def _handle_stage(self, body):
+        """
+        Run a host-side Phase 2 stage (segment / merge / validate).
+
+        200 on success, 422 on stage failure so an n8n HTTP node can gate on it
+        directly. stdout is returned either way — these scripts print a useful
+        summary that lands in the n8n execution log.
+        """
+        stage = (body.get("stage") or "").strip()
+        episode_dir = (body.get("episode_dir") or "").strip()
+        extra = body.get("args") or []
+
+        if stage not in STAGE_SCRIPTS:
+            self.send_error(
+                400, f"Unknown stage '{stage}'. Valid: {sorted(STAGE_SCRIPTS)}")
+            return
+        if not episode_dir:
+            self.send_error(400, "Missing 'episode_dir' in request body")
+            return
+
+        ok, output = run_stage(stage, episode_dir, extra)
+        print(f"[bridge] stage {stage} on {os.path.basename(episode_dir)} — "
+              f"{'OK' if ok else 'FAILED'}")
+
+        payload = json.dumps({"stage": stage, "ok": ok, "output": output}).encode()
+        self.send_response(200 if ok else 422)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _handle_validate(self, body):
+        """
+        Phase 2 generation-time gate.
+
+        Returns HTTP 200 when the timeline is valid, HTTP 422 when it is not, so
+        an n8n HTTP Request node fails the run naturally without needing an
+        extra IF node. The response body carries the full error list either way.
+        """
+        episode_dir = body.get("episode_dir", "").strip()
+        if not episode_dir:
+            self.send_error(400, "Missing 'episode_dir' in request body")
+            return
+
+        valid, report, stdout = run_timeline_validator(episode_dir)
+
+        n_err = report.get("error_count", 0 if valid else -1)
+        print(f"[bridge] validate {os.path.basename(episode_dir)} — "
+              f"{'PASS' if valid else 'FAIL'} ({n_err} errors)")
+
+        payload = json.dumps({
+            "valid": valid,
+            "report": report,
+            "stdout": stdout,
+        }).encode()
+
+        self.send_response(200 if valid else 422)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(payload)
 
     def log_message(self, fmt, *args):
         print(f"[bridge] {self.address_string()}  {fmt % args}")

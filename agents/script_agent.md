@@ -40,6 +40,7 @@ A single Markdown document (`script.md`):
 ## ACT 4 -- WHAT THEY WON'T TELL YOU
 ## ACT 5 -- THE BIGGER PICTURE
 ## CONCLUSION
+## CLOSING
 
 ---
 
@@ -59,7 +60,15 @@ A single Markdown document (`script.md`):
 | Act 4 -- What They Won't Tell You | 550-700 words |
 | Act 5 -- Bigger Picture | 300-400 words |
 | Conclusion | 150-200 words |
+| Closing (end-screen handoff) | 25-45 words |
 | **Total** | **2,400-2,800 words** |
+
+**Closing:** hands the viewer off to YouTube's *native* end screen and nothing else. Names no
+specific next video, topic or region; describes no on-screen element ("on your screen",
+"click", "card", "link below"); attributes the choice to YouTube rather than to us. Ends with
+a `[CLOSING VISUAL: ...]` direction placing the investigator in a wide shot overlooking the
+episode's subject. We ship no custom end screens or cards — a line describing one reads as
+broken.
 
 ### Responsibilities
 - Do not conduct research -- work exclusively from the research package

@@ -66,7 +66,36 @@ Prohibited content (never generate):
 
 ### Step 2 — Build the Character Registry
 
-Before writing any prompts, scan all `narration_text` fields across the **full** timeline — including video scenes — to identify every named historical figure who will appear visually in any image scene.
+#### Standing cast — always registered
+
+Ruins Untold has one recurring on-screen character who appears across **every** episode. Add
+this entry to `character_registry` verbatim on every run, before any episode-specific
+figures, and copy the description exactly into any prompt featuring him:
+
+```json
+{
+  "name": "The Investigator",
+  "description": "Present-day male investigator, late 30s to mid 40s, lean build, weathered sun-worn face with a short trimmed beard and moustache. Long wavy light-brown hair falling well past the shoulders from beneath a black wide-brim felt hat with a braided leather hat band. Plain tan waxed-canvas chore jacket, button front, chest and hip pockets, no visible branding or logos of any kind. White crew-neck t-shirt beneath. Olive-khaki technical trousers, worn olive-brown leather hiking boots. Modern field dress — never period costume.",
+  "first_scene": "recurring — channel standing cast"
+}
+```
+
+**Rules specific to The Investigator:**
+- He is **present-day**. He observes and investigates sites; he is never depicted as a
+  historical participant, and never wears period clothing.
+- **Never place him inside a historical reconstruction scene.** He belongs in modern
+  establishing shots, site overlooks, and the closing shot — not in the ancient past.
+- **No brand marks.** The jacket is plain; never render a logo, label or patch.
+- He carries a worn leather field journal and a brass compass. Include them when they suit
+  the frame; never make them the subject.
+- **The closing shot of every episode features him**: a wide shot, seen from behind or in
+  three-quarter view, at a vantage point overlooking the site or landscape central to that
+  episode, in dusk or low golden light. Contemplative and still. Small in frame against a
+  wide horizon — this frame has to sit calmly under YouTube's end screen.
+
+#### Episode-specific figures
+
+Then scan all `narration_text` fields across the **full** timeline — including video scenes — to identify every named historical figure who will appear visually in any image scene.
 
 For each person, assign a consistent physical description and record it in the character registry. This description must be copied verbatim into every prompt featuring that person.
 

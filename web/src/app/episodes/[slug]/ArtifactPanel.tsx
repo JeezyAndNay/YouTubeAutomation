@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, approveMediaPrompts, setYoutubeUrl, markEpisodeDone, resumeFromPause, generateThumbnailPrompt } from "@/app/actions/episodes";
+import { startPhase1ForEpisode, startPhase2, startPhase3, rejectEpisode, approveScript, approveMediaPrompts, setYoutubeUrl, markEpisodeDone, resumeFromPause, generateThumbnailPrompt } from "@/app/actions/episodes";
 import type { Episode, EpisodeOutputs, FileGroup, FailedAsset, PausedInfo, ThumbnailPrompt } from "@/lib/episodes";
 
 // ── Artifact definitions ─────────────────────────────────────────────────────
@@ -234,6 +234,57 @@ function ThumbnailDetailView({ thumb }: { thumb: ThumbnailPrompt }) {
 // ── Main component ───────────────────────────────────────────────────────────
 
 // ── Media approval banner ─────────────────────────────────────────────────────
+
+// ── Script approval banner ───────────────────────────────────────────────────
+// Gate added 2026-08-12: pauses Phase 1 after script.md is written, before it's
+// sent to ElevenLabs for paid TTS synthesis. No inline edit buffer here — unlike
+// the JSON manifests below, script.md is markdown meant to be read and, if it
+// needs changes, edited directly on disk (or re-run through the Script Agent)
+// before approving, not patched through a text field.
+
+function ScriptApprovalBanner({
+  onApprove,
+  onReject,
+  isPending,
+  error,
+}: {
+  onApprove: () => void;
+  onReject: () => void;
+  isPending: boolean;
+  error: string | null;
+}) {
+  return (
+    <section className="mb-6">
+      <div className="bg-amber-torchlight/10 border border-amber-torchlight/30 rounded-lg p-4">
+        <p className="text-amber-torchlight text-[10px] font-medium uppercase tracking-widest mb-2">
+          Script Review
+        </p>
+        <p className="text-bone-white/70 text-[11px] mb-3 leading-relaxed">
+          Read the &ldquo;Script&rdquo; artifact (Phase 1) before approving. Once approved, it
+          goes straight to ElevenLabs for paid voiceover synthesis — this is the last
+          chance to catch a problem before that spend happens.
+        </p>
+        <div className="space-y-1.5">
+          <button
+            onClick={onApprove}
+            disabled={isPending}
+            className="w-full bg-portal-gold text-charcoal font-semibold text-xs py-2 rounded hover:bg-amber-torchlight disabled:opacity-40 transition-colors"
+          >
+            {isPending ? "Sending to voiceover..." : "Approve & Generate Voiceover"}
+          </button>
+          <button
+            onClick={onReject}
+            disabled={isPending}
+            className="w-full border border-deep-crimson/50 text-deep-crimson text-xs py-2 rounded hover:bg-deep-crimson/10 disabled:opacity-40 transition-colors"
+          >
+            Reject
+          </button>
+        </div>
+        {error && <p className="text-deep-crimson text-[10px] mt-2">{error}</p>}
+      </div>
+    </section>
+  );
+}
 
 function MediaApprovalBanner({
   pendingEdits,
@@ -507,9 +558,9 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-refresh while running or awaiting media approval (prompts may still be writing)
+  // Auto-refresh while running or awaiting script/media approval (prompts may still be writing)
   useEffect(() => {
-    if (status !== "running" && status !== "awaiting_media_approval") return;
+    if (status !== "running" && status !== "awaiting_script_approval" && status !== "awaiting_media_approval") return;
     const id = setInterval(() => router.refresh(), 5000);
     return () => clearInterval(id);
   }, [status, router]);
@@ -621,13 +672,15 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
 
   // Determine available actions
   const isRunning = status === "running";
+  const isAwaitingScriptApproval = status === "awaiting_script_approval";
   const isAwaitingMediaApproval = status === "awaiting_media_approval";
+  const isAwaitingApproval = isAwaitingScriptApproval || isAwaitingMediaApproval;
   const isPaused = status === "paused_until";
-  const canPhase1    = phase === null && !isRunning && !isAwaitingMediaApproval && !isPaused;
-  const canPhase2    = phase === 1    && !isRunning && !isAwaitingMediaApproval && !isPaused;
-  const canPhase3    = phase === 2    && !isRunning && !isAwaitingMediaApproval && !isPaused;
-  const canMarkDone  = phase === 3    && !isRunning && !isAwaitingMediaApproval && !isPaused && status !== "done" && status !== "rejected";
-  const canReject    = !isRunning && !isAwaitingMediaApproval && !isPaused && status !== "done" && status !== "rejected";
+  const canPhase1    = phase === null && !isRunning && !isAwaitingApproval && !isPaused;
+  const canPhase2    = phase === 1    && !isRunning && !isAwaitingApproval && !isPaused;
+  const canPhase3    = phase === 2    && !isRunning && !isAwaitingApproval && !isPaused;
+  const canMarkDone  = phase === 3    && !isRunning && !isAwaitingApproval && !isPaused && status !== "done" && status !== "rejected";
+  const canReject    = !isRunning && !isAwaitingApproval && !isPaused && status !== "done" && status !== "rejected";
   const hasActions   = canPhase1 || canPhase2 || canPhase3 || canMarkDone || canReject;
 
   // Whether the selected artifact is editable in media review mode
@@ -652,6 +705,17 @@ export default function ArtifactPanel({ episode, outputs, fileGroups, failedAsse
 
         {/* Failed assets banner — shown regardless of status */}
         {failedAssets.length > 0 && <FailedAssetsBanner failedAssets={failedAssets} />}
+
+        {/* Script approval banner — read scripts/script.md (the "Script" artifact,
+            visible in the Phase 1 column) before approving. Blocks ElevenLabs spend. */}
+        {isAwaitingScriptApproval && (
+          <ScriptApprovalBanner
+            onApprove={() => runAction(() => approveScript(slug))}
+            onReject={() => runAction(() => rejectEpisode(slug))}
+            isPending={isPending}
+            error={actionError}
+          />
+        )}
 
         {/* Media approval banner */}
         {isAwaitingMediaApproval && (
