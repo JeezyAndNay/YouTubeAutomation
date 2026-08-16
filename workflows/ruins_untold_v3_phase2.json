@@ -205,7 +205,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst fs   = require('fs');\nconst vars = $('Parse Media Timeline').first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/metadata_agent.md', 'utf-8');\nconst scriptText   = fs.readFileSync(vars.scriptPath, 'utf-8');\nconst researchPkg  = fs.readFileSync(vars.researchPath, 'utf-8');\nconst voicePkg     = fs.readFileSync(vars.voicePackagePath, 'utf-8');\nconst input = {\n  script_path:          vars.scriptPath,\n  research_package_path: vars.researchPath,\n  voice_package_path:   vars.voicePackagePath,\n  script_text:          scriptText,\n  research_package:     JSON.parse(researchPkg),\n  voice_package:        JSON.parse(voicePkg)\n};\nconst prompt = sys + '\\n\\n---\\n\\nYour input:\\n\\n' + JSON.stringify(input, null, 2);\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, model: 'claude-haiku-4-5-20251001' }) } }];\n"
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $('Prepare Media Vars').first().json;\nconst sys  = fs.readFileSync('/Users/jneal/n8n_projects/ruins_untold_system_prompts/metadata_agent.md', 'utf-8');\nconst scriptText   = fs.readFileSync(vars.scriptPath, 'utf-8');\nconst researchPkg  = fs.readFileSync(vars.researchPath, 'utf-8');\nconst voicePkg     = fs.readFileSync(vars.voicePackagePath, 'utf-8');\nconst input = {\n  script_path:          vars.scriptPath,\n  research_package_path: vars.researchPath,\n  voice_package_path:   vars.voicePackagePath,\n  script_text:          scriptText,\n  research_package:     JSON.parse(researchPkg),\n  voice_package:        JSON.parse(voicePkg)\n};\nconst prompt = sys + '\\n\\n---\\n\\nYour input:\\n\\n' + JSON.stringify(input, null, 2);\nreturn [{ json: { ...vars, claudeBody: JSON.stringify({ prompt, model: 'claude-haiku-4-5-20251001' }) } }];\n"
       },
       "id": "f44f92c6-e95d-43ea-a539-33a79de5b70e",
       "name": "Build Metadata Agent Prompt",
@@ -277,7 +277,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst fs   = require('fs');\nconst vars = $('Parse Media Timeline').first().json;\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst cues     = timeline.music_cues || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.musicCredits = 0;\nstaticData.musicCount = 0;\n\nreturn cues.map((c, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/music',\n    promptIndex:  i + 1,\n    totalPrompts: cues.length,\n    assetType:    'music',\n    cueId:        c.cue_id,\n    cueAct:       c.act,\n    cueStart:     c.start,\n    cueEnd:       c.end,\n    cueDuration:  c.duration,\n    rawPrompt:    c,\n    filename:     'music_' + String(i + 1).padStart(2, '0')\n  }\n}));\n"
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $('Prepare Media Vars').first().json;\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst cues     = timeline.music_cues || [];\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.musicCredits = 0;\nstaticData.musicCount = 0;\n\nreturn cues.map((c, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/music',\n    promptIndex:  i + 1,\n    totalPrompts: cues.length,\n    assetType:    'music',\n    cueId:        c.cue_id,\n    cueAct:       c.act,\n    cueStart:     c.start,\n    cueEnd:       c.end,\n    cueDuration:  c.duration,\n    rawPrompt:    c,\n    filename:     'music_' + String(i + 1).padStart(2, '0')\n  }\n}));\n"
       },
       "id": "a826a467-e267-4c5b-b936-87e1652768e1",
       "name": "Extract Music Cues",
@@ -290,7 +290,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst fs   = require('fs');\nconst vars = $('Parse Media Timeline').first().json;\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst cues     = timeline.sfx_cues || [];\n\nreturn cues.map((c, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/sfx',\n    promptIndex:  i + 1,\n    totalPrompts: cues.length,\n    assetType:    'sfx',\n    cueId:        c.cue_id,\n    cueType:      c.type,\n    cueStart:     c.start,\n    cueDuration:  c.duration,\n    rawPrompt:    c,\n    filename:     'sfx_' + String(i + 1).padStart(2, '0')\n  }\n}));\n"
+        "jsCode": "\nconst fs   = require('fs');\nconst vars = $('Prepare Media Vars').first().json;\nconst timeline = vars.timeline || JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\nconst cues     = timeline.sfx_cues || [];\n\nreturn cues.map((c, i) => ({\n  json: {\n    ...vars,\n    assetDir:     vars.projectDir + '/sfx',\n    promptIndex:  i + 1,\n    totalPrompts: cues.length,\n    assetType:    'sfx',\n    cueId:        c.cue_id,\n    cueType:      c.type,\n    cueStart:     c.start,\n    cueDuration:  c.duration,\n    rawPrompt:    c,\n    filename:     'sfx_' + String(i + 1).padStart(2, '0')\n  }\n}));\n"
       },
       "id": "1c2f4e0d-390a-4f5c-99d9-66468e08db7d",
       "name": "Extract SFX Cues",
