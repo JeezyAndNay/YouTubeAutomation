@@ -272,6 +272,7 @@ STAGE_SCRIPTS = {
     "segment": "/Users/jneal/n8n_projects/segment.py",
     "merge": "/Users/jneal/n8n_projects/merge_timeline.py",
     "validate": VALIDATOR_PATH,
+    "compose_music": "/Users/jneal/n8n_projects/compose_music.py",
 }
 
 

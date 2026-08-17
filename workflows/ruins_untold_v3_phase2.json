@@ -1734,6 +1734,26 @@
         -200,
         2440
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3333/stage",
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ JSON.stringify({ stage:'compose_music', episode_dir: $('Prepare Media Vars').first().json.projectDir }) }}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1080,
+        1044
+      ],
+      "id": "a1c2e3f4-9b7d-4e2a-8c5f-6d3a1b0e7c9f",
+      "name": "Run Compose Music"
     }
   ],
   "connections": {
@@ -2623,7 +2643,7 @@
       "main": [
         [
           {
-            "node": "Run Merge",
+            "node": "Run Compose Music",
             "type": "main",
             "index": 0
           }
@@ -2708,6 +2728,17 @@
         [
           {
             "node": "Write Error Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Compose Music": {
+      "main": [
+        [
+          {
+            "node": "Run Merge",
             "type": "main",
             "index": 0
           }
