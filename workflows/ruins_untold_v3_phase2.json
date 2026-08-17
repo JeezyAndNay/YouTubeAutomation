@@ -684,7 +684,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const fs   = require('fs');\nconst item = $input.item.json;\nconst c    = item.rawPrompt;\n\n// Save Music File calls realpath on assetDir. Without this the entire run dies\n// with ENOENT at the very last stage - after every image and video has already\n// been generated and paid for. Prepare SFX Request already does this; music was\n// the odd one out. (Derinkuyu exec 537, 2026-08-10.)\ntry { fs.mkdirSync(item.assetDir, { recursive: true }); } catch(e) {}\n\n// Kie.ai / Suno generation body. Music moved to ElevenLabs sound-generation\n// briefly (2026-07/08) but that API caps prompts at 450 chars, which cannot\n// carry the era/culture accent palette's 80-150 word suno_prompt - every music\n// cue failed text_too_long. Back on Suno as of 2026-08-12; contract recovered\n// from commit 13b5faf (the last commit before the ElevenLabs switch).\nconst kieBody = {\n  model:        c.model        || 'V4_5',\n  prompt:       c.suno_prompt  || c.style_prompt || c.mood || '',\n  customMode:   c.customMode   !== undefined ? c.customMode : true,\n  instrumental: c.instrumental !== undefined ? c.instrumental : true,\n  style:        c.suno_tags    || '',\n  title:        c.suno_title   || '',\n  negativeTags: c.negativeTags || 'vocals, lyrics, voice, singing, chanting, humming, spoken word, breath sounds',\n  callBackUrl:  'http://localhost:9999/callback'\n};\n\nreturn [{ json: {\n  ...item,\n  kieBody:    JSON.stringify(kieBody),\n  promptText: kieBody.prompt,\n  filepath:   item.assetDir + '/' + item.filename + '.mp3'\n} }];"
+        "jsCode": "const fs   = require('fs');\nconst item = $input.item.json;\nconst c    = item.rawPrompt;\n\n// Save Music File calls realpath on assetDir. Without this the entire run dies\n// with ENOENT at the very last stage - after every image and video has already\n// been generated and paid for. Prepare SFX Request already does this; music was\n// the odd one out. (Derinkuyu exec 537, 2026-08-10.)\ntry { fs.mkdirSync(item.assetDir, { recursive: true }); } catch(e) {}\n\n// Kie.ai / Suno generation body. Music moved to ElevenLabs sound-generation\n// briefly (2026-07/08) but that API caps prompts at 450 chars, which cannot\n// carry the era/culture accent palette's 80-150 word suno_prompt - every music\n// cue failed text_too_long. Back on Suno as of 2026-08-12; contract recovered\n// from commit 13b5faf (the last commit before the ElevenLabs switch).\nconst kieBody = {\n  model:        c.model        || 'V4_5',\n  prompt:       c.suno_prompt  || c.style_prompt || c.mood || '',\n  customMode:   c.customMode   !== undefined ? c.customMode : true,\n  instrumental: c.instrumental !== undefined ? c.instrumental : true,\n  style:        c.suno_tags    || '',\n  title:        c.suno_title   || '',\n  negativeTags: c.negativeTags || 'vocals, lyrics, voice, singing, chanting, humming, spoken word, breath sounds',\n  callBackUrl:  'http://localhost:9999/callback'\n};\n\nconst filepath = item.assetDir + '/' + item.filename + '.mp3';\nconst alreadyExists = fs.existsSync(filepath);\n\nreturn [{ json: {\n  ...item,\n  kieBody:    JSON.stringify(kieBody),\n  promptText: kieBody.prompt,\n  filepath,\n  alreadyExists\n} }];"
       },
       "id": "3af72b53-a630-4ec4-b87f-8c5679aa4c26",
       "name": "Prepare Music Request",
@@ -1800,6 +1800,39 @@
       ],
       "id": "c3e5f7a9-2d4f-4b6c-8e0a-3f5d7b9c1e2a",
       "name": "Has Video Manifest?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-music-exists",
+              "leftValue": "={{ $json.alreadyExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        1600
+      ],
+      "id": "d4f6a8c0-3e5f-4c7d-9f1b-4a6c8e0d2f3a",
+      "name": "Skip if Music Exists?"
     }
   ],
   "connections": {
@@ -2232,7 +2265,7 @@
       "main": [
         [
           {
-            "node": "Submit Music to Kie.ai",
+            "node": "Skip if Music Exists?",
             "type": "main",
             "index": 0
           }
@@ -2814,6 +2847,24 @@
         [
           {
             "node": "Build Video Agent Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip if Music Exists?": {
+      "main": [
+        [
+          {
+            "node": "Split Music Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Submit Music to Kie.ai",
             "type": "main",
             "index": 0
           }
