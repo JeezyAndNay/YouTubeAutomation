@@ -127,6 +127,11 @@ def main():
     skel_path = os.path.join(ep, "scripts", "scene_skeleton.json")
     out_path = os.path.join(ep, "scripts", "music_composition.json")
 
+    if os.path.exists(out_path):
+        print(f"music_composition.json already exists — leaving it alone: {out_path}")
+        print("  (delete it first if you want a fresh composition)")
+        sys.exit(0)
+
     if not os.path.exists(skel_path):
         print(f"ERROR: {skel_path} not found — run segment.py first", file=sys.stderr)
         sys.exit(2)

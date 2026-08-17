@@ -1754,6 +1754,52 @@
       ],
       "id": "a1c2e3f4-9b7d-4e2a-8c5f-6d3a1b0e7c9f",
       "name": "Run Compose Music"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs   = require('fs');\nconst vars = $input.first().json;\nlet manifestExists = false;\nif (fs.existsSync(vars.videoManifestPath)) {\n  try {\n    const m = JSON.parse(fs.readFileSync(vars.videoManifestPath, 'utf-8'));\n    const promptCount = (m.video_prompts || []).length;\n\n    const videoDir = vars.projectDir + '/videos';\n    const videoCount = fs.existsSync(videoDir)\n      ? fs.readdirSync(videoDir).filter(f => f.endsWith('.mp4')).length\n      : 0;\n\n    const timeline = JSON.parse(fs.readFileSync(vars.mediaTimelinePath, 'utf-8'));\n    const expectedCount = (timeline.scenes || []).filter(s => s.visual_type === 'video').length;\n\n    manifestExists = promptCount === expectedCount && videoCount >= expectedCount;\n\n    console.log('Video coverage: ' + videoCount + ' files on disk, manifest has ' + promptCount + ' prompts, timeline expects ' + expectedCount);\n    if (!manifestExists) {\n      console.log('Video manifest/assets incomplete or scene-count mismatch \u2014 Video Agent will run.');\n    }\n  } catch(e) {\n    console.log('Video manifest check error: ' + e.message);\n    manifestExists = false;\n  }\n}\nreturn [{ json: { ...vars, videoManifestExists: manifestExists } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        1450
+      ],
+      "id": "b2d4f6a8-1c3e-4a5b-9d7f-2e4c6a8b0d1f",
+      "name": "Check Video Manifest"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-video-manifest-exists",
+              "leftValue": "={{ $json.videoManifestExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        1450
+      ],
+      "id": "c3e5f7a9-2d4f-4b6c-8e0a-3f5d7b9c1e2a",
+      "name": "Has Video Manifest?"
     }
   ],
   "connections": {
@@ -2383,7 +2429,7 @@
       "main": [
         [
           {
-            "node": "Build Video Agent Prompt",
+            "node": "Check Video Manifest",
             "type": "main",
             "index": 0
           }
@@ -2441,7 +2487,7 @@
       "main": [
         [
           {
-            "node": "Build Video Agent Prompt",
+            "node": "Check Video Manifest",
             "type": "main",
             "index": 0
           }
@@ -2739,6 +2785,35 @@
         [
           {
             "node": "Run Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Video Manifest": {
+      "main": [
+        [
+          {
+            "node": "Has Video Manifest?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Video Manifest?": {
+      "main": [
+        [
+          {
+            "node": "Set Awaiting Approval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Video Agent Prompt",
             "type": "main",
             "index": 0
           }
