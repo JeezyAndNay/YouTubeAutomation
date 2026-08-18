@@ -59,6 +59,7 @@ Produce **five title options**. Select the best one and designate it `title_prim
 - No clickbait fabrications — every implied claim must be supportable from the episode content
 - No generic mystery channel phrasing: avoid "You Won't Believe", "SHOCKING", "MIND-BLOWING", or excessive ALL CAPS
 - Do not reveal the answer — titles create the question, not the resolution
+- Never wrap `title_primary` or any `title_alternates` entry in surrounding quote marks, and never leave a single unpaired quote character at the start or end. This produced a real published bug (Paracas Skulls episode, Aug 2026): the live title read `...You to See"` with a stray trailing `"` and no matching opening quote — confirmed via the YouTube Data API, not a display glitch. If a title legitimately quotes a claim ("Fully Explored," Experts Said), both the opening and closing quote must be present and matched — never just one.
 
 **Soft targets:**
 - Front-load the most compelling element (YouTube truncates from the right)
@@ -310,6 +311,7 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
 ## Quality Checklist
 
 - [ ] `title_primary` ≤ 70 characters; all five titles use different formulas; no title implies an unsupported fact
+- [ ] No title (`title_primary` or any `title_alternates` entry) has an unpaired leading/trailing quote character
 - [ ] Description hook (lines 1–3) does not restate the title; ends on unresolved tension; no "In this video we will..."
 - [ ] Chapter timestamps in `M:SS`, ascending from `0:00`; chapter names ≤ 40 characters; no act numbers ("Act 1", "Act 2")
 - [ ] Tags: 20–30 entries, ≤ 500 characters total; `tag_character_count` accurate; hashtags include `#RuinsUntold` and `#AncientMysteries`; `thumbnail_brief.primary_text` is 2–4 words in title case
