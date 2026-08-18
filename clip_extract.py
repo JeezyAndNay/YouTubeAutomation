@@ -54,6 +54,20 @@ CONTAINER = "n8n-n8n-1"
 CLIP_W, CLIP_H = 1080, 1920
 MIN_CLIP_S, MAX_CLIP_S = 6, 90  # sanity bounds; agent targets 15-45s per the prompt
 
+# render.js applies a global `adelay=1500ms` (its NARRATION_PAUSE_SECONDS) to the entire
+# narration audio track when assembling final_video.mp4 -- a one-time, constant shift over
+# the whole episode, not per-scene. media_timeline.json's audio_in/audio_out and
+# transcript.json's word offsets are both derived from the raw, unshifted voiceover file, so
+# every one of those timestamps sits this many seconds EARLIER than where that same
+# narration actually plays in final_video.mp4. Cutting straight from the raw timestamps (as
+# v1 did) chops the tail off every clip's narration and throws captions out of sync by
+# exactly this amount -- confirmed against real output, not theoretical. Must match
+# render.js's NARRATION_PAUSE_SECONDS exactly; keep in sync if that ever changes.
+FINAL_VIDEO_AUDIO_OFFSET_S = 1.5
+# Small trailing pad so the last word's natural decay/breath isn't guillotined at the exact
+# Whisper word-boundary timestamp.
+END_PAD_S = 0.4
+
 
 def call_bridge(system, prompt, model, max_tokens=2048):
     body = json.dumps({
@@ -233,15 +247,21 @@ def main():
             print(f"  clip {i}: SKIPPED — start_scene_id after end_scene_id")
             continue
 
-        start_s = scene_by_id[sid]["audio_in"]
-        end_s = scene_by_id[eid]["audio_out"]
-        duration = end_s - start_s
+        # Raw (unshifted) timestamps -- these match transcript.json's word offsets and are
+        # what caption timing is built relative to.
+        raw_start_s = scene_by_id[sid]["audio_in"]
+        raw_end_s = scene_by_id[eid]["audio_out"]
+        duration = raw_end_s - raw_start_s
         if not (MIN_CLIP_S <= duration <= MAX_CLIP_S):
             print(f"  clip {i}: SKIPPED — duration {duration:.1f}s outside "
                   f"[{MIN_CLIP_S}, {MAX_CLIP_S}]s sanity bounds ({sid}..{eid})")
             continue
 
-        start_ms, end_ms = int(start_s * 1000), int(end_s * 1000)
+        # Where that same narration actually sits in final_video.mp4 -- what we cut from.
+        start_s = raw_start_s + FINAL_VIDEO_AUDIO_OFFSET_S
+        end_s = raw_end_s + FINAL_VIDEO_AUDIO_OFFSET_S + END_PAD_S
+
+        start_ms, end_ms = int(raw_start_s * 1000), int(raw_end_s * 1000)
         words = build_caption_words(transcript, start_ms, end_ms)
 
         clip_name = f"clip_{i:02d}"

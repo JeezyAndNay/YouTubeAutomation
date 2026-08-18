@@ -51,6 +51,7 @@ Processes only scenes where `visual_type: "image"` from the media timeline:
 ```
 
 ### Responsibilities
+- **Hard prohibition: never generate a diagram, map with labels, chart, infographic, or annotated/comparative graphic with text callouts.** AI image models cannot reliably render legible text and will produce garbled gibberish (confirmed on Puma Punku and Nan Madol, Aug 2026). `text_space` is always `"none"`. See full rule in `prompts/image_agent.md`.
 - Filter media timeline to image-only scenes
 - Build character registry for all named historical figures to ensure consistent appearance across scenes
 - Expand each `prompt_seed` into a complete Nano Banana 2 JSON prompt

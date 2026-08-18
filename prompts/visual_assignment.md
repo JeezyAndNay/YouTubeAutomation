@@ -77,10 +77,18 @@ For each scene, assign `visual_type` based on what the narration describes.
 **Assign `image` when narration describes:**
 - Artifacts, inscriptions, carvings, or objects
 - Portraits or depictions of historical figures
-- Maps, diagrams, or structural layouts
+- Structural layouts and site plans, as photographic reconstructions or real aerial/overhead photography — never as labeled diagrams or maps (see hard prohibition below)
 - Static establishing shots of locations
 - Abstract or conceptual subjects (a date, a number, an idea)
 - Any scene with `duration_seconds` under 5 seconds — always image
+
+---
+
+### HARD PROHIBITION — No diagrams, infographics, charts, or labeled comparisons
+
+**Never write a `prompt_seed` that asks for a diagram, map with labels, chart, infographic, annotated illustration, or "comparative"/"side-by-side" graphic with text callouts.** AI image models cannot reliably render legible text — the model attempts it anyway and produces garbled gibberish. Confirmed root cause of production incidents on Puma Punku (`scene_007`) and Nan Madol (7 scenes), Aug 2026 — one Nan Madol scene rendered the literal unfilled placeholder `"[e.g., 18 features]"` as if it were real data.
+
+If a scene needs to convey structural or comparative information, prefer a real photo (`real_photo_preferred: true`, per Step 1) or write the seed around the plain physical subject only, with zero implied text or labels. Banned words in `prompt_seed`: "diagram", "infographic", "chart", "graph" (as a visual, not "geography"), "annotated", "labeled"/"labelled", "comparative illustration", "side-by-side comparison", "before-and-after comparison", "legend", "schematic".
 
 ---
 

@@ -121,7 +121,7 @@ For each scene, determine whether the visual should be a **static image** or a *
 **Assign `image` when the narration describes:**
 - Artifacts, inscriptions, carvings, or objects
 - Portraits or depictions of historical figures
-- Maps, diagrams, or structural layouts
+- Structural layouts and site plans, described as photographic reconstructions or real aerial/overhead photography — never as labeled diagrams or maps (see hard prohibition below)
 - Static establishing shots of locations
 - Abstract or conceptual subjects (a date, a number, an idea)
 - Any scene under 5 seconds (images hold better than truncated video clips)
@@ -192,6 +192,19 @@ Correct seed: "Cross-section view of American floodplain soil revealing buried e
 
 ---
 
+#### HARD PROHIBITION — No diagrams, infographics, charts, or labeled comparisons
+
+**Never write a `prompt_seed` that asks for a diagram, map with labels, chart, infographic, annotated illustration, or "comparative"/"side-by-side" graphic with text callouts.**
+
+AI image models cannot reliably render legible text. When a prompt seed implies on-image labels, legends, callout boxes, or comparison text (e.g. "diagram showing X vs Y", "annotated map highlighting Z", "comparative illustration of A and B"), the model attempts the text anyway and produces garbled gibberish — confirmed root cause of production incidents on Puma Punku (`scene_007`, 8/17) and Nan Madol (7 scenes, 8/18; one scene rendered literal unfilled template placeholders like `"[e.g., 18 features]"` as if they were real data).
+
+**If a scene needs to convey structural, comparative, or data-driven information:**
+- Prefer `real_photo_preferred: true` with a Wikimedia search query — real photography never has this failure mode.
+- Otherwise, write the prompt seed around the physical subject only (the ruins, the artifact, the landscape) with zero implied text, labels, or callouts. Any actual labels, legends, or comparison text must be added as a proper rendered overlay layer in Phase 3 (render.js), not baked into the AI-generated image.
+- Banned words/phrases in `prompt_seed`: "diagram", "infographic", "chart", "graph" (as a visual, not "geography"), "annotated", "labeled"/"labelled", "comparative illustration", "side-by-side comparison", "before-and-after comparison", "legend", "schematic".
+
+---
+
 #### Real Photo Flagging
 
 After completing the visual type assignment and ratio enforcement pass, scan every `image` and `video` scene for subjects where a real Wikimedia Commons photograph would be stronger than AI-generated imagery.
@@ -206,7 +219,7 @@ After completing the visual type assignment and ratio enforcement pass, scan eve
 | Named historical figure with a known likeness | Yes |
 | Abstract concept (a process, a debate, an idea) | No |
 | Historical reconstruction (ancient city, transport, event) | No |
-| Data visualization (timeline, map, diagram) | No |
+| Data visualization (timeline, map, diagram) | N/A — this content type is banned as an AI-image seed entirely, see hard prohibition above. Use a real photo if one exists; otherwise reduce to the plain physical subject. |
 | Emotional/cinematic moment (collapse, catastrophe, atmosphere) | No |
 
 **License constraint:** Only flag `real_photo_preferred: true` if the site or artifact is likely to have CC0, CC BY, or CC BY-SA coverage on Wikimedia Commons. CC BY-NC is not acceptable. Strong Wikimedia coverage exists for: Göbekli Tepe, Puma Punku/Tiwanaku, Olmec heads, Derinkuyu, Cappadocia fairy chimneys, Machu Picchu, Nazca Lines, Baalbek, Sacsayhuaman, Angkor Wat, Easter Island, most major museum artifacts. Private collections or niche unphotographed sites: set `real_photo_preferred: false`.

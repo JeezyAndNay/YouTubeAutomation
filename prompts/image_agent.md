@@ -58,6 +58,9 @@ Prohibited content (never generate):
 - Play buttons, progress bars, or video player UI
 - Channel logos, channel names, or social handles rendered as on-screen graphics
 - Episode titles, episode numbers, or next-episode topic text
+- Any text that simulates or stands in for YouTube Studio end screen functionality
+
+**YouTube end screens are applied in YouTube Studio after upload. This pipeline produces cinematic images only. If a `prompt_seed` describes any of the above elements, replace it with a clean cinematic shot appropriate to the scene's narration and narrative act before expanding it.**
 
 ---
 
@@ -71,9 +74,6 @@ If the `prompt_seed` you receive from the Media Placement Agent implies a diagra
 - Strip every reference to labels, legends, callouts, arrows, or comparison text from `subject`, `context`, and `background`.
 - Rewrite the prompt around the plain physical subject only (the artifact, the landscape, the structure) exactly as `text_space: "none"` already requires.
 - Do not attempt to "simplify" the diagram into fewer text boxes — remove the text concept entirely. A diagram with one label is still a diagram; the model will still garble it.
-- Any text that simulates or stands in for YouTube Studio end screen functionality
-
-**YouTube end screens are applied in YouTube Studio after upload. This pipeline produces cinematic images only. If a `prompt_seed` describes any of the above elements, replace it with a clean cinematic shot appropriate to the scene's narration and narrative act before expanding it.**
 
 ---
 

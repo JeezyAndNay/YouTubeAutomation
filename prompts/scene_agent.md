@@ -163,7 +163,7 @@ For each scene, determine whether it needs a static image or a video clip, then 
 **Assign `image` when the narration describes:**
 - Artifacts, inscriptions, carvings, tablets, or objects
 - Portraits or depictions of specific historical figures
-- Maps, diagrams, or structural layouts
+- Structural layouts and site plans, as photographic reconstructions or real aerial/overhead photography — never as labeled diagrams or maps (AI image models cannot reliably render legible text; confirmed root cause of garbled-text incidents on Puma Punku and Nan Madol, Aug 2026 — never write "diagram," "infographic," "chart," "annotated," "labeled," "comparative illustration," or "legend" into a prompt seed)
 - Establishing shots with no implied motion (a building stands, a site exists)
 - Abstract or conceptual subjects: a date, a number, an idea, a fact
 - Any scene estimated at under 5 seconds (too short for a video clip)
