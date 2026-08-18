@@ -58,6 +58,19 @@ Prohibited content (never generate):
 - Play buttons, progress bars, or video player UI
 - Channel logos, channel names, or social handles rendered as on-screen graphics
 - Episode titles, episode numbers, or next-episode topic text
+
+---
+
+### HARD PROHIBITION — Diagrams, Infographics, and Labeled Text
+
+**No generated image may contain, simulate, or approximate a diagram, map legend, chart, infographic, annotation box, callout label, or any comparative "before/after" or "side-by-side" text overlay — regardless of what the `prompt_seed` implies.**
+
+AI image models cannot reliably render legible text. Any attempt produces garbled, misspelled, or nonsense text baked permanently into the image (confirmed root cause on Puma Punku `scene_007` and 7 Nan Madol scenes, Aug 2026 — one scene rendered the literal unfilled placeholder `"[e.g., 18 features]"` as if it were real data).
+
+If the `prompt_seed` you receive from the Media Placement Agent implies a diagram, map-with-labels, chart, or annotated comparison (it should not — this is also prohibited upstream — but treat this as a second gate):
+- Strip every reference to labels, legends, callouts, arrows, or comparison text from `subject`, `context`, and `background`.
+- Rewrite the prompt around the plain physical subject only (the artifact, the landscape, the structure) exactly as `text_space: "none"` already requires.
+- Do not attempt to "simplify" the diagram into fewer text boxes — remove the text concept entirely. A diagram with one label is still a diagram; the model will still garble it.
 - Any text that simulates or stands in for YouTube Studio end screen functionality
 
 **YouTube end screens are applied in YouTube Studio after upload. This pipeline produces cinematic images only. If a `prompt_seed` describes any of the above elements, replace it with a clean cinematic shot appropriate to the scene's narration and narrative act before expanding it.**
@@ -190,7 +203,6 @@ If the scene does not clearly belong to a single act, choose the mood that best 
 | Artifact or inscription | `"extreme close-up or macro, full frame subject, raking light to reveal texture"` |
 | Historical figure | `"environmental portrait, medium shot, figure placed in period context, negative space above"` |
 | Landscape / geographic | `"panoramic wide angle, horizon line at lower third, sky dominant"` |
-| Map or diagram | `"angled overhead perspective, legible surface detail, slight depth of field fall-off at edges"` |
 | Abstract concept | `"symbolic central subject, minimalist composition, strong single focal point"` |
 
 ---
@@ -235,8 +247,8 @@ Match the lens profile to the content type:
 | Interior architectural | `"16mm"` | `"f/11"` | `"ultra-wide architectural"` |
 | Figure in environment | `"35mm"` | `"f/4"` | `"environmental portrait"` |
 | Artifact or inscription close-up | `"100mm"` | `"f/2.8"` | `"macro"` |
-| Map or diagram | `"50mm"` | `"f/5.6"` | `"standard overhead"` |
 | Dramatic ruins detail | `"85mm"` | `"f/2.8"` | `"telephoto detail"` |
+| Structural layout / overhead site view (photographic, not a labeled diagram) | `"35mm"` | `"f/8"` | `"aerial overhead"` |
 
 **`mood`**
 One or two descriptors from the mood table above, matched to the scene's narrative act.
@@ -245,8 +257,21 @@ One or two descriptors from the mood table above, matched to the scene's narrati
 Always: `"none"` — no text overlays, no letterboxing, no titles. Never deviate.
 
 **`negative_constraints`**
-Array of exclusions. Always include all **ten** standard channel exclusions:
-- `"modern elements"`, `"anachronistic objects"`, `"artificial studio lighting"`, `"oversaturated colors"`, `"cartoonish rendering"`, `"low detail"`, `"watermark"`, `"YouTube UI elements"`, `"subscribe buttons"`, `"fake video thumbnails"`
+Array of exclusions. Always include all **fourteen** standard channel exclusions:
+- `"modern elements"`, `"anachronistic objects"`, `"artificial studio lighting"`, `"oversaturated colors"`, `"cartoonish rendering"`, `"low detail"`, `"watermark"`, `"YouTube UI elements"`, `"subscribe buttons"`, `"fake video thumbnails"`, `"text"`, `"title card"`, `"logo"`, `"on-screen text"`
+
+The last four exist because `text_space: "none"` alone does not reliably stop the model from
+rendering text — confirmed on two independent incidents, Aug 2026: Ruins Untold `scene_010`
+(narration mentioned the channel name; image rendered a full title-card graphic with the
+show's logo and tagline) and Nan Madol `scene_112` (narration used reframing language
+— "may not be a story about stone at all" — and the image rendered a clean, perfectly
+legible chapter-title card, "BEYOND THE STONE," out of nowhere). Neither was a diagram or
+garbled text (see the HARD PROHIBITION above, which covers that separately) — both were
+clean, legible, unwanted title-card-style text the model added on its own initiative. A
+strong verbal cue toward "title," "reveal," or "reframe" concepts is apparently enough to
+trigger this, even with no literal instruction to render text. The `text_space` field is a
+weak signal the model can and does ignore; explicit negative_constraints are what actually
+worked when tested.
 
 Add scene-specific exclusions for historical accuracy:
 - Ancient Rome scenes: add `"medieval architecture"`, `"Gothic elements"`
@@ -336,5 +361,5 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
 
 - [ ] Only `visual_type: "image"` scenes included; count matches `total_image_scenes`
 - [ ] Every registered character uses the exact registry description — no variations
-- [ ] Every `style` is `"photorealistic, hyper-detailed, cinematic, documentary archaeology"`; every `text_space` is `"none"`; all seven standard `negative_constraints` present plus period-specific ones
+- [ ] Every `style` is `"photorealistic, hyper-detailed, cinematic, documentary archaeology"`; every `text_space` is `"none"`; all fourteen standard `negative_constraints` present plus period-specific ones
 - [ ] `continuity_flag` set for unresolved issues; all `asset_path` fields are `null`; `manifest_stats` counts accurate

@@ -78,7 +78,7 @@ merge, split, or reorder scenes.** The scene list is fixed.
 **Assign `image` when the narration describes:**
 - Artifacts, inscriptions, carvings, objects
 - Portraits or depictions of historical figures
-- Maps, diagrams, structural layouts
+- Structural layouts and site plans, as photographic reconstructions or real aerial/overhead photography — never as labeled diagrams or maps (see hard prohibition below)
 - Static establishing shots
 - Abstract or conceptual subjects (a date, a number, an idea)
 - **Any scene under 5 seconds**
@@ -137,6 +137,42 @@ Wrong: "Medieval London illustration circa 1100 AD, thatched rooftops along the 
   ← London is mentioned later. This scene is about buried foundations.
 Right: "Cross-section of floodplain soil revealing buried earthen foundations beneath quiet
   grassland. Dark underground archaeology. Ominous, archaeological."
+```
+
+**Wrong — channel name treated as a title-card cue:** the narration line that says "Welcome
+to Ruins Untold" (or similar) is the cold-open hook, not a cue to depict the show's own
+branding. It gets the exact same treatment as every other line: illustrate the *subject
+matter*, never the show's name, logo, or any title-card/text-graphic concept. Image models
+render literal on-screen text from a strong verbal cue like "title card" even when
+`text_space` says none — the fix is to never write the cue, not to rely on `text_space` to
+suppress it.
+```
+Narration: "What else is still down there? Welcome to Ruins Untold."
+Wrong: "Ruins Untold title card reveals mysterious underwater city imagery, Nan Madol
+  structures partially visible, invitation to discovery, cinematic opening sequence."
+  ← This is not about the show's name. It rendered as a literal on-screen logo graphic.
+Right: "Wide shot of submerged basalt ruins beneath shallow tropical water, structures
+  vanishing into murky depth, jungle silhouette above the waterline. Ominous, cinematic."
+```
+
+**Wrong — diagram/infographic seed:** image models cannot reliably render legible text. A
+seed that implies labels, legends, callout boxes, or a comparison graphic gets the model to
+attempt text anyway, producing garbled gibberish — confirmed on Puma Punku (`scene_007`) and
+7 Nan Madol scenes, Aug 2026 (one rendered the literal unfilled placeholder `"[e.g., 18
+features]"` as if it were real data). Never write "diagram," "infographic," "chart,"
+"annotated," "labeled," "comparative illustration," "side-by-side comparison," "legend," or
+"schematic" into a `prompt_seed`. If the scene is genuinely about a map, a technology's
+mechanism, or a comparison between sites, illustrate the plain physical subject only — no
+implied text — or flag `real_photo_preferred: true` instead.
+```
+Narration: "LiDAR fires millions of laser pulses, mapping the hidden structures beneath the
+  canopy."
+Wrong: "LiDAR technology diagram showing laser pulses firing downward, sensor mechanism
+  visualized, labeled callouts for each component."
+  ← Diagrams with labels always render as garbled text. This is not a spoiler problem, it's
+  a legibility problem — the model cannot spell.
+Right: "Aircraft-mounted sensor firing a dense grid of laser light down through dark jungle
+  canopy toward hidden stone ruins below. Technical, precise, nocturnal blue glow."
 ```
 
 ---
@@ -270,6 +306,8 @@ not "electrical hum".
       later scene's subject
 - [ ] Scenes under 5 seconds are `image`
 - [ ] No `prompt_seed` mentions the narrator, on-screen text, or camera directions
+- [ ] No `prompt_seed` treats a "Welcome to Ruins Untold" narration line as a title-card,
+      logo, or channel-branding cue — it illustrates the subject matter like any other line
 - [ ] `real_photo_preferred: true` scenes have a specific `wikimedia_search_query`
 - [ ] Every distinct `ambient_location` used has an entry in `ambient_prompts`
 - [ ] At most 2 `sfx_punctuation` in this chunk; each has both `description` and `prompt`
