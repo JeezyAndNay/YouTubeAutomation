@@ -37,6 +37,11 @@ Every script follows this nine-part structure. Do not skip sections. Do not reor
 
 Drop the audience into the most compelling moment before any context is established. No introduction. No channel branding. Pure tension.
 
+**Structure this as the First 50 Formula — three moves, in order, inside the word count:**
+1. **Pattern interrupt** — a vivid, sensory, mid-moment image. Not "Ancient Egypt was a civilization that…" — drop the audience into a scene already in motion.
+2. **Specific proof** — one concrete, verifiable, sensory detail (a real number, a real place, a real physical detail from the research package) that signals "this is researched, not invented." Never a fabricated statistic.
+3. **Open loop** — an unanswered question that forces the audience forward. This is the loop the Conclusion must close.
+
 Rules:
 - Write in present tense, second or third person
 - Place the audience inside the scene — sensory details, immediate stakes
@@ -49,7 +54,7 @@ Example cadence:
 
 ---
 
-### PART 2 — CHANNEL HOOK (40–60 words)
+### PART 2 — CHANNEL HOOK (50–90 words)
 
 A brief, branded transition into the episode. Acknowledge the audience directly. Signal this is a deep-dive investigation.
 
@@ -60,6 +65,8 @@ Beats to hit, in any order/phrasing:
 - Signal this is a deep, investigative look at something history buried, got wrong, or won't explain
 - Tease the episode premise in one sentence — without giving away the answer
 - Close with a line that invites the audience to stay through the whole investigation
+
+**Question-frame (required, closes out this part):** before handing off to Act 1, install 2–3 explicit questions the episode will answer, in the order it will answer them (e.g. "Who built it? Why here? And why does the written record refuse to name them?"). Then name Chapter 1 aloud and on screen — `[TEXT ON SCREEN: "Chapter 1 — [TITLE]"]`. This is a promise map: it tells the audience (and the algorithm) there's a plan. Every subsequent Act must open the same way — narrate the chapter name and place the `[TEXT ON SCREEN: "Chapter N — [TITLE]"]` cue at the top of that Act's narration.
 
 Example phrasings — write a NEW one each episode, do not reuse these verbatim:
 > "You're back at Ruins Untold — and today we're digging into something the history books got conveniently wrong. [premise]. Stick around. This one goes deep."
@@ -110,6 +117,8 @@ Rules:
 - Credit named researchers, institutions, or archaeological evidence where available
 - Use `mysteries[].mainstream_explanation` from the research package
 - Signal the audience that you've heard the official story — and that's exactly why what comes next is so disturbing
+
+**This is the False Answer beat — the single highest-risk section in the script.** Make it feel almost convincing. If it reads as obviously weak, the audience never believed it and Act 4's reveal lands flat. But it must never feel *fully* sufficient — if it's satisfying, viewers leave here. Present it at full strength, then in the transition line, name precisely and specifically what it fails to account for.
 
 Transition line: End this act by identifying the one piece of evidence, anomaly, or question that the official story cannot explain. This is the door to Act 4.
 
@@ -207,21 +216,47 @@ frame to sit over, and it closes the episode on the same investigator who opened
 
 ### Pacing
 - Target narration pace: 145–160 words per minute
-- Total script target: 2,500–2,900 words — hard ceiling is 2,900. Never exceed it. At 145 wpm that is 20 minutes.
+- Total script target: 2,600–3,000 words — hard ceiling is 3,000. Never exceed it. At 150 wpm that is roughly 18–20 minutes.
 - Write for ears, not eyes — read every paragraph aloud mentally. If it stumbles, rewrite it.
 - Use paragraph breaks generously — the Voice Agent needs clear breath points
+- **New-fact cadence:** roughly one new fact, data point, named expert, or story beat every 20–40 seconds of narration. Dense but readable.
+
+### Causal Threading — BUT/THEREFORE, never AND-THEN (the South Park rule)
+Connect every beat with **but** or **therefore**, never **and then**. Each new fact should push *against* or *build a consequence from* the last one, not just follow it chronologically. This forces the audience's brain to stay active instead of passively absorbing a timeline.
+- ✗ "The mound was excavated in 1936. And then again in the 1950s."
+- ✓ "The mound was excavated in 1936 — **but** it wasn't until the 1950s that anyone found what was actually buried inside it."
+Rewrite every "and then / meanwhile" transition you catch yourself writing into a but/therefore.
 
 ### Retention Mechanics
 - Open loops: introduce a question or tension early that you won't resolve until later in the act
-- Pattern interrupts: shift tone, location, or scale every 90–120 seconds of estimated runtime
-- Cliffhanger act endings: each act should end on an unresolved tension that pulls into the next
+- Pattern interrupts: shift tone, location, or scale every **60–90 seconds** of estimated runtime — a new tension, question, or visual shift. Never let a section run longer than ~90 seconds without one.
+- Cliffhanger act endings: each act should end on an unresolved tension that pulls into the next — close the loop WITH payoff, then hand off to the next loop in the same breath. A "dead second" after a reveal is where drop-off spikes.
 - Specificity over generality: "117 people" is more powerful than "over a hundred people"
+- Reveal ladder: when an act has multiple pieces of evidence, order them escalating — least to most surprising — so a viewer who's made it through the first piece has a reason to expect the next is bigger
+- Time pressure: even in ancient settings, frame stakes with urgency where the research supports it ("before the winter floods," "before the ceremony began") — deadlines are one of the most reliable retention tools in the genre, but never invent one the sources don't support
 
 ### Content Flags
 - Review `research_flags` before writing — handle sensitivity issues as directed
 - Never present `[SPECULATIVE]` timeline entries as confirmed fact
 - Never fabricate specific quotes from historical figures
 - Mark alternative theories clearly with language that signals interpretation, not confirmation
+
+---
+
+## Anti-Slop Checklist (run against your own draft before finalizing)
+
+These eight patterns are the fastest way a faceless script reads as an AI blog post and tanks retention in under 30 seconds. Scan the full draft for each before treating it as done:
+
+1. ❌ Short period fragments ("No X. No Y. No Z.")
+2. ❌ Colon abuse ("The truth: it was…")
+3. ❌ "Most people" angles ("Most people don't know…")
+4. ❌ "It's not X, it's Y" structures
+5. ❌ Suspicious or invented statistics ("73% of sites…") — use only numbers present in the research package
+6. ❌ Empty emphasis words ("powerful," "game-changing," "incredible")
+7. ❌ "Wise narrator" tone ("Here's what no one tells you…")
+8. ❌ Robotic data statements ("According to research, X occurred.")
+
+**Keep doing (green flags):** real named experts, real verifiable numbers from the research package, sensory story-world detail, BUT/THEREFORE threading, a question-and-answer arc, specific visual cues on every paragraph.
 
 ---
 
@@ -315,9 +350,13 @@ contemplative and still]
 
 ## Quality Checklist
 
-- [ ] All nine parts present and in order; word count 2,400–2,800 (never above 2,800)
-- [ ] Cold Open does not name topic directly; conclusion returns to Cold Open image
-- [ ] Mainstream explanation presented fairly; alternative theories framed as interpretation; no `[SPECULATIVE]` entries as fact
+- [ ] All nine parts present and in order; word count 2,600–3,000 (never above 3,000)
+- [ ] Cold Open follows the First 50 Formula (pattern interrupt → specific proof → open loop) and does not name the topic directly; conclusion returns to Cold Open image and closes that loop
+- [ ] Channel Hook ends with 2–3 explicit questions (question-frame) and names Chapter 1 on screen; every subsequent Act opens with its own `[TEXT ON SCREEN: "Chapter N — [TITLE]"]` cue
+- [ ] BUT/THEREFORE threading used throughout — no bare "and then" chronology stringing facts together
+- [ ] Mainstream explanation (Act 3 / False Answer) presented at full strength, but never left fully satisfying — transition line names exactly what it can't explain
+- [ ] Alternative theories framed as interpretation; no `[SPECULATIVE]` entries as fact
+- [ ] Anti-Slop Checklist run against the full draft — none of the 8 patterns present
 - [ ] **Closing names no specific next video, topic, or region** — the handoff is to YouTube's
       end screen generically, never to something we chose
 - [ ] **Closing describes no on-screen element** — no "on your screen", "right here", "click",
