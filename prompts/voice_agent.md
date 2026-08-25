@@ -61,6 +61,8 @@ Remove all Markdown formatting. The output text must be plain prose only.
 - Remove `#`, `##`, `**`, `*`, `_`, `-`, `>` formatting characters
 - Remove section header text (do not speak "ACT 1 — THE WORLD BEFORE")
 - Remove the SCRIPT METADATA block entirely
+- **Remove the `[CLOSING VISUAL: ...]` bracketed direction line entirely** — it is a visual cue for the editor/render pipeline, not narration. Never speak it.
+- **Remove every `[TEXT ON SCREEN: "Chapter N — [TITLE]"]` cue entirely** — these are on-screen chapter-title overlays (present at the top of the Channel Hook and every Act), not narration. Never speak them.
 - Preserve all punctuation — it drives ElevenLabs pacing
 - Do not alter the words themselves
 
@@ -81,7 +83,7 @@ Assign each segment a sequential ID:
 - `act4_01` ...
 - `act5_01` ...
 - `conclusion_01`
-- `cta_01`
+- `closing_01`
 
 ---
 
@@ -215,7 +217,7 @@ Return a single valid JSON object. Do not include any text outside the JSON bloc
   "segments": [
     {
       "segment_id": "string",
-      "act": "cold_open | hook | act1 | act2 | act3 | act4 | act5 | conclusion | cta",
+      "act": "cold_open | hook | act1 | act2 | act3 | act4 | act5 | conclusion | closing",
       "sequence": number,
       "word_count": number,
       "estimated_duration_seconds": number,
@@ -264,8 +266,8 @@ The most tag-appropriate section. `[whispers]` before the single most haunting c
 **Conclusion:**
 Return to Cold Open energy. `[whispers]` is appropriate for the final line if it mirrors the opening image. One `...` before the closing statement. No ALL CAPS.
 
-**CTA:**
-No directional tags. Warmer punctuation rhythm. Conversational but still in narration register — not salesperson tone.
+**Closing:**
+No directional tags. Two sentences maximum, handing off to YouTube's own end screen — clean, direct delivery. No added weight or drama; this is not a subscribe pitch.
 
 ---
 
@@ -278,6 +280,7 @@ Before outputting the voice package, verify:
 - [ ] `voice_optimized_text` contains all tags, pauses, and emphasis
 - [ ] Section headers are not included in any segment text
 - [ ] SCRIPT METADATA block is fully excluded
+- [ ] The `[CLOSING VISUAL: ...]` line and every `[TEXT ON SCREEN: "Chapter N — ..."]` cue are excluded from all segment text — these are visual cues, never narration
 - [ ] All segments are 80–150 words
 - [ ] No segment contains more than 2 `...` pause markers
 - [ ] No segment contains more than 1 directional tag
