@@ -36,6 +36,7 @@ Exit codes:
 import argparse
 import json
 import os
+import re
 import sys
 
 # ── Spec constants — must match media_placement_agent.md and render.js ────────
@@ -55,7 +56,36 @@ VALID_SFX_TYPES = {"ambient", "punctuation", "transition"}
 # Fields that prove the agent emitted the OLD schema. Presence = hard fail.
 STALE_CUE_FIELDS = {"trigger_at", "sfx_type", "start_time", "duration_seconds"}
 
-PLACEHOLDER_MARKERS = ("[narration", "XXX", "x.xx", "TODO", "PLACEHOLDER", "lorem ipsum")
+# Fixed 2026-08-26: the old flat, case-insensitive PLACEHOLDER_MARKERS list
+# false-positived on Newark Earthworks scene_033, whose real, correctly-
+# transcribed narration was "...not as a vague 'ancient people' placeholder."
+# "placeholder," "todo," and "xxx" are all real English words/tokens that can
+# legitimately appear in documentary prose; a naive substring match can't tell
+# that apart from an actual unfilled template default. Split into two tiers:
+#   - PLACEHOLDER_PHRASES: multi-word or bracket-prefixed strings with
+#     essentially zero chance of appearing in real narration/prompt text.
+#     Matched case-insensitively as a plain substring, as before.
+#   - PLACEHOLDER_TOKENS: single common-English-word tokens that are only
+#     ever a real template leftover when they show up bracket-wrapped or in
+#     ALL CAPS (e.g. "[PLACEHOLDER]", "TODO:", "XXX") — never when they
+#     appear in normally-cased prose. Matched with a case-sensitive,
+#     word-boundary regex against the ORIGINAL (non-lowered) text.
+PLACEHOLDER_PHRASES = ("[narration", "x.xx", "lorem ipsum")
+PLACEHOLDER_TOKENS = ("PLACEHOLDER", "TODO", "XXX")
+PLACEHOLDER_TOKEN_RE = re.compile(
+    r'\[?\b(?:' + '|'.join(PLACEHOLDER_TOKENS) + r')\b\]?'
+)
+
+
+def _has_placeholder(text):
+    """True if text contains a placeholder phrase (case-insensitive) or a
+    placeholder token in bracket/ALL-CAPS form (case-sensitive). See the
+    2026-08-26 note above PLACEHOLDER_PHRASES for why these are split."""
+    if not isinstance(text, str):
+        return False
+    if any(m.lower() in text.lower() for m in PLACEHOLDER_PHRASES):
+        return True
+    return bool(PLACEHOLDER_TOKEN_RE.search(text))
 
 
 class Report:
@@ -208,12 +238,12 @@ def validate_scenes(tl, rep):
         seed = (s.get("prompt_seed") or "").strip()
         if not seed and not s.get("asset_path"):
             rep.err("PROMPT_SEED_EMPTY", f"{sid}: empty prompt_seed and no asset_path")
-        elif any(m.lower() in seed.lower() for m in PLACEHOLDER_MARKERS):
+        elif _has_placeholder(seed):
             rep.err("PROMPT_SEED_PLACEHOLDER", f"{sid}: prompt_seed contains placeholder text")
 
         # --- narration placeholder check (when present) ---
         nar = s.get("narration_text")
-        if isinstance(nar, str) and any(m.lower() in nar.lower() for m in PLACEHOLDER_MARKERS):
+        if _has_placeholder(nar):
             rep.err("NARRATION_PLACEHOLDER",
                     f"{sid}: narration_text contains placeholder text")
 
