@@ -124,7 +124,17 @@ def segment_words(words, total_duration):
     spans = []
     i = 0
     while i < n:
-        scene_start_t = words[i]["start"]
+        # Scene 1's audio_in is force-set to 0.0 downstream (so picture and
+        # sound both start at absolute t=0 with no lead-in gap) regardless of
+        # where the first real word actually starts. If the cap arithmetic
+        # here uses the real word start instead, the cap is computed against
+        # the wrong origin and the scene's *measured* duration (audio_out -
+        # 0.0) silently exceeds MAX_SCENE by however much lead-in silence
+        # preceded the first word. Confirmed 2026-09-09 on Karahantepe:
+        # first word started at 0.08s, scene_001 came out 10.05s (2x the
+        # self_check's 0.02s tolerance). Anchor the very first scene's cap
+        # at 0.0 to match what self_check() actually measures.
+        scene_start_t = 0.0 if i == 0 else words[i]["start"]
         cap_t = scene_start_t + MAX_SCENE
 
         # Widest cut index whose boundary still fits under the cap.

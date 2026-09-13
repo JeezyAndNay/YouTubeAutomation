@@ -167,9 +167,29 @@ def validate_scenes(tl, rep):
 
     n_img = n_vid = 0
     prev_out = None
+    acts_seen = []
 
     for i, s in enumerate(scenes):
         sid = s.get("scene_id") or f"index_{i}"
+
+        # --- act field (2026-09-08: silent mood-generation failure guard) ---
+        # image_agent.md keys its visual-mood table off each scene's `act`
+        # (act1..act5, cold_open, hook, conclusion, closing). If `act` is
+        # missing/null/"unknown" for a scene — or every scene in the episode
+        # shares one act — the Image Agent silently falls back to one default
+        # mood for the whole video instead of varying by act, with no error
+        # raised anywhere downstream. Confirmed on Newark Earthworks
+        # (act missing from voice_package.json -> segment.py defaulted to
+        # "unknown") and again on the H-Blocks/Puma Punku episode (act key
+        # absent entirely after a manual media_timeline.json reconstruction
+        # bypassed segment.py). This check makes both failure shapes a hard,
+        # pre-spend error instead of a silent quality defect discovered only
+        # by watching the finished video.
+        act = s.get("act")
+        if not act or act == "unknown":
+            rep.err("ACT_MISSING", f"{sid}: act is missing/null/'unknown'")
+        else:
+            acts_seen.append(act)
 
         # --- required numeric timing fields ---
         missing = [f for f in ("audio_in", "audio_out", "visual_in", "visual_out")
@@ -251,6 +271,14 @@ def validate_scenes(tl, rep):
         if s.get("real_photo_preferred") and not (s.get("wikimedia_search_query") or s.get("asset_path")):
             rep.warn("WIKIMEDIA_QUERY_MISSING",
                      f"{sid}: real_photo_preferred is true but no wikimedia_search_query")
+
+    # --- act variety across the episode ---
+    if len(scenes) > 3 and len(acts_seen) > 3 and len(set(acts_seen)) <= 1:
+        rep.err("ACT_NO_VARIETY",
+                f"all {len(acts_seen)} scenes with a valid act share the single "
+                f"value '{acts_seen[0]}' — either every scene is genuinely the "
+                f"same act (unlikely for a full episode) or act was copied "
+                f"incorrectly upstream. Image Agent mood will not vary by act.")
 
     # --- final coverage gap ---
     if total is not None and prev_out is not None:

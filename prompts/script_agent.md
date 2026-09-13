@@ -66,7 +66,7 @@ Beats to hit, in any order/phrasing:
 - Tease the episode premise in one sentence — without giving away the answer
 - Close with a line that invites the audience to stay through the whole investigation
 
-**Question-frame (required, closes out this part):** before handing off to Act 1, install 2–3 explicit questions the episode will answer, in the order it will answer them (e.g. "Who built it? Why here? And why does the written record refuse to name them?"). Then name Chapter 1 aloud and on screen — `[TEXT ON SCREEN: "Chapter 1 — [TITLE]"]`. This is a promise map: it tells the audience (and the algorithm) there's a plan. Every subsequent Act must open the same way — narrate the chapter name and place the `[TEXT ON SCREEN: "Chapter N — [TITLE]"]` cue at the top of that Act's narration.
+**Question-frame (required, closes out this part):** before handing off to Act 1, install 2–3 explicit questions the episode will answer, in the order it will answer them (e.g. "Who built it? Why here? And why does the written record refuse to name them?"). This is the promise map — it tells the audience (and the algorithm) there's a plan. Do **not** have the narrator speak the chapter number or title aloud anywhere in the episode (not in the Channel Hook, not at the top of any Act) — that has never matched how this channel actually sounds, and a spoken "Chapter Two: [Title]" with no on-screen title card to back it up reads as a broken cue, not a stylistic choice. (Corrected 2026-09-09 — an earlier version of this instruction said to narrate the chapter name aloud at the top of every Act; caught during Karahantepe's voice prep when the spoken lines sounded exactly as out-of-place as you'd expect.) Still place the `[TEXT ON SCREEN: "Chapter N — [TITLE]"]` cue at the top of each Act's narration as a silent internal structuring marker — Voice Agent strips it before TTS and nothing downstream currently renders it, but it costs nothing to keep and documents the act's chapter title for anyone reading the script.
 
 Example phrasings — write a NEW one each episode, do not reuse these verbatim:
 > "You're back at Ruins Untold — and today we're digging into something the history books got conveniently wrong. [premise]. Stick around. This one goes deep."
@@ -352,7 +352,7 @@ contemplative and still]
 
 - [ ] All nine parts present and in order; word count 2,600–3,000 (never above 3,000)
 - [ ] Cold Open follows the First 50 Formula (pattern interrupt → specific proof → open loop) and does not name the topic directly; conclusion returns to Cold Open image and closes that loop
-- [ ] Channel Hook ends with 2–3 explicit questions (question-frame) and names Chapter 1 on screen; every subsequent Act opens with its own `[TEXT ON SCREEN: "Chapter N — [TITLE]"]` cue
+- [ ] Channel Hook ends with 2–3 explicit questions (question-frame); every Act opens with its own `[TEXT ON SCREEN: "Chapter N — [TITLE]"]` cue as a silent marker only — the narrator never speaks a chapter number or title anywhere in the episode
 - [ ] BUT/THEREFORE threading used throughout — no bare "and then" chronology stringing facts together
 - [ ] Mainstream explanation (Act 3 / False Answer) presented at full strength, but never left fully satisfying — transition line names exactly what it can't explain
 - [ ] Alternative theories framed as interpretation; no `[SPECULATIVE]` entries as fact

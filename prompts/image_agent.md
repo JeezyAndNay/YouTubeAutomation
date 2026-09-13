@@ -275,9 +275,11 @@ worked when tested.
 
 Add scene-specific exclusions for historical accuracy:
 - Ancient Rome scenes: add `"medieval architecture"`, `"Gothic elements"`
-- Prehistoric scenes: add `"metal tools"`, `"written language"`, `"constructed buildings"`
+- Prehistoric or no-writing-system scenes: add `"metal tools"`, `"written language"`, `"constructed buildings"`, `"hieroglyphs"`, `"cuneiform"`, `"carved inscriptions"`, `"pictographic symbol rows"`, `"glyphs"`, `"legible script of any kind"`, `"idealized classical Greco-Roman facial features"`, `"symmetrical idealized sculpture"`
 - Egyptian scenes: add `"Greek columns"`, `"Roman arches"`
 - Match exclusions to the time period being depicted
+
+**Why the expanded prehistoric list (added 2026-09-11):** `"written language"` alone was not enough. On an episode whose entire premise is a site with no writing system, `"written language"` failed to stop the model from carving what reads as an actual inscription — rows of boxed glyph-like symbols, cartouche-style panels, even a close-up that assembled into legible letterforms — 8 separate scenes on one episode (Karahantepe). This is a different failure mode from the diagram/UI-text prohibition above: it's not garbled text or a title card, it's the model interpreting "ancient carved stone" as an invitation to invent a plausible-looking ancient script. `"written language"` reads to the model as "no modern alphabet," not "no organized rows of symbols that resemble a writing system" — hence the more explicit terms. The same episode also produced repeated idealized, symmetrical, Greco-Roman-style faces and Doric/Ionic column details on a Pre-Pottery Neolithic subject that should be crude, weathered, and asymmetric — hence the added style exclusions. If a future episode's site is not classified "no writing system" specifically but is still genuinely prehistoric, the hieroglyph/glyph exclusions still apply — no real prehistoric site had hieroglyphic writing, so this list is safe to include on every prehistoric-scene case, not just this one.
 
 ---
 

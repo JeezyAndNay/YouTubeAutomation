@@ -115,13 +115,72 @@ Describe the primary subject and what it is doing. This is the core of what Veo 
 - Make the motion the subject: fire consuming, water rushing, sand shifting, storm approaching
 - Example: `Waves crash against the base of ancient sea-facing cliffs, white foam surging over carved stone steps.`
 
+**For carved stone on a prehistoric or no-writing-system site — describe it as POSITIVELY plain, never assume Veo will avoid inventing a script:**
+Because negative language doesn't work on Veo (see the rule above), you cannot write "no
+hieroglyphs" or "no writing" into a video prompt and expect it to help — Veo ignores it.
+Confirmed on Karahantepe (2026-09-11): 6 separate video scenes describing "carved stone"
+on a site with no writing system rendered organized rows of hieroglyph-like glyphs,
+cartouche panels, and even legible letterforms, because the prompt left "what's carved on
+it" open enough for the model to invent a plausible ancient script. The fix is to always
+POSITIVELY and specifically describe the carving every time stone/a pillar/a tablet/a
+statue appears in a prehistoric prompt: name the exact motif (a single animal figure, a
+human form, an abstract geometric shape, a hand print) and explicitly state the carving
+technique in plain physical terms — e.g. `a single deeply-incised animal figure, the only
+mark on an otherwise bare weathered stone face` or `crude asymmetric relief of a human
+form, no additional marks around it`. Never leave a carved-stone description generic
+enough that "ancient markings" or "carved symbols" could be filled in as rows of
+pictographic text. The same principle applies to sculptural style: state explicitly that
+faces and bodies are `crude, weathered, asymmetric Pre-Pottery Neolithic carving` — do not
+just say "ancient statue," which Veo tends to render as smooth, symmetrical, idealized
+Greco-Roman sculpture instead.
+
 ---
 
 #### Step 3a — Character Registry (Build Before Any Prompt)
 
-Before writing any prompts, scan all `narration_text` fields across the **full** timeline — including image scenes — to identify every named historical figure who appears visually in any video scene.
+**Standing cast — always registered, video side too.** Ruins Untold has one recurring
+on-screen character who appears across **every** episode, in both images and video. Add
+this entry to `character_registry` verbatim on every run, before any episode-specific
+figures, and copy the description exactly into any video prompt featuring him. This is
+the SAME character defined in `image_agent.md` — the two registries must not drift or
+invent a different appearance for him:
 
-For each person, assign a consistent physical description and record it in the character registry. This description must be used verbatim every time that person appears in a video prompt.
+```json
+{
+  "name": "The Investigator",
+  "description": "Present-day male investigator, late 30s to mid 40s, lean build, weathered sun-worn face with a short trimmed beard and moustache. Long wavy light-brown hair falling well past the shoulders from beneath a black wide-brim felt hat with a braided leather hat band. Plain tan waxed-canvas chore jacket, button front, chest and hip pockets, no visible branding or logos of any kind. White crew-neck t-shirt beneath. Olive-khaki technical trousers, worn olive-brown leather hiking boots. Modern field dress — never period costume.",
+  "first_scene": "recurring — channel standing cast"
+}
+```
+
+**Rules specific to The Investigator (video):**
+- He is **present-day**. He observes and investigates sites; he is never depicted as a
+  historical participant, and never wears period clothing.
+- **Never place him inside a historical reconstruction scene.** He belongs in modern
+  establishing shots, site overlooks, and the closing shot — not in the ancient past.
+- **The closing shot of every episode features him**, matching the script's own
+  `[CLOSING VISUAL: ...]` direction: a wide shot, seen from behind or in three-quarter
+  view, at a vantage point overlooking the site or landscape central to that episode, in
+  dusk or low golden light. Contemplative and still, small in frame against a wide
+  horizon. Use his registered description explicitly in that prompt — do not fall back to
+  a generic unnamed "lone figure," which is how his gender/appearance has drifted
+  inconsistently between scenes in past episodes (confirmed on Karahantepe, 2026-09-11).
+- **Any scene whose narration describes a present-day, unnamed field researcher/
+  archaeologist/excavator in a non-historical, observational role should default to
+  using The Investigator** rather than inventing a new anonymous figure — this is what
+  keeps his gender and appearance consistent instead of the model defaulting
+  unpredictably (confirmed root cause of a wrong-gender regeneration on Karahantepe
+  scene_016 and scene_091, 2026-09-11: an anonymized-but-unregistered "field
+  archaeologist" prompt with no character-registry backing rendered as a woman on one
+  pass despite the narration using "he").
+
+Then scan all `narration_text` fields across the **full** timeline — including image
+scenes — to identify every additional NAMED historical figure who appears visually in
+any video scene, distinct from The Investigator.
+
+For each such named person, assign a consistent physical description and record it in
+the character registry. This description must be used verbatim every time that person
+appears in a video prompt.
 
 **Registry entry format:**
 ```json
@@ -137,6 +196,13 @@ For each person, assign a consistent physical description and record it in the c
 - For figures without known likeness, construct a plausible period-accurate description
 - Clothing must match the historical time period and social station — zero anachronisms
 - Once set, the description does not change between scenes
+- **Do not name a real, living person in the prompt text itself**, even when the
+  narration names them. Veo's safety filter rejects prompts that name a real identifiable
+  public figure (confirmed on Karahantepe scene_016, "Bahattin Çelik" — HTTP rejection:
+  "Request blocked... involving a prominent public figure," 2026-09-11). If the narration
+  names a real present-day person in a non-historical role, either use The Investigator
+  standing character instead, or write the prompt around an anonymized, unnamed
+  description (age range, build, clothing) with no real name anywhere in the prompt text.
 
 ---
 

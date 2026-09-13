@@ -158,7 +158,16 @@ function createImageClip(imagePath, duration, outputPath) {
     `ffmpeg -y -loop 1 -framerate ${FPS} -i "${imagePath}"`,
     `-vf "${vf}"`,
     `-t ${duration.toFixed(3)} -r ${FPS}`,
-    `-c:v libx264 -preset ${ENCODE_PRESET} -crf ${ENCODE_CRF} -pix_fmt yuv420p -an`,
+    // -tune grain: without it, x264's adaptive quantization re-decides how much fine
+    // texture/grain to keep on every frame of what is otherwise near-static footage (a
+    // slow Ken Burns crop over one still image). The content barely changes frame to
+    // frame, but the encoder's noise/grain decision does — the eye reads that as a rapid
+    // flicker/strobe within a single shot, not a transition artifact. -tune grain tells
+    // x264 to preserve texture consistently across frames instead of re-deciding it each
+    // time. Confirmed root cause 2026-09-12 (Karahantepe) — user-reported flicker
+    // "throughout, within single shots" pointed straight at this, a known libx264
+    // behavior on near-static/slow-pan footage, not a content or transition bug.
+    `-c:v libx264 -preset ${ENCODE_PRESET} -tune grain -crf ${ENCODE_CRF} -pix_fmt yuv420p -an`,
     `"${outputPath}"`,
   ].join(' ');
 
@@ -200,7 +209,10 @@ function createVideoClip(videoPath, duration, outputPath, includeAudio, audioLev
     `ffmpeg -y -i "${videoPath}"`,
     `-vf "${vfParts.join(',')}"`,
     `-t ${duration.toFixed(3)} -r ${FPS}`,
-    `-c:v libx264 -preset ${ENCODE_PRESET} -crf ${ENCODE_CRF} -pix_fmt yuv420p`,
+    // -tune grain: see createImageClip's comment. Applies just as much to Veo clips —
+    // largely static/slow-motion shots re-encoding at CRF ${ENCODE_CRF} show the same
+    // frame-to-frame grain/texture flicker without it.
+    `-c:v libx264 -preset ${ENCODE_PRESET} -tune grain -crf ${ENCODE_CRF} -pix_fmt yuv420p`,
     audioArgs,
     `"${outputPath}"`,
   ].join(' ');
@@ -273,7 +285,9 @@ function xfadeBatch(clipPaths, clipDurations, outputPath) {
     `ffmpeg -y ${inputsStr}`,
     `-filter_complex "${filterParts.join('; ')}"`,
     `-map "[vout]"`,
-    `-c:v libx264 -preset ${ENCODE_PRESET} -crf ${ENCODE_CRF} -pix_fmt yuv420p`,
+    // -tune grain: see createImageClip's comment — this xfade re-encode is a second place
+    // the same flicker can reappear if omitted, since xfade re-quantizes every frame.
+    `-c:v libx264 -preset ${ENCODE_PRESET} -tune grain -crf ${ENCODE_CRF} -pix_fmt yuv420p`,
     `"${outputPath}"`,
   ].join(' ');
 
@@ -331,7 +345,8 @@ function assembleConcatFallback(clipPaths, outputPath) {
 
   const cmd = [
     `ffmpeg -y -f concat -safe 0 -i "${concatFile}"`,
-    `-c:v libx264 -preset ${ENCODE_PRESET} -crf ${ENCODE_CRF} -pix_fmt yuv420p`,
+    // -tune grain: see createImageClip's comment. Fallback path, but keep it consistent.
+    `-c:v libx264 -preset ${ENCODE_PRESET} -tune grain -crf ${ENCODE_CRF} -pix_fmt yuv420p`,
     `"${outputPath}"`,
   ].join(' ');
 
