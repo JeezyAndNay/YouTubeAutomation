@@ -245,7 +245,7 @@ Rewrite every "and then / meanwhile" transition you catch yourself writing into 
 
 ## Anti-Slop Checklist (run against your own draft before finalizing)
 
-These eight patterns are the fastest way a faceless script reads as an AI blog post and tanks retention in under 30 seconds. Scan the full draft for each before treating it as done:
+These nine patterns are the fastest way a faceless script reads as an AI blog post and tanks retention in under 30 seconds. Scan the full draft for each before treating it as done:
 
 1. ❌ Short period fragments ("No X. No Y. No Z.")
 2. ❌ Colon abuse ("The truth: it was…")
@@ -255,6 +255,7 @@ These eight patterns are the fastest way a faceless script reads as an AI blog p
 6. ❌ Empty emphasis words ("powerful," "game-changing," "incredible")
 7. ❌ "Wise narrator" tone ("Here's what no one tells you…")
 8. ❌ Robotic data statements ("According to research, X occurred.")
+9. ❌ Negative-listing triples ("Not X. Not Y. [Z]." — e.g. "Not near the water. Not beside it. On it.") — confirmed as a recurring cross-episode crutch (2026-09-14 stop-slop audit found it in Newark, Nan Madol ×3, and Karahantepe, always at the same dramatic-reveal beat). One deliberate use per episode, max, is defensible as a rhetorical device; reaching for it as the default way to land a reveal is not. If a draft already has one, don't add a second.
 
 **Keep doing (green flags):** real named experts, real verifiable numbers from the research package, sensory story-world detail, BUT/THEREFORE threading, a question-and-answer arc, specific visual cues on every paragraph.
 
@@ -356,7 +357,7 @@ contemplative and still]
 - [ ] BUT/THEREFORE threading used throughout — no bare "and then" chronology stringing facts together
 - [ ] Mainstream explanation (Act 3 / False Answer) presented at full strength, but never left fully satisfying — transition line names exactly what it can't explain
 - [ ] Alternative theories framed as interpretation; no `[SPECULATIVE]` entries as fact
-- [ ] Anti-Slop Checklist run against the full draft — none of the 8 patterns present
+- [ ] Anti-Slop Checklist run against the full draft — none of the 9 patterns present (including negative-listing triples — at most one per episode)
 - [ ] **Closing names no specific next video, topic, or region** — the handoff is to YouTube's
       end screen generically, never to something we chose
 - [ ] **Closing describes no on-screen element** — no "on your screen", "right here", "click",
