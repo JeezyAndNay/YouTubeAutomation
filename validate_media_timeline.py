@@ -347,9 +347,25 @@ def validate_music(tl, rep, total):
         sp = (c.get("style_prompt") or "").strip()
         if not sp:
             rep.err("MUSIC_STYLE_PROMPT", f"music_cue {cid}: missing style_prompt")
-        elif "instrumental" not in sp.lower():
-            rep.warn("MUSIC_NOT_INSTRUMENTAL",
-                     f"music_cue {cid}: style_prompt should specify 'instrumental'")
+        else:
+            # compose_music.py (2026-08-12+) writes a short mood-only style_prompt
+            # alongside a richer suno_prompt that carries the required "Instrumental
+            # only. No lyrics. No vocals." close line, plus an explicit `instrumental`
+            # boolean and `negativeTags` blocking vocals/singing/chanting. Checking
+            # style_prompt alone is stale now that field exists — it was a real
+            # false-positive warning on every compose_music.py-enabled episode
+            # (confirmed on Poverty Point, 2026-09-14: style_prompt has no literal
+            # "instrumental" substring, but suno_prompt/instrumental/negativeTags all
+            # already guarantee no-vocals). Accept any of the three.
+            suno_prompt = (c.get("suno_prompt") or "").strip()
+            is_instrumental_flag = c.get("instrumental") is True
+            if ("instrumental" not in sp.lower()
+                    and "instrumental" not in suno_prompt.lower()
+                    and not is_instrumental_flag):
+                rep.warn("MUSIC_NOT_INSTRUMENTAL",
+                         f"music_cue {cid}: neither style_prompt nor suno_prompt "
+                         f"specifies 'instrumental', and no instrumental=true flag "
+                         f"is set")
         if not _num(c.get("volume_db")):
             rep.warn("MUSIC_VOLUME", f"music_cue {cid}: no volume_db (render defaults -20)")
 
