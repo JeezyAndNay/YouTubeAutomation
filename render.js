@@ -70,11 +70,20 @@ function log(msg) {
 function resolveAsset(scene, projectDir) {
   const { visual_type = 'image', scene_id = '', sequence = 0, asset_path } = scene;
 
-  // 1. Explicit asset_path in the timeline
-  if (asset_path && fs.existsSync(asset_path)) {
-    const ext = path.extname(asset_path).toLowerCase();
+  // 1. Explicit asset_path in the timeline — resolve relative to projectDir, not cwd.
+  // media_timeline.json stores paths like "videos/scene_091.mp4" relative to the
+  // episode directory. Checking fs.existsSync(asset_path) directly only worked by
+  // accident when render.js happened to be invoked with the project dir as cwd —
+  // run from anywhere else (e.g. the YouTubeAutomation repo root), every scene fails
+  // to resolve and the pre-render completeness gate fires for the entire episode
+  // (confirmed 2026-09-18, Antikythera Mechanism).
+  const resolvedAssetPath = asset_path
+    ? (path.isAbsolute(asset_path) ? asset_path : path.join(projectDir, asset_path))
+    : null;
+  if (resolvedAssetPath && fs.existsSync(resolvedAssetPath)) {
+    const ext = path.extname(resolvedAssetPath).toLowerCase();
     const isVideo = ['.mp4', '.mov', '.avi', '.mkv', '.webm'].includes(ext);
-    return { path: asset_path, type: isVideo ? 'video' : 'image' };
+    return { path: resolvedAssetPath, type: isVideo ? 'video' : 'image' };
   }
 
   // 2. Image scenes — images/image_{scene_id}.png or images/image_scene_NNN.png
